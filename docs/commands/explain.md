@@ -1,63 +1,146 @@
-# explain — Built-in Concept Reference
+# explain - concept reference and full-doc loader
 
-Built-in educational reference for Bittensor concepts. 32 topics covering all major protocol mechanics.
+`agcli explain` is an offline documentation command. It has no chain writes and does not build a `Client`.
 
-## Usage
+## Clap surface
 
-### List all topics
-```bash
-agcli explain
-# JSON: [{"topic", "description"}]
+`Commands::Explain` is defined in `src/cli/mod.rs`:
+
+- `--topic <String>`: optional concept key or alias.
+- `--full`: optional bool flag. Switches from embedded summaries to `docs/commands/*.md` file loading.
+
+Global flags still apply, especially:
+
+- `--output {table|json|csv}` (`OutputFormat`; practical values here are table/json).
+- `--pretty` (`bool`) only affects JSON formatting.
+
+## Execution modes (all surfaces under `explain`)
+
+`src/cli/commands.rs` dispatches `Commands::Explain` directly to `system_cmds::handle_explain(...)`.
+
+| Mode | Example | Behavior |
+|---|---|---|
+| Topic index | `agcli explain` | Prints canonical topics from `utils::explain::list_topics()` |
+| Topic summary | `agcli explain --topic tempo` | Prints built-in constant text from `utils::explain::explain(topic)` |
+| Full-doc index | `agcli explain --full` | Lists `docs/commands/*.md` files discovered by `find_docs_dir()` |
+| Full-doc topic | `agcli explain --topic weights --full` | Loads and prints `docs/commands/weights.md` (with alias fallbacks) |
+
+## Subxt and SCALE audit result
+
+`explain` does not call subxt, does not encode SCALE arguments, and does not submit extrinsics.
+
+- No `connect(...)` call in the `Commands::Explain` match arm.
+- `handle_explain(...)` only reads in-memory topic constants or markdown files on disk.
+- Pallet/dispatchable/encoding checks are therefore not applicable to command execution itself.
+
+## Exit codes
+
+Command exits are classified through `src/error.rs` and `src/main.rs`.
+
+| Case | Exit code |
+|---|---|
+| Success paths (`explain`, `--topic`, `--full`) | `0` |
+| Unknown topic (`Unknown topic '...'`) | `12` (`VALIDATION`) |
+| Missing docs directory in `--full` mode | `1` (`GENERIC`) |
+| Invalid `--topic` path traversal form in `--full` mode | `1` (`GENERIC`) |
+| Missing doc file for `--topic ... --full` | `1` (`GENERIC`) |
+| Clap parse failure | `2` (clap default) |
+
+## Output JSON schemas
+
+### `agcli explain --output json`
+
+```json
+[
+  {
+    "topic": "tempo",
+    "description": "Block cadence for subnet weight evaluation"
+  }
+]
 ```
 
-### Explain a specific topic
-```bash
-agcli explain --topic tempo
-# JSON: {"topic", "content"}
+### `agcli explain --topic <topic> --output json`
+
+```json
+{
+  "topic": "tempo",
+  "content": "TEMPO\n=====\n..."
+}
 ```
 
-## Available Topics (32)
-| Topic | Description |
-|-------|-------------|
-| `tempo` | Block cadence for subnet weight evaluation |
-| `commit-reveal` | Two-phase weight submission scheme |
-| `yuma` | Yuma consensus — the incentive mechanism |
-| `rate-limits` | Weight setting frequency constraints |
-| `weights` | Setting weights: commands, commit-reveal, timeouts, common errors |
-| `stake-weight` | Minimum stake required to set weights |
-| `amm` | Automated Market Maker (Dynamic TAO pools) |
-| `bootstrap` | Getting started as a new subnet owner |
-| `alpha` | Subnet-specific alpha tokens |
-| `emission` | How TAO emissions are distributed |
-| `registration` | Registering neurons on subnets |
-| `subnets` | What subnets are and how they work |
-| `validators` | Validator role and responsibilities |
-| `miners` | Miner role and responsibilities |
-| `immunity` | Immunity period for new registrations |
-| `delegation` | Delegating/nominating stake to validators |
-| `childkeys` | Childkey take and delegation within subnets |
-| `root` | Root network (SN0) and root weights |
-| `proxy` | Proxy accounts for delegated signing |
-| `coldkey-swap` | Coldkey swap scheduling and security |
-| `governance` | On-chain governance and proposals |
-| `senate` | Senate / triumvirate governance body |
-| `mev-shield` | MEV protection on Bittensor |
-| `limits` | Network and chain operational limits |
-| `hyperparams` | Subnet hyperparameters reference |
-| `axon` | Axon serving endpoint for miners/validators |
-| `take` | Validator/delegate take percentage |
-| `recycle` | Recycling and burning alpha tokens |
-| `pow` | Proof-of-work registration mechanics |
-| `archive` | Archive nodes and historical data queries |
-| `diff` | Compare chain state between two blocks |
-| `owner-workflow` | Step-by-step guide for subnet owners |
+### `agcli explain --topic <topic> --full --output json`
 
-## Source Code
-**agcli handler**: [`src/cli/system_cmds.rs`](https://github.com/unarbos/agcli/blob/main/src/cli/system_cmds.rs) — `handle_explain()` at L131
-**Topic definitions**: [`src/utils/explain.rs`](https://github.com/unarbos/agcli/blob/main/src/utils/explain.rs) — 32 topics with fuzzy matching aliases
+```json
+{
+  "topic": "weights",
+  "source": "docs/commands/weights.md",
+  "content": "# weights ..."
+}
+```
 
-**No on-chain interaction** — all content is embedded in the binary.
+### `agcli explain --full --output json`
 
-## Related
-- `docs/commands/*.md` — Detailed command reference
-- `docs/tutorials/` — Step-by-step guides
+```json
+["admin", "balance", "block", "doctor", "weights"]
+```
+
+### Unknown topic payload (`stderr`, JSON mode)
+
+```json
+{
+  "error": true,
+  "message": "Unknown topic 'xyz'",
+  "available_topics": [
+    {
+      "topic": "tempo",
+      "description": "Block cadence for subnet weight evaluation"
+    }
+  ]
+}
+```
+
+## Topic catalog (canonical keys in `list_topics()`)
+
+`list_topics()` currently returns 31 canonical topics.
+
+| Canonical topic | Aliases accepted by `explain()` | Pallet + storage reference | On-chain events reference |
+|---|---|---|---|
+| `tempo` | `tempo` | `subtensor::Tempo` (`pallets/subtensor/src/lib.rs`) | `TempoSet` |
+| `commit-reveal` | `commitreveal`, `cr` | `subtensor::CommitRevealWeightsEnabled`, `RevealPeriodEpochs`, `WeightCommits`, `CRV3WeightCommitsV2` | `CommitRevealEnabled`, `WeightsCommitted`, `WeightsRevealed`, `CRV3WeightsCommitted`, `CRV3WeightsRevealed` |
+| `yuma` | `yuma`, `yumaconsensus` | `subtensor::Consensus`, `Incentive`, `Dividends`, `ValidatorTrust` | `WeightsSet`, `IncentiveAlphaEmittedToMiners` |
+| `rate-limits` | `ratelimit`, `ratelimits`, `weightsratelimit` | `subtensor::WeightsSetRateLimit`, `TxRateLimit`, `TxDelegateTakeRateLimit`, `TxChildkeyTakeRateLimit` | `WeightsSetRateLimitSet`, `TxRateLimitSet`, `TxDelegateTakeRateLimitSet`, `TxChildKeyTakeRateLimitSet` |
+| `weights` | `weights`, `settingweights`, `setweights`, `weightsetting` | `subtensor::Weights`, `WeightCommits`, `TimelockedWeightCommits` | `WeightsSet`, `WeightsCommitted`, `WeightsRevealed`, `TimelockedWeightsCommitted`, `TimelockedWeightsRevealed` |
+| `stake-weight` | `stakeweight`, `stakeweightminimum`, `1000` | `subtensor::StakeThreshold`, `StakeWeight` | `StakeThresholdSet` |
+| `amm` | `amm`, `dynamictao`, `dtao`, `pool` | `subtensor::SubnetTAO`, `SubnetAlphaIn`, `SubnetAlphaOut`, `SubnetMovingPrice`; `swap::Positions` | `StakeAdded`, `StakeRemoved`, `StakeSwapped`, `LiquidityAdded`, `LiquidityRemoved`, `LiquidityModified` |
+| `bootstrap` | `bootstrap` | `subtensor::SubnetOwner`, `NetworkMinLockCost`, `NetworkRegistrationAllowed`, `Tempo` | `NetworkAdded`, `SubnetIdentitySet`, `RegistrationAllowed`, `TempoSet` |
+| `alpha` | `alpha`, `alphatoken` | `subtensor::Alpha`, `AlphaV2`, `SubnetAlphaIn`, `SubnetAlphaOut` | `StakeAdded`, `StakeRemoved`, `AlphaRecycled`, `AlphaBurned` |
+| `emission` | `emission`, `emissions` | `subtensor::BlockEmission`, `Emission`, `PendingValidatorEmission`, `PendingServerEmission` | `IncentiveAlphaEmittedToMiners`, `AutoStakeAdded` |
+| `registration` | `registration`, `register` | `subtensor::Difficulty`, `Burn`, `UsedWork`, `Uids`, `RegistrationsThisBlock` | `NeuronRegistered`, `BulkNeuronsRegistered`, `PowRegistrationAllowed`, `DifficultySet` |
+| `subnets` | `subnet`, `subnets` | `subtensor::TotalNetworks`, `SubnetLimit`, `SubnetOwner`, `NetworksAdded` | `NetworkAdded`, `NetworkRemoved`, `SubnetLimitSet` |
+| `validators` | `validator`, `validators` | `subtensor::ValidatorPermit`, `ValidatorTrust`, `Delegates` | `WeightsSet`, `DelegateAdded`, `TakeIncreased`, `TakeDecreased` |
+| `miners` | `miner`, `miners` | `subtensor::Uids`, `Axons`, `Incentive`, `Emission` | `NeuronRegistered`, `AxonServed`, `IncentiveAlphaEmittedToMiners` |
+| `immunity` | `immunity`, `immunityperiod` | `subtensor::ImmunityPeriod`, `BlockAtRegistration`, `MinNonImmuneUids` | `ImmunityPeriodSet`, `MinNonImmuneUidsSet` |
+| `delegation` | `delegate`, `delegation`, `nominate` | `subtensor::Delegates`, `TotalHotkeyShares`, `TotalHotkeyAlpha` | `DelegateAdded`, `TakeIncreased`, `TakeDecreased` |
+| `childkeys` | `childkey`, `childkeys` | `subtensor::ChildKeys`, `ParentKeys`, `PendingChildKeys`, `ChildkeyTake` | `SetChildrenScheduled`, `SetChildren`, `ChildKeyTakeSet` |
+| `root` | `root`, `rootnetwork` | `subtensor::RootProp`, `RootClaimable`, `RootClaimType` | `RootClaimed`, `RootClaimTypeSet` |
+| `proxy` | `proxy` | `proxy::Proxies`, `proxy::Announcements`, `proxy::RealPaysFee` (`pallets/proxy/src/lib.rs`) | `ProxyAdded`, `ProxyRemoved`, `Announced`, `ProxyExecuted`, `RealPaysFeeSet` |
+| `coldkey-swap` | `coldkeyswap`, `coldkey`, `ckswap` | `subtensor::ColdkeySwapAnnouncements`, `ColdkeySwapDisputes`, `ColdkeySwapAnnouncementDelay`, `ColdkeySwapReannouncementDelay` | `ColdkeySwapAnnounced`, `ColdkeySwapped`, `ColdkeySwapDisputed`, `ColdkeySwapCleared` |
+| `governance` | `governance`, `gov`, `proposals` | `subtensor::VotingPower`, `VotingPowerTrackingEnabled`, `VotingPowerDisableAtBlock`, `VotingPowerEmaAlpha` | `VotingPowerTrackingEnabled`, `VotingPowerTrackingDisableScheduled`, `VotingPowerTrackingDisabled`, `VotingPowerEmaAlphaSet` |
+| `senate` | `senate`, `triumvirate` | No dedicated custom pallet under `subtensor/pallets/*`; runtime comments mark older triumvirate/senate pallets as migrated/deprecated (`runtime/src/lib.rs`) | None in current custom pallet set |
+| `mev-shield` | `mevshield`, `mev`, `mevprotection` | `shield::PendingExtrinsics`, `shield::NextPendingExtrinsicIndex`, `shield::MaxExtrinsicWeight` (`pallets/shield/src/lib.rs`) | `EncryptedSubmitted`, `ExtrinsicStored`, `ExtrinsicDispatched`, `ExtrinsicDispatchFailed` |
+| `limits` | `limits`, `networklimits`, `chainlimits` | `subtensor::MaxAllowedUids`, `MinAllowedUids`, `MaxAllowedValidators`, `WeightsSetRateLimit`, `ServingRateLimit`, `MaxRegistrationsPerBlock` | `MaxAllowedUidsSet`, `MinAllowedUidsSet`, `MaxAllowedValidatorsSet`, `WeightsSetRateLimitSet`, `ServingRateLimitSet`, `MaxRegistrationsPerBlockSet` |
+| `hyperparams` | `hyperparams`, `hyperparameters`, `params` | `subtensor::Tempo`, `Rho`, `Kappa`, `WeightsVersionKey`, `AdjustmentInterval`, `CommitRevealWeightsEnabled` | `TempoSet`, `RhoSet`, `KappaSet`, `WeightsVersionKeySet`, `AdjustmentIntervalSet`, `CommitRevealEnabled` |
+| `axon` | `axon`, `axoninfo`, `serving` | `subtensor::Axons`, `Prometheus`, `ServingRateLimit` | `AxonServed`, `PrometheusServed`, `ServingRateLimitSet` |
+| `take` | `take`, `delegatetake`, `validatortake` | `subtensor::Delegates`, `MaxDelegateTake`, `MinDelegateTake` | `TakeIncreased`, `TakeDecreased`, `MaxDelegateTakeSet`, `MinDelegateTakeSet` |
+| `recycle` | `recycle`, `recyclealpha`, `burn`, `burnalpha` | `subtensor::RecycleOrBurn`, `SubnetAlphaOut` | `AlphaRecycled`, `AlphaBurned`, `AddStakeBurn` |
+| `pow` | `pow`, `powregistration`, `proofofwork` | `subtensor::NetworkPowRegistrationAllowed`, `Difficulty`, `MinDifficulty`, `MaxDifficulty`, `UsedWork` | `PowRegistrationAllowed`, `DifficultySet`, `NeuronRegistered` |
+| `archive` | `archive`, `archivenode`, `historical`, `wayback` | No dedicated runtime storage. This is a node data-retention mode used to read historical values of normal storage keys. | None. Read-only behavior. |
+| `diff` | `diff`, `compare`, `historicaldiff` | No dedicated runtime storage. Compares snapshots from existing storage at two block hashes. | None. Read-only behavior. |
+| `owner-workflow` | `ownerworkflow`, `ow`, `subnetowner`, `ownerguide` | Composite guide that spans `subtensor::SubnetOwner`, `SubnetIdentitiesV3`, `Tempo`, `CommitRevealWeightsEnabled`, `Weights` | Composite workflow, not one event. Common events include `NetworkAdded`, `SubnetIdentitySet`, `TempoSet`, `CommitRevealEnabled`, `WeightsSet` |
+
+## Notes for audit consumers
+
+- `explain` topic matching normalizes case and strips `-` and `_`.
+- Unknown topic behavior is explicit and machine-readable in JSON mode.
+- `--full` file loading includes path traversal checks and alias redirection for select topics (`cr`, `amm`, `nominate`, and weight-setting aliases).
+- Fuzzy fallback exists for partial topic substrings in canonical keys.
