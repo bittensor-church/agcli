@@ -101,7 +101,7 @@ Command exits are classified through `src/error.rs` and `src/main.rs`.
 
 ## Topic catalog (canonical keys in `list_topics()`)
 
-`list_topics()` currently returns 31 canonical topics.
+`list_topics()` currently returns 32 canonical topics.
 
 | Canonical topic | Aliases accepted by `explain()` | Pallet + storage reference | On-chain events reference |
 |---|---|---|---|
