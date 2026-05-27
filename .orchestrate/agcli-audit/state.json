@@ -76,16 +76,16 @@
       "agentId": "bc-30e345f5-d3d5-4760-9de5-1c35bc012abb",
       "runId": "run-254b5e4f-e4cd-4707-b154-a619f2c833e7",
       "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
-      "status": "running",
-      "resultStatus": null,
-      "handoffPath": null,
+      "status": "error",
+      "resultStatus": "error",
+      "handoffPath": "handoffs/audit-stake.md",
       "startedAt": "2026-05-27T11:15:48.406Z",
-      "finishedAt": null,
-      "lastUpdate": "2026-05-27T11:15:51.382Z",
+      "finishedAt": "2026-05-27T11:16:29.962Z",
+      "lastUpdate": "2026-05-27T11:16:29.962Z",
       "note": null,
       "slackTs": null,
       "prNumber": null,
-      "failureMode": null,
+      "failureMode": "unknown",
       "verification": null,
       "attempts": 1
     },
@@ -1351,6 +1351,18 @@
     {
       "at": "2026-05-27T11:16:28.794Z",
       "message": "audit-weights: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status"
+    },
+    {
+      "at": "2026-05-27T11:16:29.869Z",
+      "message": "audit-weights: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-weights.md"
+    },
+    {
+      "at": "2026-05-27T11:16:29.870Z",
+      "message": "audit-weights: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-weights-failure.md"
+    },
+    {
+      "at": "2026-05-27T11:16:29.962Z",
+      "message": "audit-stake: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status"
     }
   ]
 }
