@@ -521,13 +521,13 @@
       "handoffPath": "handoffs/audit-commitment.md",
       "startedAt": "2026-05-27T11:16:55.479Z",
       "finishedAt": "2026-05-27T11:33:30.143Z",
-      "lastUpdate": "2026-05-27T11:33:30.143Z",
+      "lastUpdate": "2026-05-27T11:33:31.066Z",
       "note": null,
       "attempts": 1,
       "slackTs": null,
       "prNumber": null,
       "failureMode": null,
-      "verification": null
+      "verification": "unit-test-verified"
     },
     {
       "name": "audit-block",
@@ -626,12 +626,12 @@
       "agentId": "bc-66f3b332-876b-4b4a-bc48-d7d0443e37a8",
       "runId": "run-af08afe8-68f0-4018-be01-f3c9f1eaa65e",
       "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
-      "status": "running",
-      "resultStatus": null,
-      "handoffPath": null,
+      "status": "handed-off",
+      "resultStatus": "finished",
+      "handoffPath": "handoffs/audit-explain.md",
       "startedAt": "2026-05-27T11:17:12.865Z",
-      "finishedAt": null,
-      "lastUpdate": "2026-05-27T11:17:15.697Z",
+      "finishedAt": "2026-05-27T11:33:31.087Z",
+      "lastUpdate": "2026-05-27T11:33:31.087Z",
       "note": null,
       "attempts": 1,
       "slackTs": null,
@@ -1829,6 +1829,10 @@
     {
       "at": "2026-05-27T11:33:30.129Z",
       "message": "audit-preimage: verification self-reported (type-check-only)"
+    },
+    {
+      "at": "2026-05-27T11:33:31.066Z",
+      "message": "audit-commitment: verification self-reported (unit-test-verified)"
     }
   ]
 }
