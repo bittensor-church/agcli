@@ -494,16 +494,16 @@
       "agentId": "bc-63bf4582-3a51-40ae-8654-049ebce1d97a",
       "runId": "run-e101ae65-cf6b-43f2-bf97-b1d067f916d0",
       "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
-      "status": "running",
-      "resultStatus": null,
-      "handoffPath": null,
+      "status": "error",
+      "resultStatus": "error",
+      "handoffPath": "handoffs/audit-liquidity.md",
       "startedAt": "2026-05-27T11:16:46.513Z",
-      "finishedAt": null,
-      "lastUpdate": "2026-05-27T11:16:55.477Z",
+      "finishedAt": "2026-05-27T11:17:27.771Z",
+      "lastUpdate": "2026-05-27T11:17:27.771Z",
       "note": null,
       "slackTs": null,
       "prNumber": null,
-      "failureMode": null,
+      "failureMode": "unknown",
       "verification": null,
       "attempts": 1
     },
@@ -1558,6 +1558,18 @@
     {
       "at": "2026-05-27T11:17:26.564Z",
       "message": "audit-drand: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status"
+    },
+    {
+      "at": "2026-05-27T11:17:27.763Z",
+      "message": "audit-drand: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-drand.md"
+    },
+    {
+      "at": "2026-05-27T11:17:27.764Z",
+      "message": "audit-drand: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-drand-failure.md"
+    },
+    {
+      "at": "2026-05-27T11:17:27.770Z",
+      "message": "audit-liquidity: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status"
     }
   ]
 }
