@@ -76,17 +76,17 @@
       "agentId": "bc-4ab7013e-6ea5-4286-8c23-79ad601d611c",
       "runId": "run-17cb88b7-14c0-45e0-88e9-0bfa43531dcc",
       "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
-      "status": "running",
-      "resultStatus": null,
-      "handoffPath": null,
+      "status": "error",
+      "resultStatus": "error",
+      "handoffPath": "handoffs/audit-stake.md",
       "startedAt": "2026-05-27T11:33:36.283Z",
-      "finishedAt": null,
-      "lastUpdate": "2026-05-27T11:33:39.153Z",
+      "finishedAt": "2026-05-27T11:34:06.992Z",
+      "lastUpdate": "2026-05-27T11:34:06.992Z",
       "note": "respawned by self-planner (was error; attempts=1)",
       "attempts": 2,
       "slackTs": null,
       "prNumber": null,
-      "failureMode": null,
+      "failureMode": "unknown",
       "verification": null
     },
     {
@@ -1841,6 +1841,10 @@
     {
       "at": "2026-05-27T11:33:33.089Z",
       "message": "audit-localnet: verification self-reported (type-check-only)"
+    },
+    {
+      "at": "2026-05-27T11:34:06.991Z",
+      "message": "audit-stake: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status"
     }
   ]
 }
