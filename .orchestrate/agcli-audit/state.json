@@ -126,14 +126,14 @@
       "agentId": null,
       "runId": null,
       "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
-      "status": "pending",
+      "status": "running",
       "resultStatus": null,
       "handoffPath": null,
-      "startedAt": null,
+      "startedAt": "2026-05-27T13:20:42.492Z",
       "finishedAt": null,
-      "lastUpdate": "2026-05-27T12:01:04.802Z",
+      "lastUpdate": "2026-05-27T13:20:42.493Z",
       "note": "respawned by self-planner (was error; attempts=2)",
-      "attempts": 2,
+      "attempts": 3,
       "slackTs": null,
       "prNumber": null,
       "failureMode": null,
@@ -2603,6 +2603,10 @@
     {
       "at": "2026-05-27T13:19:19.624Z",
       "message": "audit-multisig: model \"claude-sonnet-4-6\" not in MODEL_CATALOG (spawning anyway). Run `bun cli.ts models` to see known slugs."
+    },
+    {
+      "at": "2026-05-27T13:20:42.491Z",
+      "message": "audit-weights: model \"claude-sonnet-4-6\" not in MODEL_CATALOG (spawning anyway). Run `bun cli.ts models` to see known slugs."
     }
   ]
 }
