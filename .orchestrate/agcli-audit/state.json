@@ -103,13 +103,13 @@
       "handoffPath": "handoffs/audit-subnet.md",
       "startedAt": "2026-05-27T11:33:39.155Z",
       "finishedAt": "2026-05-27T11:48:16.079Z",
-      "lastUpdate": "2026-05-27T11:48:16.079Z",
+      "lastUpdate": "2026-05-27T11:49:15.591Z",
       "note": "respawned by self-planner (was error; attempts=1)",
       "attempts": 2,
       "slackTs": null,
       "prNumber": null,
       "failureMode": null,
-      "verification": null
+      "verification": "unit-test-verified"
     },
     {
       "name": "audit-weights",
@@ -736,12 +736,12 @@
       "agentId": "bc-f85e68a1-ec09-4e9b-9e79-4f4154fd48ae",
       "runId": "run-8d11a630-ca8e-4555-9159-5ff5e57c36b9",
       "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
-      "status": "running",
-      "resultStatus": null,
-      "handoffPath": null,
+      "status": "handed-off",
+      "resultStatus": "finished",
+      "handoffPath": "handoffs/audit-admin.md",
       "startedAt": "2026-05-27T11:34:58.478Z",
-      "finishedAt": null,
-      "lastUpdate": "2026-05-27T11:35:01.865Z",
+      "finishedAt": "2026-05-27T11:49:15.594Z",
+      "lastUpdate": "2026-05-27T11:49:15.594Z",
       "note": "respawned by self-planner (was error; attempts=1)",
       "attempts": 2,
       "slackTs": null,
@@ -2126,6 +2126,10 @@
     {
       "at": "2026-05-27T11:47:30.583Z",
       "message": "audit-audit-cmd: verification self-reported (unit-test-verified)"
+    },
+    {
+      "at": "2026-05-27T11:49:15.592Z",
+      "message": "audit-subnet: verification self-reported (unit-test-verified)"
     }
   ]
 }
