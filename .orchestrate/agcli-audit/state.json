@@ -367,13 +367,13 @@
       "handoffPath": "handoffs/audit-preimage.md",
       "startedAt": "2026-05-27T11:16:27.298Z",
       "finishedAt": "2026-05-27T11:33:29.069Z",
-      "lastUpdate": "2026-05-27T11:33:29.069Z",
+      "lastUpdate": "2026-05-27T11:33:30.129Z",
       "note": null,
       "attempts": 1,
       "slackTs": null,
       "prNumber": null,
       "failureMode": null,
-      "verification": null
+      "verification": "type-check-only"
     },
     {
       "name": "audit-contracts",
@@ -516,12 +516,12 @@
       "agentId": "bc-93f861ab-b9a6-4053-a45a-f1fab6020a42",
       "runId": "run-d38de302-19bf-46f4-99f2-a49af7e8309d",
       "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
-      "status": "running",
-      "resultStatus": null,
-      "handoffPath": null,
+      "status": "handed-off",
+      "resultStatus": "finished",
+      "handoffPath": "handoffs/audit-commitment.md",
       "startedAt": "2026-05-27T11:16:55.479Z",
-      "finishedAt": null,
-      "lastUpdate": "2026-05-27T11:16:59.891Z",
+      "finishedAt": "2026-05-27T11:33:30.143Z",
+      "lastUpdate": "2026-05-27T11:33:30.143Z",
       "note": null,
       "attempts": 1,
       "slackTs": null,
@@ -1825,6 +1825,10 @@
     {
       "at": "2026-05-27T11:33:29.048Z",
       "message": "audit-evm: verification self-reported (unit-test-verified)"
+    },
+    {
+      "at": "2026-05-27T11:33:30.129Z",
+      "message": "audit-preimage: verification self-reported (type-check-only)"
     }
   ]
 }
