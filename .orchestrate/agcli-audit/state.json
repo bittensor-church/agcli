@@ -2653,6 +2653,14 @@
     {
       "at": "2026-05-27T13:50:49.184Z",
       "message": "fix-scaffold-localnet: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status"
+    },
+    {
+      "at": "2026-05-27T13:50:50.254Z",
+      "message": "fix-scaffold-localnet: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/fix-scaffold-localnet.md"
+    },
+    {
+      "at": "2026-05-27T13:50:50.257Z",
+      "message": "fix-scaffold-localnet: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/fix-scaffold-localnet-failure.md"
     }
   ]
 }
