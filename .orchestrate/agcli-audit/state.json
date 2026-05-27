@@ -365,13 +365,13 @@
       "handoffPath": "handoffs/audit-scheduler.md",
       "startedAt": "2026-05-27T11:34:11.028Z",
       "finishedAt": "2026-05-27T11:45:11.101Z",
-      "lastUpdate": "2026-05-27T11:45:56.810Z",
+      "lastUpdate": "2026-05-27T13:15:12.199Z",
       "note": "respawned by self-planner (was error; attempts=1)",
       "attempts": 2,
       "slackTs": null,
       "prNumber": null,
       "failureMode": null,
-      "verification": "type-check-only"
+      "verification": "verifier-failed"
     },
     {
       "name": "audit-preimage",
@@ -722,12 +722,12 @@
       "agentId": "bc-68aac5ab-c145-4220-a752-0fbcf596f165",
       "runId": "run-05e8385b-2f74-4f9f-b4fc-ae2a183a320f",
       "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
-      "status": "running",
-      "resultStatus": null,
-      "handoffPath": null,
+      "status": "handed-off",
+      "resultStatus": "finished",
+      "handoffPath": "handoffs/audit-batch.md",
       "startedAt": "2026-05-27T13:01:25.118Z",
-      "finishedAt": null,
-      "lastUpdate": "2026-05-27T13:01:29.271Z",
+      "finishedAt": "2026-05-27T13:16:05.365Z",
+      "lastUpdate": "2026-05-27T13:16:05.365Z",
       "note": "respawned by self-planner (was error; attempts=2)",
       "attempts": 3,
       "slackTs": null,
@@ -2583,6 +2583,10 @@
     {
       "at": "2026-05-27T13:12:22.869Z",
       "message": "audit-serve: model \"claude-sonnet-4-6\" not in MODEL_CATALOG (spawning anyway). Run `bun cli.ts models` to see known slugs."
+    },
+    {
+      "at": "2026-05-27T13:15:12.201Z",
+      "message": "audit-scheduler: verification recorded (verifier-failed) by verifier verify-governance-batch"
     }
   ]
 }
