@@ -196,17 +196,17 @@
       "agentId": "bc-51349619-31d5-4adf-b645-a58b4c14f033",
       "runId": "run-71e3a518-1a52-45a6-bcf4-a45bc84731f0",
       "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
-      "status": "running",
-      "resultStatus": null,
-      "handoffPath": null,
+      "status": "error",
+      "resultStatus": "error",
+      "handoffPath": "handoffs/audit-view.md",
       "startedAt": "2026-05-27T12:34:43.998Z",
-      "finishedAt": null,
-      "lastUpdate": "2026-05-27T12:34:47.960Z",
+      "finishedAt": "2026-05-27T12:35:07.992Z",
+      "lastUpdate": "2026-05-27T12:35:07.992Z",
       "note": "respawned by self-planner (was error; attempts=2)",
       "attempts": 3,
       "slackTs": null,
       "prNumber": null,
-      "failureMode": null,
+      "failureMode": "unknown",
       "verification": null
     },
     {
@@ -673,15 +673,15 @@
       "dependsOn": [
         "audit-config"
       ],
-      "agentId": null,
-      "runId": null,
+      "agentId": "bc-2c8c9a3a-a338-4b1d-b72c-ed00d1c2716d",
+      "runId": "run-c581318a-1445-4ca4-bf20-2f72b3bd841d",
       "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
       "status": "running",
       "resultStatus": null,
       "handoffPath": null,
       "startedAt": "2026-05-27T12:34:57.966Z",
       "finishedAt": null,
-      "lastUpdate": "2026-05-27T12:34:57.966Z",
+      "lastUpdate": "2026-05-27T12:35:01.539Z",
       "note": "respawned by self-planner (was error; attempts=2)",
       "attempts": 3,
       "slackTs": null,
@@ -2458,6 +2458,10 @@
     {
       "at": "2026-05-27T12:34:53.698Z",
       "message": "audit-config: verification self-reported (unit-test-verified)"
+    },
+    {
+      "at": "2026-05-27T12:35:07.991Z",
+      "message": "audit-view: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status"
     }
   ]
 }

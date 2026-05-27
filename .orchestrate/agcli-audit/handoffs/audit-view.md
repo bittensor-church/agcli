@@ -1,12 +1,12 @@
 <!-- orchestrate handoff
 task: audit-view
 branch: orch/agcli-audit/audit-view
-agentId: bc-b0077730-c33f-45a8-92b7-105a1b5691e0
-runId: run-b5112d78-a609-44b9-87e4-c5a66bf1d963
+agentId: bc-51349619-31d5-4adf-b645-a58b4c14f033
+runId: run-71e3a518-1a52-45a6-bcf4-a45bc84731f0
 resultStatus: error
-finishedAt: 2026-05-27T11:34:16.007Z
+finishedAt: 2026-05-27T12:35:07.992Z
 -->
 
 > ⚠️ Run ended with `status=error`. No structured handoff produced — the content below is the worker's raw output up to the point of failure.
 
-Starting the audit by reading the orchestrator discovery doc first, then I’ll enumerate every `view` subcommand/handler mapping and trace each one into chain queries before drafting docs and tests.I’ve loaded the discovery context and next I’m mapping `ViewCommands` to handlers and chain calls so the docs/test additions are complete and exact.
+I’m going to audit the `view` command surface end-to-end now: first I’ll read `.orchestrate/agcli-audit/discovery.md`, map every `ViewCommands` subcommand to its handler and chain call paths, then I’ll update `docs/commands/view.md` and add `tests/audit_view.rs` before running the required cargo checks.
