@@ -741,13 +741,13 @@
       "handoffPath": "handoffs/audit-admin.md",
       "startedAt": "2026-05-27T11:34:58.478Z",
       "finishedAt": "2026-05-27T11:49:15.594Z",
-      "lastUpdate": "2026-05-27T11:49:15.594Z",
+      "lastUpdate": "2026-05-27T11:50:40.578Z",
       "note": "respawned by self-planner (was error; attempts=1)",
       "attempts": 2,
       "slackTs": null,
       "prNumber": null,
       "failureMode": null,
-      "verification": null
+      "verification": "type-check-only"
     },
     {
       "name": "audit-localnet",
@@ -866,15 +866,15 @@
         "audit-liquidity",
         "audit-commitment"
       ],
-      "agentId": null,
-      "runId": null,
-      "parentAgentId": null,
+      "agentId": "bc-39c932ff-3fdd-426a-9d09-87d0da782784",
+      "runId": "run-061799af-de4a-44fa-be6b-4bd2ac0078e9",
+      "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
       "status": "running",
       "resultStatus": null,
       "handoffPath": null,
       "startedAt": "2026-05-27T11:47:30.606Z",
       "finishedAt": null,
-      "lastUpdate": "2026-05-27T11:47:30.606Z",
+      "lastUpdate": "2026-05-27T11:50:40.583Z",
       "note": null,
       "slackTs": null,
       "prNumber": null,
@@ -2130,6 +2130,10 @@
     {
       "at": "2026-05-27T11:49:15.592Z",
       "message": "audit-subnet: verification self-reported (unit-test-verified)"
+    },
+    {
+      "at": "2026-05-27T11:50:40.579Z",
+      "message": "audit-admin: verification self-reported (type-check-only)"
     }
   ]
 }
