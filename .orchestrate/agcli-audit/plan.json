@@ -17,11 +17,9 @@
     {
       "name": "bootstrap-env",
       "type": "worker",
-      "scopedGoal": "Bootstrap the orchestrate workspace's environment and validate the audit baseline. Before anything else, read .orchestrate/agcli-audit/discovery.md.\n\nConcretely:\n1. Run `rustup install stable && rustup default stable` (Cargo.toml needs >= 1.89). Capture `rustc --version` in the handoff.\n2. Initialize the subtensor submodule (`git submodule update --init --depth=1 -- subtensor`).\n3. Install Docker (`sudo apt-get install -y docker.io`), write /etc/docker/daemon.json with vfs storage driver + containerd-snapshotter:false, start `sudo dockerd > /tmp/dockerd.log 2>&1 &`. Verify `sudo docker run --rm hello-world` works. Record the working command sequence in .orchestrate/agcli-audit/discovery.md as the canonical environment recipe.\n4. Run `SKIP_METADATA_FETCH=1 cargo check --bin agcli` and confirm it succeeds.\n5. Pull `ghcr.io/opentensor/subtensor-localnet:devnet-ready` and start it with `agcli localnet start --output json` (build the binary first with `cargo build --release --bin agcli`). Confirm the chain produces blocks with `agcli localnet status --output json`. Stop it with `agcli localnet stop` after verification.\n6. Print the chain RPC metadata (`subxt metadata` or just `agcli doctor --network local`). Save the raw output under .orchestrate/agcli-audit/baseline-doctor.json so siblings can read it.\n\nAcceptance: handoff confirms each step's result with exact commands run. Update discovery.md with anything you learned.",
+      "scopedGoal": "Minimal env baseline. Read .orchestrate/agcli-audit/discovery.md FIRST.\n\nConcretely (and NOTHING ELSE):\n1. `rustup install stable && rustup default stable` — Cargo.toml needs >= 1.89; the VM ships with 1.83.\n2. `git submodule update --init --depth=1 -- subtensor` — needed for pallet cross-reference.\n3. `SKIP_METADATA_FETCH=1 cargo check --bin agcli` — confirm the project compiles. (~1m25s cold, fast on warm cache.)\n4. Append a one-line \"verified at <UTC timestamp> on rust <rustc -V>\" stamp at the end of .orchestrate/agcli-audit/discovery.md.\n\nDo NOT pull Docker images, build --release, or boot a localnet. Audit workers handle Docker on their own VMs if they need it.",
       "pathsAllowed": [
         ".orchestrate/agcli-audit/discovery.md",
-        ".orchestrate/agcli-audit/baseline-doctor.json",
-        ".orchestrate/agcli-audit/baseline-build.log",
         ".orchestrate/agcli-audit/handoffs/**"
       ],
       "pathsForbidden": [
@@ -35,11 +33,9 @@
       ],
       "acceptance": [
         "rustc >= 1.89.",
-        "Docker running with vfs storage driver and `sudo docker run --rm hello-world` succeeds.",
-        "`cargo check --bin agcli` succeeds.",
-        "`agcli localnet start` brings up a chain that produces blocks; `agcli localnet stop` cleans up.",
-        "discovery.md is updated with the verified environment recipe.",
-        "baseline-doctor.json exists with `agcli doctor --network local --output json` output."
+        "subtensor submodule populated (subtensor/Cargo.toml exists).",
+        "`SKIP_METADATA_FETCH=1 cargo check --bin agcli` exits 0.",
+        "discovery.md has a final verification timestamp line."
       ],
       "model": "gpt-5.3-codex-high-fast",
       "maxAttempts": 3
@@ -88,10 +84,7 @@
       ],
       "verify": "Run on the worker branch: `cargo check --all-targets` (must succeed). Then `cargo test --no-run --test audit_wallet` (must compile). The Findings section in the handoff is the substantive deliverable.",
       "model": "gpt-5.3-codex-high-fast",
-      "maxAttempts": 2,
-      "dependsOn": [
-        "bootstrap-env"
-      ]
+      "maxAttempts": 2
     },
     {
       "name": "audit-balance-transfer",
@@ -137,10 +130,7 @@
       ],
       "verify": "Run on the worker branch: `cargo check --all-targets` (must succeed). Then `cargo test --no-run --test audit_balance_transfer` (must compile). The Findings section in the handoff is the substantive deliverable.",
       "model": "gpt-5.3-codex-high-fast",
-      "maxAttempts": 2,
-      "dependsOn": [
-        "bootstrap-env"
-      ]
+      "maxAttempts": 2
     },
     {
       "name": "audit-stake",
@@ -186,10 +176,7 @@
       ],
       "verify": "Run on the worker branch: `cargo check --all-targets` (must succeed). Then `cargo test --no-run --test audit_stake` (must compile). The Findings section in the handoff is the substantive deliverable.",
       "model": "gpt-5.3-codex-high-fast",
-      "maxAttempts": 2,
-      "dependsOn": [
-        "bootstrap-env"
-      ]
+      "maxAttempts": 2
     },
     {
       "name": "audit-subnet",
@@ -235,10 +222,7 @@
       ],
       "verify": "Run on the worker branch: `cargo check --all-targets` (must succeed). Then `cargo test --no-run --test audit_subnet` (must compile). The Findings section in the handoff is the substantive deliverable.",
       "model": "gpt-5.3-codex-high-fast",
-      "maxAttempts": 2,
-      "dependsOn": [
-        "bootstrap-env"
-      ]
+      "maxAttempts": 2
     },
     {
       "name": "audit-weights",
@@ -284,10 +268,7 @@
       ],
       "verify": "Run on the worker branch: `cargo check --all-targets` (must succeed). Then `cargo test --no-run --test audit_weights` (must compile). The Findings section in the handoff is the substantive deliverable.",
       "model": "gpt-5.3-codex-high-fast",
-      "maxAttempts": 2,
-      "dependsOn": [
-        "bootstrap-env"
-      ]
+      "maxAttempts": 2
     },
     {
       "name": "audit-root",
@@ -333,10 +314,7 @@
       ],
       "verify": "Run on the worker branch: `cargo check --all-targets` (must succeed). Then `cargo test --no-run --test audit_root` (must compile). The Findings section in the handoff is the substantive deliverable.",
       "model": "gpt-5.3-codex-high-fast",
-      "maxAttempts": 2,
-      "dependsOn": [
-        "bootstrap-env"
-      ]
+      "maxAttempts": 2
     },
     {
       "name": "audit-delegate",
@@ -382,10 +360,7 @@
       ],
       "verify": "Run on the worker branch: `cargo check --all-targets` (must succeed). Then `cargo test --no-run --test audit_delegate` (must compile). The Findings section in the handoff is the substantive deliverable.",
       "model": "gpt-5.3-codex-high-fast",
-      "maxAttempts": 2,
-      "dependsOn": [
-        "bootstrap-env"
-      ]
+      "maxAttempts": 2
     },
     {
       "name": "audit-view",
@@ -431,10 +406,7 @@
       ],
       "verify": "Run on the worker branch: `cargo check --all-targets` (must succeed). Then `cargo test --no-run --test audit_view` (must compile). The Findings section in the handoff is the substantive deliverable.",
       "model": "gpt-5.3-codex-high-fast",
-      "maxAttempts": 2,
-      "dependsOn": [
-        "bootstrap-env"
-      ]
+      "maxAttempts": 2
     },
     {
       "name": "audit-identity",
@@ -480,10 +452,7 @@
       ],
       "verify": "Run on the worker branch: `cargo check --all-targets` (must succeed). Then `cargo test --no-run --test audit_identity` (must compile). The Findings section in the handoff is the substantive deliverable.",
       "model": "gpt-5.3-codex-high-fast",
-      "maxAttempts": 2,
-      "dependsOn": [
-        "bootstrap-env"
-      ]
+      "maxAttempts": 2
     },
     {
       "name": "audit-serve",
@@ -529,10 +498,7 @@
       ],
       "verify": "Run on the worker branch: `cargo check --all-targets` (must succeed). Then `cargo test --no-run --test audit_serve` (must compile). The Findings section in the handoff is the substantive deliverable.",
       "model": "gpt-5.3-codex-high-fast",
-      "maxAttempts": 2,
-      "dependsOn": [
-        "bootstrap-env"
-      ]
+      "maxAttempts": 2
     },
     {
       "name": "audit-proxy",
@@ -578,10 +544,7 @@
       ],
       "verify": "Run on the worker branch: `cargo check --all-targets` (must succeed). Then `cargo test --no-run --test audit_proxy` (must compile). The Findings section in the handoff is the substantive deliverable.",
       "model": "gpt-5.3-codex-high-fast",
-      "maxAttempts": 2,
-      "dependsOn": [
-        "bootstrap-env"
-      ]
+      "maxAttempts": 2
     },
     {
       "name": "audit-swap-keys",
@@ -627,10 +590,7 @@
       ],
       "verify": "Run on the worker branch: `cargo check --all-targets` (must succeed). Then `cargo test --no-run --test audit_swap_keys` (must compile). The Findings section in the handoff is the substantive deliverable.",
       "model": "gpt-5.3-codex-high-fast",
-      "maxAttempts": 2,
-      "dependsOn": [
-        "bootstrap-env"
-      ]
+      "maxAttempts": 2
     },
     {
       "name": "audit-subscribe",
@@ -676,10 +636,7 @@
       ],
       "verify": "Run on the worker branch: `cargo check --all-targets` (must succeed). Then `cargo test --no-run --test audit_subscribe` (must compile). The Findings section in the handoff is the substantive deliverable.",
       "model": "gpt-5.3-codex-high-fast",
-      "maxAttempts": 2,
-      "dependsOn": [
-        "bootstrap-env"
-      ]
+      "maxAttempts": 2
     },
     {
       "name": "audit-multisig",
@@ -725,10 +682,7 @@
       ],
       "verify": "Run on the worker branch: `cargo check --all-targets` (must succeed). Then `cargo test --no-run --test audit_multisig` (must compile). The Findings section in the handoff is the substantive deliverable.",
       "model": "gpt-5.3-codex-high-fast",
-      "maxAttempts": 2,
-      "dependsOn": [
-        "bootstrap-env"
-      ]
+      "maxAttempts": 2
     },
     {
       "name": "audit-scheduler",
@@ -774,10 +728,7 @@
       ],
       "verify": "Run on the worker branch: `cargo check --all-targets` (must succeed). Then `cargo test --no-run --test audit_scheduler` (must compile). The Findings section in the handoff is the substantive deliverable.",
       "model": "gpt-5.3-codex-high-fast",
-      "maxAttempts": 2,
-      "dependsOn": [
-        "bootstrap-env"
-      ]
+      "maxAttempts": 2
     },
     {
       "name": "audit-preimage",
@@ -823,10 +774,7 @@
       ],
       "verify": "Run on the worker branch: `cargo check --all-targets` (must succeed). Then `cargo test --no-run --test audit_preimage` (must compile). The Findings section in the handoff is the substantive deliverable.",
       "model": "gpt-5.3-codex-high-fast",
-      "maxAttempts": 2,
-      "dependsOn": [
-        "bootstrap-env"
-      ]
+      "maxAttempts": 2
     },
     {
       "name": "audit-contracts",
@@ -872,10 +820,7 @@
       ],
       "verify": "Run on the worker branch: `cargo check --all-targets` (must succeed). Then `cargo test --no-run --test audit_contracts` (must compile). The Findings section in the handoff is the substantive deliverable.",
       "model": "gpt-5.3-codex-high-fast",
-      "maxAttempts": 2,
-      "dependsOn": [
-        "bootstrap-env"
-      ]
+      "maxAttempts": 2
     },
     {
       "name": "audit-evm",
@@ -921,10 +866,7 @@
       ],
       "verify": "Run on the worker branch: `cargo check --all-targets` (must succeed). Then `cargo test --no-run --test audit_evm` (must compile). The Findings section in the handoff is the substantive deliverable.",
       "model": "gpt-5.3-codex-high-fast",
-      "maxAttempts": 2,
-      "dependsOn": [
-        "bootstrap-env"
-      ]
+      "maxAttempts": 2
     },
     {
       "name": "audit-safe-mode",
@@ -970,10 +912,7 @@
       ],
       "verify": "Run on the worker branch: `cargo check --all-targets` (must succeed). Then `cargo test --no-run --test audit_safe_mode` (must compile). The Findings section in the handoff is the substantive deliverable.",
       "model": "gpt-5.3-codex-high-fast",
-      "maxAttempts": 2,
-      "dependsOn": [
-        "bootstrap-env"
-      ]
+      "maxAttempts": 2
     },
     {
       "name": "audit-drand",
@@ -1019,10 +958,7 @@
       ],
       "verify": "Run on the worker branch: `cargo check --all-targets` (must succeed). Then `cargo test --no-run --test audit_drand` (must compile). The Findings section in the handoff is the substantive deliverable.",
       "model": "gpt-5.3-codex-high-fast",
-      "maxAttempts": 2,
-      "dependsOn": [
-        "bootstrap-env"
-      ]
+      "maxAttempts": 2
     },
     {
       "name": "audit-crowdloan",
@@ -1068,10 +1004,7 @@
       ],
       "verify": "Run on the worker branch: `cargo check --all-targets` (must succeed). Then `cargo test --no-run --test audit_crowdloan` (must compile). The Findings section in the handoff is the substantive deliverable.",
       "model": "gpt-5.3-codex-high-fast",
-      "maxAttempts": 2,
-      "dependsOn": [
-        "bootstrap-env"
-      ]
+      "maxAttempts": 2
     },
     {
       "name": "audit-liquidity",
@@ -1117,10 +1050,7 @@
       ],
       "verify": "Run on the worker branch: `cargo check --all-targets` (must succeed). Then `cargo test --no-run --test audit_liquidity` (must compile). The Findings section in the handoff is the substantive deliverable.",
       "model": "gpt-5.3-codex-high-fast",
-      "maxAttempts": 2,
-      "dependsOn": [
-        "bootstrap-env"
-      ]
+      "maxAttempts": 2
     },
     {
       "name": "audit-commitment",
@@ -1166,10 +1096,7 @@
       ],
       "verify": "Run on the worker branch: `cargo check --all-targets` (must succeed). Then `cargo test --no-run --test audit_commitment` (must compile). The Findings section in the handoff is the substantive deliverable.",
       "model": "gpt-5.3-codex-high-fast",
-      "maxAttempts": 2,
-      "dependsOn": [
-        "bootstrap-env"
-      ]
+      "maxAttempts": 2
     },
     {
       "name": "audit-block",
@@ -1215,10 +1142,7 @@
       ],
       "verify": "Run on the worker branch: `cargo check --all-targets` (must succeed). Then `cargo test --no-run --test audit_block` (must compile). The Findings section in the handoff is the substantive deliverable.",
       "model": "gpt-5.3-codex-high-fast",
-      "maxAttempts": 2,
-      "dependsOn": [
-        "bootstrap-env"
-      ]
+      "maxAttempts": 2
     },
     {
       "name": "audit-diff",
@@ -1264,10 +1188,7 @@
       ],
       "verify": "Run on the worker branch: `cargo check --all-targets` (must succeed). Then `cargo test --no-run --test audit_diff` (must compile). The Findings section in the handoff is the substantive deliverable.",
       "model": "gpt-5.3-codex-high-fast",
-      "maxAttempts": 2,
-      "dependsOn": [
-        "bootstrap-env"
-      ]
+      "maxAttempts": 2
     },
     {
       "name": "audit-config",
@@ -1313,10 +1234,7 @@
       ],
       "verify": "Run on the worker branch: `cargo check --all-targets` (must succeed). Then `cargo test --no-run --test audit_config` (must compile). The Findings section in the handoff is the substantive deliverable.",
       "model": "gpt-5.3-codex-high-fast",
-      "maxAttempts": 2,
-      "dependsOn": [
-        "bootstrap-env"
-      ]
+      "maxAttempts": 2
     },
     {
       "name": "audit-doctor",
@@ -1362,10 +1280,7 @@
       ],
       "verify": "Run on the worker branch: `cargo check --all-targets` (must succeed). Then `cargo test --no-run --test audit_doctor` (must compile). The Findings section in the handoff is the substantive deliverable.",
       "model": "gpt-5.3-codex-high-fast",
-      "maxAttempts": 2,
-      "dependsOn": [
-        "bootstrap-env"
-      ]
+      "maxAttempts": 2
     },
     {
       "name": "audit-explain",
@@ -1411,10 +1326,7 @@
       ],
       "verify": "Run on the worker branch: `cargo check --all-targets` (must succeed). Then `cargo test --no-run --test audit_explain` (must compile). The Findings section in the handoff is the substantive deliverable.",
       "model": "gpt-5.3-codex-high-fast",
-      "maxAttempts": 2,
-      "dependsOn": [
-        "bootstrap-env"
-      ]
+      "maxAttempts": 2
     },
     {
       "name": "audit-completions-update",
@@ -1460,10 +1372,7 @@
       ],
       "verify": "Run on the worker branch: `cargo check --all-targets` (must succeed). Then `cargo test --no-run --test audit_completions_update` (must compile). The Findings section in the handoff is the substantive deliverable.",
       "model": "gpt-5.3-codex-high-fast",
-      "maxAttempts": 2,
-      "dependsOn": [
-        "bootstrap-env"
-      ]
+      "maxAttempts": 2
     },
     {
       "name": "audit-audit-cmd",
@@ -1509,10 +1418,7 @@
       ],
       "verify": "Run on the worker branch: `cargo check --all-targets` (must succeed). Then `cargo test --no-run --test audit_audit_cmd` (must compile). The Findings section in the handoff is the substantive deliverable.",
       "model": "gpt-5.3-codex-high-fast",
-      "maxAttempts": 2,
-      "dependsOn": [
-        "bootstrap-env"
-      ]
+      "maxAttempts": 2
     },
     {
       "name": "audit-batch",
@@ -1558,10 +1464,7 @@
       ],
       "verify": "Run on the worker branch: `cargo check --all-targets` (must succeed). Then `cargo test --no-run --test audit_batch` (must compile). The Findings section in the handoff is the substantive deliverable.",
       "model": "gpt-5.3-codex-high-fast",
-      "maxAttempts": 2,
-      "dependsOn": [
-        "bootstrap-env"
-      ]
+      "maxAttempts": 2
     },
     {
       "name": "audit-utils-cli",
@@ -1607,10 +1510,7 @@
       ],
       "verify": "Run on the worker branch: `cargo check --all-targets` (must succeed). Then `cargo test --no-run --test audit_utils_cli` (must compile). The Findings section in the handoff is the substantive deliverable.",
       "model": "gpt-5.3-codex-high-fast",
-      "maxAttempts": 2,
-      "dependsOn": [
-        "bootstrap-env"
-      ]
+      "maxAttempts": 2
     },
     {
       "name": "audit-admin",
@@ -1656,10 +1556,7 @@
       ],
       "verify": "Run on the worker branch: `cargo check --all-targets` (must succeed). Then `cargo test --no-run --test audit_admin` (must compile). The Findings section in the handoff is the substantive deliverable.",
       "model": "gpt-5.3-codex-high-fast",
-      "maxAttempts": 2,
-      "dependsOn": [
-        "bootstrap-env"
-      ]
+      "maxAttempts": 2
     },
     {
       "name": "audit-localnet",
@@ -1705,10 +1602,7 @@
       ],
       "verify": "Run on the worker branch: `cargo check --all-targets` (must succeed). Then `cargo test --no-run --test audit_localnet` (must compile). The Findings section in the handoff is the substantive deliverable.",
       "model": "gpt-5.3-codex-high-fast",
-      "maxAttempts": 2,
-      "dependsOn": [
-        "bootstrap-env"
-      ]
+      "maxAttempts": 2
     },
     {
       "name": "verify-write-batch",
