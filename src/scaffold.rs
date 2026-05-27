@@ -203,15 +203,18 @@ pub struct NeuronResult {
 pub fn load_config(path: &str) -> Result<ScaffoldConfig> {
     let content = std::fs::read_to_string(path)
         .with_context(|| format!("Failed to read scaffold config: {}", path))?;
-    let config: ScaffoldConfig = toml::from_str(&content)
-        .with_context(|| format!("Failed to parse scaffold TOML '{}' (check for unknown keys or type mismatches)", path))?;
+    let config: ScaffoldConfig = toml::from_str(&content).with_context(|| {
+        format!(
+            "Failed to parse scaffold TOML '{}' (check for unknown keys or type mismatches)",
+            path
+        )
+    })?;
     Ok(config)
 }
 
 /// Serialize a scaffold config back to TOML (symmetric with `load_config`).
 pub fn serialize_config(config: &ScaffoldConfig) -> Result<String> {
-    toml::to_string_pretty(config)
-        .context("Failed to serialize scaffold config to TOML")
+    toml::to_string_pretty(config).context("Failed to serialize scaffold config to TOML")
 }
 
 /// Run the full scaffold: start chain → create wallets → fund → register
@@ -881,8 +884,7 @@ name = "miner1"
 fund_tao = 50.0
 register = true
 "#;
-        let parsed: ScaffoldConfig =
-            toml::from_str(toml_input).expect("valid TOML should parse");
+        let parsed: ScaffoldConfig = toml::from_str(toml_input).expect("valid TOML should parse");
         let serialized = serialize_config(&parsed).expect("serialization should succeed");
         let round_tripped: ScaffoldConfig =
             toml::from_str(&serialized).expect("serialized TOML should re-parse");
@@ -960,9 +962,6 @@ extra = "bad"
 totally_unexpected = true
 "#;
         let result: Result<ScaffoldConfig, _> = toml::from_str(bad_toml);
-        assert!(
-            result.is_err(),
-            "Unknown top-level keys should be rejected"
-        );
+        assert!(result.is_err(), "Unknown top-level keys should be rejected");
     }
 }

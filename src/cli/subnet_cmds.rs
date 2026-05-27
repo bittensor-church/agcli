@@ -1844,7 +1844,7 @@ async fn handle_subnet_liquidity(
     }
 
     let mut sorted: Vec<_> = dynamic.iter().filter(|d| d.tao_in.rao() > 0).collect();
-    sorted.sort_by(|a, b| b.tao_in.rao().cmp(&a.tao_in.rao()));
+    sorted.sort_by_key(|item| std::cmp::Reverse(item.tao_in.rao()));
 
     render_rows(
         OutputFormat::Table,

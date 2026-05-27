@@ -68,6 +68,7 @@ const STAKING_VARIANTS: &[&str] = &[
     "AlphaBurned",
     "RootClaimed",
     "AutoStakeAdded",
+    "AddStakeBurn",
     "AutoStakeDestinationSet",
 ];
 
@@ -119,24 +120,29 @@ const DELEGATION_VARIANTS: &[&str] = &[
     "ChildKeyTakeSet",
     "SetChildren",
     "SetChildrenScheduled",
+    "AutoParentDelegationEnabledSet",
 ];
 
 const KEY_VARIANTS: &[&str] = &[
     "HotkeySwapped",
     "HotkeySwappedOnSubnet",
+    "ColdkeySwapAnnounced",
+    "ColdkeySwapReset",
     "ColdkeySwapped",
-    "ColdkeySwapScheduled",
+    "ColdkeySwapDisputed",
+    "ColdkeySwapCleared",
+    "AllBalanceUnstakedAndTransferredToNewColdkey",
+    "ArbitrationPeriodExtended",
     "EvmKeyAssociated",
     "ChainIdentitySet",
 ];
 
 const SWAP_VARIANTS: &[&str] = &[
-    "SwapExecuted",
+    "FeeRateSet",
+    "UserLiquidityToggled",
     "LiquidityAdded",
     "LiquidityRemoved",
-    "PositionCreated",
-    "PositionClosed",
-    "FeesCollected",
+    "LiquidityModified",
 ];
 
 const GOVERNANCE_VARIANTS: &[(&str, &str)] = &[
@@ -168,8 +174,11 @@ const CROWDLOAN_VARIANTS: &[&str] = &[
     "Withdrew",
     "PartiallyRefunded",
     "AllRefunded",
+    "Finalized",
     "Dissolved",
-    "Edited",
+    "MinContributionUpdated",
+    "EndUpdated",
+    "CapUpdated",
 ];
 
 fn validation_error(message: impl Into<String>) -> PyErr {

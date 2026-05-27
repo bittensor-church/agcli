@@ -1304,10 +1304,10 @@ pub fn validate_multisig_json_args(json_str: &str) -> Result<Vec<serde_json::Val
                     s.len()
                 );
             }
-            serde_json::Value::Number(n) => {
-                if n.as_f64().is_some_and(|f| f.is_nan() || f.is_infinite()) {
-                    anyhow::bail!("NaN/Infinity not allowed in args.\n  Tip: use a finite number.");
-                }
+            serde_json::Value::Number(n)
+                if n.as_f64().is_some_and(|f| f.is_nan() || f.is_infinite()) =>
+            {
+                anyhow::bail!("NaN/Infinity not allowed in args.\n  Tip: use a finite number.");
             }
             serde_json::Value::Array(inner) => {
                 for item in inner {

@@ -31,11 +31,26 @@ fn diff_cmd(cli: Cli) -> DiffCommands {
 #[test]
 fn portfolio_minimal_parse() {
     // --address is optional; --block1 / --block2 are required
-    let cli = parse(&["agcli", "diff", "portfolio", "--block1", "100", "--block2", "200"]);
+    let cli = parse(&[
+        "agcli",
+        "diff",
+        "portfolio",
+        "--block1",
+        "100",
+        "--block2",
+        "200",
+    ]);
     assert!(cli.is_ok(), "portfolio minimal: {:?}", cli.err());
     let cmd = diff_cmd(cli.unwrap());
     assert!(
-        matches!(cmd, DiffCommands::Portfolio { address: None, block1: 100, block2: 200 }),
+        matches!(
+            cmd,
+            DiffCommands::Portfolio {
+                address: None,
+                block1: 100,
+                block2: 200
+            }
+        ),
         "variant mismatch: {cmd:?}"
     );
 }
@@ -56,7 +71,14 @@ fn portfolio_with_address() {
     assert!(cli.is_ok(), "portfolio with address: {:?}", cli.err());
     let cmd = diff_cmd(cli.unwrap());
     assert!(
-        matches!(cmd, DiffCommands::Portfolio { address: Some(_), block1: 100, block2: 200 }),
+        matches!(
+            cmd,
+            DiffCommands::Portfolio {
+                address: Some(_),
+                block1: 100,
+                block2: 200
+            }
+        ),
         "address not captured: {cmd:?}"
     );
 }
@@ -65,36 +87,70 @@ fn portfolio_with_address() {
 fn portfolio_missing_block1_rejected() {
     let cli = parse(&["agcli", "diff", "portfolio", "--block2", "200"]);
     assert!(cli.is_err(), "missing --block1 should be rejected");
-    assert_eq!(cli.unwrap_err().kind(), clap::error::ErrorKind::MissingRequiredArgument);
+    assert_eq!(
+        cli.unwrap_err().kind(),
+        clap::error::ErrorKind::MissingRequiredArgument
+    );
 }
 
 #[test]
 fn portfolio_missing_block2_rejected() {
     let cli = parse(&["agcli", "diff", "portfolio", "--block1", "100"]);
     assert!(cli.is_err(), "missing --block2 should be rejected");
-    assert_eq!(cli.unwrap_err().kind(), clap::error::ErrorKind::MissingRequiredArgument);
+    assert_eq!(
+        cli.unwrap_err().kind(),
+        clap::error::ErrorKind::MissingRequiredArgument
+    );
 }
 
 #[test]
 fn portfolio_block_u32_boundary_max() {
-    let cli = parse(&["agcli", "diff", "portfolio", "--block1", "0", "--block2", "4294967295"]);
+    let cli = parse(&[
+        "agcli",
+        "diff",
+        "portfolio",
+        "--block1",
+        "0",
+        "--block2",
+        "4294967295",
+    ]);
     assert!(cli.is_ok(), "u32::MAX should parse: {:?}", cli.err());
-    assert!(
-        matches!(diff_cmd(cli.unwrap()), DiffCommands::Portfolio { block2: 4294967295, .. }),
-    );
+    assert!(matches!(
+        diff_cmd(cli.unwrap()),
+        DiffCommands::Portfolio {
+            block2: 4294967295,
+            ..
+        }
+    ),);
 }
 
 #[test]
 fn portfolio_block_overflow_rejected() {
     // 2^32 overflows u32
-    let cli = parse(&["agcli", "diff", "portfolio", "--block1", "0", "--block2", "4294967296"]);
+    let cli = parse(&[
+        "agcli",
+        "diff",
+        "portfolio",
+        "--block1",
+        "0",
+        "--block2",
+        "4294967296",
+    ]);
     assert!(cli.is_err(), "u32 overflow should fail");
 }
 
 #[test]
 fn portfolio_same_block_allowed() {
     // block1 == block2 is a valid (no-op) diff; the CLI must not reject it
-    let cli = parse(&["agcli", "diff", "portfolio", "--block1", "500", "--block2", "500"]);
+    let cli = parse(&[
+        "agcli",
+        "diff",
+        "portfolio",
+        "--block1",
+        "500",
+        "--block2",
+        "500",
+    ]);
     assert!(cli.is_ok(), "same block should parse: {:?}", cli.err());
 }
 
@@ -118,8 +174,16 @@ fn portfolio_json_output_flag() {
 
 #[test]
 fn portfolio_unknown_flag_rejected() {
-    let cli =
-        parse(&["agcli", "diff", "portfolio", "--block1", "100", "--block2", "200", "--foo"]);
+    let cli = parse(&[
+        "agcli",
+        "diff",
+        "portfolio",
+        "--block1",
+        "100",
+        "--block2",
+        "200",
+        "--foo",
+    ]);
     assert!(cli.is_err(), "unknown flag should fail");
 }
 
@@ -129,24 +193,37 @@ fn portfolio_unknown_flag_rejected() {
 
 #[test]
 fn subnet_minimal_parse() {
-    let cli =
-        parse(&["agcli", "diff", "subnet", "--netuid", "1", "--block1", "100", "--block2", "200"]);
+    let cli = parse(&[
+        "agcli", "diff", "subnet", "--netuid", "1", "--block1", "100", "--block2", "200",
+    ]);
     assert!(cli.is_ok(), "subnet minimal: {:?}", cli.err());
-    assert!(
-        matches!(diff_cmd(cli.unwrap()), DiffCommands::Subnet { netuid: 1, block1: 100, block2: 200 }),
-    );
+    assert!(matches!(
+        diff_cmd(cli.unwrap()),
+        DiffCommands::Subnet {
+            netuid: 1,
+            block1: 100,
+            block2: 200
+        }
+    ),);
 }
 
 #[test]
 fn subnet_missing_netuid_rejected() {
-    let cli = parse(&["agcli", "diff", "subnet", "--block1", "100", "--block2", "200"]);
+    let cli = parse(&[
+        "agcli", "diff", "subnet", "--block1", "100", "--block2", "200",
+    ]);
     assert!(cli.is_err(), "missing --netuid should fail");
-    assert_eq!(cli.unwrap_err().kind(), clap::error::ErrorKind::MissingRequiredArgument);
+    assert_eq!(
+        cli.unwrap_err().kind(),
+        clap::error::ErrorKind::MissingRequiredArgument
+    );
 }
 
 #[test]
 fn subnet_missing_block2_rejected() {
-    let cli = parse(&["agcli", "diff", "subnet", "--netuid", "1", "--block1", "100"]);
+    let cli = parse(&[
+        "agcli", "diff", "subnet", "--netuid", "1", "--block1", "100",
+    ]);
     assert!(cli.is_err(), "missing --block2 should fail");
 }
 
@@ -157,7 +234,10 @@ fn subnet_max_netuid() {
         "agcli", "diff", "subnet", "--netuid", "65535", "--block1", "100", "--block2", "200",
     ]);
     assert!(cli.is_ok(), "max netuid: {:?}", cli.err());
-    assert!(matches!(diff_cmd(cli.unwrap()), DiffCommands::Subnet { netuid: 65535, .. }));
+    assert!(matches!(
+        diff_cmd(cli.unwrap()),
+        DiffCommands::Subnet { netuid: 65535, .. }
+    ));
 }
 
 #[test]
@@ -184,9 +264,17 @@ fn subnet_zero_netuid_accepted() {
 
 #[test]
 fn network_minimal_parse() {
-    let cli = parse(&["agcli", "diff", "network", "--block1", "100", "--block2", "200"]);
+    let cli = parse(&[
+        "agcli", "diff", "network", "--block1", "100", "--block2", "200",
+    ]);
     assert!(cli.is_ok(), "network minimal: {:?}", cli.err());
-    assert!(matches!(diff_cmd(cli.unwrap()), DiffCommands::Network { block1: 100, block2: 200 }));
+    assert!(matches!(
+        diff_cmd(cli.unwrap()),
+        DiffCommands::Network {
+            block1: 100,
+            block2: 200
+        }
+    ));
 }
 
 #[test]
@@ -209,7 +297,9 @@ fn network_zero_blocks_accepted() {
 
 #[test]
 fn network_same_block_accepted() {
-    let cli = parse(&["agcli", "diff", "network", "--block1", "500", "--block2", "500"]);
+    let cli = parse(&[
+        "agcli", "diff", "network", "--block1", "500", "--block2", "500",
+    ]);
     assert!(cli.is_ok(), "same block: {:?}", cli.err());
 }
 
@@ -227,7 +317,10 @@ fn network_global_endpoint_flag() {
         "2",
     ]);
     assert!(cli.is_ok(), "endpoint flag: {:?}", cli.err());
-    assert_eq!(cli.unwrap().endpoint, Some("ws://127.0.0.1:9944".to_string()));
+    assert_eq!(
+        cli.unwrap().endpoint,
+        Some("ws://127.0.0.1:9944".to_string())
+    );
 }
 
 #[test]
@@ -255,41 +348,91 @@ fn network_archive_network_flag() {
 #[test]
 fn metagraph_minimal_parse() {
     let cli = parse(&[
-        "agcli", "diff", "metagraph", "--netuid", "1", "--block1", "100", "--block2", "200",
+        "agcli",
+        "diff",
+        "metagraph",
+        "--netuid",
+        "1",
+        "--block1",
+        "100",
+        "--block2",
+        "200",
     ]);
     assert!(cli.is_ok(), "metagraph minimal: {:?}", cli.err());
     assert!(matches!(
         diff_cmd(cli.unwrap()),
-        DiffCommands::Metagraph { netuid: 1, block1: 100, block2: 200 }
+        DiffCommands::Metagraph {
+            netuid: 1,
+            block1: 100,
+            block2: 200
+        }
     ));
 }
 
 #[test]
 fn metagraph_missing_netuid_rejected() {
-    let cli = parse(&["agcli", "diff", "metagraph", "--block1", "100", "--block2", "200"]);
+    let cli = parse(&[
+        "agcli",
+        "diff",
+        "metagraph",
+        "--block1",
+        "100",
+        "--block2",
+        "200",
+    ]);
     assert!(cli.is_err(), "missing --netuid should fail");
-    assert_eq!(cli.unwrap_err().kind(), clap::error::ErrorKind::MissingRequiredArgument);
+    assert_eq!(
+        cli.unwrap_err().kind(),
+        clap::error::ErrorKind::MissingRequiredArgument
+    );
 }
 
 #[test]
 fn metagraph_missing_block1_rejected() {
-    let cli = parse(&["agcli", "diff", "metagraph", "--netuid", "1", "--block2", "200"]);
+    let cli = parse(&[
+        "agcli",
+        "diff",
+        "metagraph",
+        "--netuid",
+        "1",
+        "--block2",
+        "200",
+    ]);
     assert!(cli.is_err(), "missing --block1 should fail");
 }
 
 #[test]
 fn metagraph_missing_block2_rejected() {
-    let cli = parse(&["agcli", "diff", "metagraph", "--netuid", "1", "--block1", "100"]);
+    let cli = parse(&[
+        "agcli",
+        "diff",
+        "metagraph",
+        "--netuid",
+        "1",
+        "--block1",
+        "100",
+    ]);
     assert!(cli.is_err(), "missing --block2 should fail");
 }
 
 #[test]
 fn metagraph_max_netuid() {
     let cli = parse(&[
-        "agcli", "diff", "metagraph", "--netuid", "65535", "--block1", "100", "--block2", "200",
+        "agcli",
+        "diff",
+        "metagraph",
+        "--netuid",
+        "65535",
+        "--block1",
+        "100",
+        "--block2",
+        "200",
     ]);
     assert!(cli.is_ok(), "max netuid: {:?}", cli.err());
-    assert!(matches!(diff_cmd(cli.unwrap()), DiffCommands::Metagraph { netuid: 65535, .. }));
+    assert!(matches!(
+        diff_cmd(cli.unwrap()),
+        DiffCommands::Metagraph { netuid: 65535, .. }
+    ));
 }
 
 #[test]
@@ -323,7 +466,9 @@ fn diff_without_subcommand_rejected() {
 
 #[test]
 fn diff_unknown_subcommand_rejected() {
-    let cli = parse(&["agcli", "diff", "balances", "--block1", "100", "--block2", "200"]);
+    let cli = parse(&[
+        "agcli", "diff", "balances", "--block1", "100", "--block2", "200",
+    ]);
     assert!(cli.is_err(), "unknown subcommand should fail");
 }
 
@@ -338,10 +483,25 @@ fn diff_unknown_subcommand_rejected() {
 #[test]
 fn all_diff_subcommands_enumerated() {
     let variants: &[DiffCommands] = &[
-        DiffCommands::Portfolio { address: None, block1: 0, block2: 1 },
-        DiffCommands::Subnet { netuid: 1, block1: 0, block2: 1 },
-        DiffCommands::Network { block1: 0, block2: 1 },
-        DiffCommands::Metagraph { netuid: 1, block1: 0, block2: 1 },
+        DiffCommands::Portfolio {
+            address: None,
+            block1: 0,
+            block2: 1,
+        },
+        DiffCommands::Subnet {
+            netuid: 1,
+            block1: 0,
+            block2: 1,
+        },
+        DiffCommands::Network {
+            block1: 0,
+            block2: 1,
+        },
+        DiffCommands::Metagraph {
+            netuid: 1,
+            block1: 0,
+            block2: 1,
+        },
     ];
     // The only assertion needed is that this compiles — any exhaustiveness
     // failure will appear as a compile error.
@@ -373,8 +533,14 @@ fn audit_subnet_json_missing_tempo_and_owner_hotkey() {
         "emission_diff": 100i128,
         // tempo and owner_hotkey are intentionally omitted in the real code
     });
-    assert!(json.get("tempo").is_none(), "tempo is not in diff subnet JSON — this is the documented drift");
-    assert!(json.get("owner_hotkey").is_none(), "owner_hotkey is not in diff subnet JSON — documented drift");
+    assert!(
+        json.get("tempo").is_none(),
+        "tempo is not in diff subnet JSON — this is the documented drift"
+    );
+    assert!(
+        json.get("owner_hotkey").is_none(),
+        "owner_hotkey is not in diff subnet JSON — documented drift"
+    );
     assert!(json.get("tao_in").is_some());
     assert!(json.get("emission_diff").is_some());
 }
@@ -395,10 +561,22 @@ fn audit_network_json_no_diff_fields() {
         "subnet_count": [30usize, 31usize],
         // No diff scalar fields — documented drift vs portfolio and subnet
     });
-    assert!(json.get("total_issuance_diff").is_none(), "no diff field in network JSON");
-    assert!(json.get("total_stake_diff").is_none(), "no diff field in network JSON");
-    assert!(json.get("subnet_count_diff").is_none(), "no diff field in network JSON");
-    assert_eq!(json.get("subnet_count").unwrap().as_array().unwrap().len(), 2);
+    assert!(
+        json.get("total_issuance_diff").is_none(),
+        "no diff field in network JSON"
+    );
+    assert!(
+        json.get("total_stake_diff").is_none(),
+        "no diff field in network JSON"
+    );
+    assert!(
+        json.get("subnet_count_diff").is_none(),
+        "no diff field in network JSON"
+    );
+    assert_eq!(
+        json.get("subnet_count").unwrap().as_array().unwrap().len(),
+        2
+    );
 }
 
 /// Audit guard: `diff metagraph` does not track neurons removed between blocks.
@@ -425,7 +603,10 @@ fn audit_metagraph_removed_neurons_not_tracked() {
         }
     }
     // No "removed" logic exists in the handler — UID 2 is never in changes
-    assert!(!changes.iter().any(|&u| u == 2), "UID 2 was removed but not tracked — documented drift");
+    assert!(
+        !changes.iter().any(|&u| u == 2),
+        "UID 2 was removed but not tracked — documented drift"
+    );
     // The drift: if we wanted completeness we would iterate map1 for UIDs not
     // present in uids_block2 and emit "change: removed" entries.
 }
@@ -467,7 +648,10 @@ fn exit_code_subnet_not_found_is_validation() {
     // "Subnet N not found at block B" should classify as VALIDATION (12)
     // because classify() matches msg.contains("subnet") && msg.contains("not found")
     let err = anyhow::anyhow!("Subnet 99 not found at block 100");
-    assert_eq!(agcli::error::classify(&err), agcli::error::exit_code::VALIDATION);
+    assert_eq!(
+        agcli::error::classify(&err),
+        agcli::error::exit_code::VALIDATION
+    );
 }
 
 #[test]
@@ -475,7 +659,10 @@ fn exit_code_network_error_is_network() {
     use std::io;
     let io_err = io::Error::new(io::ErrorKind::ConnectionRefused, "connection refused");
     let err = anyhow::Error::from(io_err);
-    assert_eq!(agcli::error::classify(&err), agcli::error::exit_code::NETWORK);
+    assert_eq!(
+        agcli::error::classify(&err),
+        agcli::error::exit_code::NETWORK
+    );
 }
 
 #[test]
@@ -485,7 +672,10 @@ fn exit_code_no_address_is_generic() {
     // behaviour per docs/commands/diff.md; listed as a finding because it
     // should arguably be VALIDATION.
     let err = anyhow::anyhow!("No address provided and no wallet found. Use --address <SS58>.");
-    assert_eq!(agcli::error::classify(&err), agcli::error::exit_code::GENERIC);
+    assert_eq!(
+        agcli::error::classify(&err),
+        agcli::error::exit_code::GENERIC
+    );
 }
 
 #[test]
@@ -494,7 +684,10 @@ fn exit_code_pruned_state_is_generic() {
     // classify() call on the outer message returns GENERIC (1).
     let err = anyhow::anyhow!("State already discarded for block 100");
     // "discarded" doesn't match any chain/network pattern — exits GENERIC
-    assert_eq!(agcli::error::classify(&err), agcli::error::exit_code::GENERIC);
+    assert_eq!(
+        agcli::error::classify(&err),
+        agcli::error::exit_code::GENERIC
+    );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -513,18 +706,18 @@ async fn green_path_diff() {
     use agcli::chain::Client;
 
     let endpoint = "ws://127.0.0.1:9944";
-    let client = Client::connect(endpoint).await.expect("connect to localnet");
+    let client = Client::connect(endpoint)
+        .await
+        .expect("connect to localnet");
 
     // Get two adjacent blocks to diff against
     let block2 = client.get_block_number().await.expect("get latest block") as u32;
     let block1 = block2.saturating_sub(5);
 
     // diff network — no required subnet, simplest to verify
-    let (hash1, hash2) = tokio::try_join!(
-        client.get_block_hash(block1),
-        client.get_block_hash(block2),
-    )
-    .expect("get block hashes");
+    let (hash1, hash2) =
+        tokio::try_join!(client.get_block_hash(block1), client.get_block_hash(block2),)
+            .expect("get block hashes");
 
     let (issuance1, issuance2) = tokio::try_join!(
         client.get_total_issuance_at_block(hash1),
@@ -545,7 +738,10 @@ async fn green_path_diff() {
     .expect("get Alice balance at both blocks");
 
     // Alice has genesis balance on localnet
-    assert!(bal1.rao() > 0, "Alice block1 balance must be non-zero on localnet");
+    assert!(
+        bal1.rao() > 0,
+        "Alice block1 balance must be non-zero on localnet"
+    );
     let _ = bal2; // may be same as bal1 if no transfers occurred
 
     // diff subnet — subnet 1 (root subnet exists on localnet)

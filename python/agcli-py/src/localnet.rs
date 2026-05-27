@@ -288,8 +288,13 @@ impl PyLocalnetStatus {
     }
 
     #[getter]
+    fn started_at(&self) -> Option<String> {
+        self.inner.started_at.clone()
+    }
+
+    #[getter]
     fn uptime(&self) -> Option<String> {
-        self.inner.uptime.clone()
+        self.inner.started_at.clone()
     }
 
     fn to_dict(&self) -> PyResult<PyObject> {

@@ -145,7 +145,14 @@ fn validate_take_range() {
         );
     }
     // out-of-range values
-    for pct in [-0.01_f64, 18.01, 19.0, 100.0, f64::INFINITY, f64::NEG_INFINITY] {
+    for pct in [
+        -0.01_f64,
+        18.01,
+        19.0,
+        100.0,
+        f64::INFINITY,
+        f64::NEG_INFINITY,
+    ] {
         assert!(
             agcli::cli::helpers::validate_delegate_take(pct).is_err(),
             "expected {pct}% to be rejected"
@@ -214,8 +221,8 @@ fn error_classify_non_associated_coldkey() {
 async fn green_path_delegate() {
     use agcli::chain::Client;
 
-    let endpoint = std::env::var("AGCLI_ENDPOINT")
-        .unwrap_or_else(|_| "ws://127.0.0.1:9944".to_string());
+    let endpoint =
+        std::env::var("AGCLI_ENDPOINT").unwrap_or_else(|_| "ws://127.0.0.1:9944".to_string());
 
     let client = Client::connect(&endpoint)
         .await

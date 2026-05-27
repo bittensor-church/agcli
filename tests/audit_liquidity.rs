@@ -102,14 +102,7 @@ fn parse_surface_all_liquidity_subcommands() {
         other => panic!("expected Modify, got {:?}", other),
     }
 
-    let toggle = parse_liquidity(&[
-        "agcli",
-        "liquidity",
-        "toggle",
-        "--netuid",
-        "7",
-        "--enable",
-    ]);
+    let toggle = parse_liquidity(&["agcli", "liquidity", "toggle", "--netuid", "7", "--enable"]);
     match toggle {
         LiquidityCommands::Toggle { netuid, enable } => {
             assert_eq!(netuid, 7);

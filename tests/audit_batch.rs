@@ -8,12 +8,19 @@ use clap::Parser;
 
 #[test]
 fn parse_batch_default_mode() {
-    let cli =
-        agcli::cli::Cli::try_parse_from(["agcli", "batch", "--file", "calls.json"]);
-    assert!(cli.is_ok(), "batch --file calls.json should parse: {:?}", cli.err());
+    let cli = agcli::cli::Cli::try_parse_from(["agcli", "batch", "--file", "calls.json"]);
+    assert!(
+        cli.is_ok(),
+        "batch --file calls.json should parse: {:?}",
+        cli.err()
+    );
     let cli = cli.unwrap();
     match cli.command {
-        agcli::cli::Commands::Batch { file, no_atomic, force } => {
+        agcli::cli::Commands::Batch {
+            file,
+            no_atomic,
+            force,
+        } => {
             assert_eq!(file, "calls.json");
             assert!(!no_atomic, "no_atomic should default false");
             assert!(!force, "force should default false");
@@ -24,12 +31,13 @@ fn parse_batch_default_mode() {
 
 #[test]
 fn parse_batch_no_atomic_flag() {
-    let cli = agcli::cli::Cli::try_parse_from([
-        "agcli", "batch", "--file", "calls.json", "--no-atomic",
-    ]);
+    let cli =
+        agcli::cli::Cli::try_parse_from(["agcli", "batch", "--file", "calls.json", "--no-atomic"]);
     assert!(cli.is_ok(), "{:?}", cli.err());
     match cli.unwrap().command {
-        agcli::cli::Commands::Batch { no_atomic, force, .. } => {
+        agcli::cli::Commands::Batch {
+            no_atomic, force, ..
+        } => {
             assert!(no_atomic, "--no-atomic should be true");
             assert!(!force);
         }
@@ -39,12 +47,13 @@ fn parse_batch_no_atomic_flag() {
 
 #[test]
 fn parse_batch_force_flag() {
-    let cli = agcli::cli::Cli::try_parse_from([
-        "agcli", "batch", "--file", "calls.json", "--force",
-    ]);
+    let cli =
+        agcli::cli::Cli::try_parse_from(["agcli", "batch", "--file", "calls.json", "--force"]);
     assert!(cli.is_ok(), "{:?}", cli.err());
     match cli.unwrap().command {
-        agcli::cli::Commands::Batch { no_atomic, force, .. } => {
+        agcli::cli::Commands::Batch {
+            no_atomic, force, ..
+        } => {
             assert!(!no_atomic);
             assert!(force, "--force should be true");
         }
@@ -57,7 +66,12 @@ fn parse_batch_force_flag() {
 #[test]
 fn parse_batch_both_flags_accepted() {
     let cli = agcli::cli::Cli::try_parse_from([
-        "agcli", "batch", "--file", "calls.json", "--no-atomic", "--force",
+        "agcli",
+        "batch",
+        "--file",
+        "calls.json",
+        "--no-atomic",
+        "--force",
     ]);
     assert!(
         cli.is_ok(),
@@ -65,7 +79,9 @@ fn parse_batch_both_flags_accepted() {
         cli.err()
     );
     match cli.unwrap().command {
-        agcli::cli::Commands::Batch { no_atomic, force, .. } => {
+        agcli::cli::Commands::Batch {
+            no_atomic, force, ..
+        } => {
             assert!(no_atomic);
             assert!(force);
         }
@@ -86,9 +102,7 @@ fn parse_batch_missing_file_is_error() {
 /// Global --yes flag must propagate to the Cli struct.
 #[test]
 fn parse_batch_with_global_yes() {
-    let cli = agcli::cli::Cli::try_parse_from([
-        "agcli", "--yes", "batch", "--file", "calls.json",
-    ]);
+    let cli = agcli::cli::Cli::try_parse_from(["agcli", "--yes", "batch", "--file", "calls.json"]);
     assert!(cli.is_ok(), "{:?}", cli.err());
     let cli = cli.unwrap();
     assert!(cli.yes, "--yes should be true on the Cli struct");
@@ -99,7 +113,12 @@ fn parse_batch_with_global_yes() {
 #[test]
 fn parse_batch_with_output_json() {
     let cli = agcli::cli::Cli::try_parse_from([
-        "agcli", "--output", "json", "batch", "--file", "calls.json",
+        "agcli",
+        "--output",
+        "json",
+        "batch",
+        "--file",
+        "calls.json",
     ]);
     assert!(cli.is_ok(), "{:?}", cli.err());
     let cli = cli.unwrap();
@@ -112,9 +131,8 @@ fn parse_batch_with_output_json() {
 /// Global --batch (non-interactive mode) should parse alongside the batch command.
 #[test]
 fn parse_batch_with_global_batch_flag() {
-    let cli = agcli::cli::Cli::try_parse_from([
-        "agcli", "--batch", "batch", "--file", "calls.json",
-    ]);
+    let cli =
+        agcli::cli::Cli::try_parse_from(["agcli", "--batch", "batch", "--file", "calls.json"]);
     assert!(cli.is_ok(), "{:?}", cli.err());
     assert!(cli.unwrap().batch, "global --batch flag should be true");
 }
@@ -122,12 +140,7 @@ fn parse_batch_with_global_batch_flag() {
 /// --file must accept paths with spaces when quoted (arg passing).
 #[test]
 fn parse_batch_file_path_with_special_chars() {
-    let cli = agcli::cli::Cli::try_parse_from([
-        "agcli",
-        "batch",
-        "--file",
-        "/tmp/my calls.json",
-    ]);
+    let cli = agcli::cli::Cli::try_parse_from(["agcli", "batch", "--file", "/tmp/my calls.json"]);
     assert!(cli.is_ok(), "{:?}", cli.err());
     match cli.unwrap().command {
         agcli::cli::Commands::Batch { file, .. } => {
@@ -140,9 +153,8 @@ fn parse_batch_file_path_with_special_chars() {
 /// --file with absolute path must be accepted verbatim.
 #[test]
 fn parse_batch_absolute_file_path() {
-    let cli = agcli::cli::Cli::try_parse_from([
-        "agcli", "batch", "--file", "/etc/agcli/batch_ops.json",
-    ]);
+    let cli =
+        agcli::cli::Cli::try_parse_from(["agcli", "batch", "--file", "/etc/agcli/batch_ops.json"]);
     assert!(cli.is_ok(), "{:?}", cli.err());
     match cli.unwrap().command {
         agcli::cli::Commands::Batch { file, .. } => {
@@ -159,18 +171,13 @@ fn validate_batch_rejects_empty_array() {
     let result = agcli::cli::helpers::validate_batch_file("[]", "test.json");
     assert!(result.is_err(), "empty array must be rejected");
     let msg = result.unwrap_err().to_string();
-    assert!(
-        msg.contains("empty"),
-        "error should mention 'empty': {msg}"
-    );
+    assert!(msg.contains("empty"), "error should mention 'empty': {msg}");
 }
 
 #[test]
 fn validate_batch_rejects_non_array_object() {
-    let result = agcli::cli::helpers::validate_batch_file(
-        r#"{"pallet": "SubtensorModule"}"#,
-        "test.json",
-    );
+    let result =
+        agcli::cli::helpers::validate_batch_file(r#"{"pallet": "SubtensorModule"}"#, "test.json");
     assert!(result.is_err(), "non-array JSON must be rejected");
 }
 
@@ -204,10 +211,7 @@ fn validate_batch_rejects_missing_call_field() {
     let result = agcli::cli::helpers::validate_batch_file(json, "test.json");
     assert!(result.is_err());
     let msg = result.unwrap_err().to_string();
-    assert!(
-        msg.contains("call"),
-        "error should reference 'call': {msg}"
-    );
+    assert!(msg.contains("call"), "error should reference 'call': {msg}");
 }
 
 #[test]
@@ -216,10 +220,7 @@ fn validate_batch_rejects_missing_args_field() {
     let result = agcli::cli::helpers::validate_batch_file(json, "test.json");
     assert!(result.is_err());
     let msg = result.unwrap_err().to_string();
-    assert!(
-        msg.contains("args"),
-        "error should reference 'args': {msg}"
-    );
+    assert!(msg.contains("args"), "error should reference 'args': {msg}");
 }
 
 #[test]
@@ -233,7 +234,10 @@ fn validate_batch_rejects_args_not_array() {
 fn validate_batch_rejects_too_many_calls() {
     // Construct 1001 minimal valid calls, one more than the 1000-call cap.
     let single = r#"{"pallet":"Balances","call":"transfer_allow_death","args":[]}"#;
-    let calls = std::iter::repeat(single).take(1001).collect::<Vec<_>>().join(",");
+    let calls = std::iter::repeat(single)
+        .take(1001)
+        .collect::<Vec<_>>()
+        .join(",");
     let json = format!("[{}]", calls);
     let result = agcli::cli::helpers::validate_batch_file(&json, "test.json");
     assert!(result.is_err(), "1001 calls must exceed the 1000-call cap");
@@ -247,17 +251,28 @@ fn validate_batch_rejects_too_many_calls() {
 #[test]
 fn validate_batch_accepts_exactly_1000_calls() {
     let single = r#"{"pallet":"Balances","call":"transfer_allow_death","args":[]}"#;
-    let calls = std::iter::repeat(single).take(1000).collect::<Vec<_>>().join(",");
+    let calls = std::iter::repeat(single)
+        .take(1000)
+        .collect::<Vec<_>>()
+        .join(",");
     let json = format!("[{}]", calls);
     let result = agcli::cli::helpers::validate_batch_file(&json, "test.json");
-    assert!(result.is_ok(), "1000 calls should be accepted: {:?}", result.err());
+    assert!(
+        result.is_ok(),
+        "1000 calls should be accepted: {:?}",
+        result.err()
+    );
 }
 
 #[test]
 fn validate_batch_accepts_valid_single_call() {
     let json = r#"[{"pallet": "SubtensorModule", "call": "add_stake", "args": [1, 2, 3]}]"#;
     let result = agcli::cli::helpers::validate_batch_file(json, "test.json");
-    assert!(result.is_ok(), "valid single call should be accepted: {:?}", result.err());
+    assert!(
+        result.is_ok(),
+        "valid single call should be accepted: {:?}",
+        result.err()
+    );
     assert_eq!(result.unwrap().len(), 1);
 }
 
@@ -277,14 +292,21 @@ fn validate_batch_accepts_multi_call_mix() {
 fn validate_batch_accepts_empty_args_array() {
     let json = r#"[{"pallet": "System", "call": "remark", "args": []}]"#;
     let result = agcli::cli::helpers::validate_batch_file(json, "test.json");
-    assert!(result.is_ok(), "empty args array must be accepted: {:?}", result.err());
+    assert!(
+        result.is_ok(),
+        "empty args array must be accepted: {:?}",
+        result.err()
+    );
 }
 
 #[test]
 fn validate_batch_rejects_non_object_call_entry() {
     let json = r#"["not-an-object"]"#;
     let result = agcli::cli::helpers::validate_batch_file(json, "test.json");
-    assert!(result.is_err(), "array entries that are not objects must be rejected");
+    assert!(
+        result.is_err(),
+        "array entries that are not objects must be rejected"
+    );
 }
 
 // ── Exit-code classification tests for batch error messages ─────────────────
@@ -354,8 +376,8 @@ fn exit_code_toomanycalls_on_chain_is_chain() {
 #[test]
 #[ignore]
 fn green_path_batch() {
-    let ws = std::env::var("AGCLI_LOCALNET_WS")
-        .unwrap_or_else(|_| "ws://127.0.0.1:9944".to_string());
+    let ws =
+        std::env::var("AGCLI_LOCALNET_WS").unwrap_or_else(|_| "ws://127.0.0.1:9944".to_string());
 
     // Write a minimal System.remark batch JSON.
     let tmpdir = tempfile::tempdir().expect("tempdir");
@@ -368,16 +390,18 @@ fn green_path_batch() {
 
     // agcli handle_batch is not pub; exercise via the binary.
     // The binary is built to `target/debug/agcli` by `cargo build --bin agcli`.
-    let bin = std::env::var("AGCLI_BIN")
-        .unwrap_or_else(|_| "target/debug/agcli".to_string());
+    let bin = std::env::var("AGCLI_BIN").unwrap_or_else(|_| "target/debug/agcli".to_string());
 
     let output = std::process::Command::new(&bin)
         .args([
             "--yes",
-            "--output", "json",
-            "--network", &ws,
+            "--output",
+            "json",
+            "--network",
+            &ws,
             "batch",
-            "--file", batch_file.to_str().unwrap(),
+            "--file",
+            batch_file.to_str().unwrap(),
         ])
         .output()
         .unwrap_or_else(|e| panic!("failed to run agcli binary '{}': {}", bin, e));

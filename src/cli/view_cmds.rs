@@ -502,7 +502,7 @@ async fn handle_validators(
             std::sync::Arc::try_unwrap(arc).unwrap_or_else(|a| (*a).clone())
         };
         let mut validators: Vec<_> = neurons.into_iter().filter(|n| n.validator_permit).collect();
-        validators.sort_by(|a, b| b.stake.rao().cmp(&a.stake.rao()));
+        validators.sort_by_key(|item| std::cmp::Reverse(item.stake.rao()));
         validators.truncate(limit);
 
         render_rows(
@@ -547,7 +547,7 @@ async fn handle_validators(
             client.get_delegates().await?
         };
         let mut sorted = delegates;
-        sorted.sort_by(|a, b| b.total_stake.rao().cmp(&a.total_stake.rao()));
+        sorted.sort_by_key(|item| std::cmp::Reverse(item.total_stake.rao()));
         sorted.truncate(limit);
 
         // Add rank index for table display

@@ -1525,9 +1525,7 @@ mod tests {
     #[test]
     fn extract_netuid_named_no_field() {
         let composite = make_named_no_netuid();
-        assert!(
-            extract_netuids("SubtensorModule", "TempoSet", &composite).is_empty()
-        );
+        assert!(extract_netuids("SubtensorModule", "TempoSet", &composite).is_empty());
     }
 
     #[test]
@@ -1548,9 +1546,7 @@ mod tests {
     #[test]
     fn extract_netuid_unnamed_unknown_variant_returns_empty() {
         let composite = Composite::Unnamed(vec![subxt::ext::scale_value::Value::u128(42)]);
-        assert!(
-            extract_netuids("SubtensorModule", "UnknownEvent", &composite).is_empty()
-        );
+        assert!(extract_netuids("SubtensorModule", "UnknownEvent", &composite).is_empty());
     }
 
     #[test]
@@ -1712,9 +1708,7 @@ mod tests {
             "netuid".to_string(),
             subxt::ext::scale_value::Value::u128(65536),
         )]);
-        assert!(
-            extract_netuids("SubtensorModule", "TempoSet", &composite).is_empty()
-        );
+        assert!(extract_netuids("SubtensorModule", "TempoSet", &composite).is_empty());
     }
 
     #[test]
@@ -1725,9 +1719,7 @@ mod tests {
             "netuid".to_string(),
             subxt::ext::scale_value::Value::u128(0x0001_0001),
         )]);
-        assert!(
-            extract_netuids("SubtensorModule", "TempoSet", &composite).is_empty()
-        );
+        assert!(extract_netuids("SubtensorModule", "TempoSet", &composite).is_empty());
     }
 
     // --- Issue 155: saturating arithmetic for gap display ---
@@ -1972,33 +1964,36 @@ mod tests {
         let source =
             std::fs::read_to_string(source_path).expect("subtensor events source should exist");
         let mut in_enum = false;
+        let mut enum_brace_depth = 0i32;
         let mut variants = Vec::<String>::new();
         for line in source.lines() {
             let trimmed = line.trim_start();
             if trimmed.starts_with("pub enum Event") {
                 in_enum = true;
-                continue;
             }
             if !in_enum {
                 continue;
             }
-            if trimmed.starts_with('}') {
-                break;
-            }
-            if trimmed.is_empty() || trimmed.starts_with("#[") || trimmed.starts_with("///") {
-                continue;
+
+            if enum_brace_depth == 1
+                && !(trimmed.is_empty() || trimmed.starts_with("#[") || trimmed.starts_with("///"))
+            {
+                let name: String = trimmed
+                    .chars()
+                    .take_while(|c| c.is_ascii_alphanumeric() || *c == '_')
+                    .collect();
+                if !name.is_empty() {
+                    let rest = &trimmed[name.len()..];
+                    if rest.trim_start().starts_with('(') || rest.trim_start().starts_with('{') {
+                        variants.push(name);
+                    }
+                }
             }
 
-            let name: String = trimmed
-                .chars()
-                .take_while(|c| c.is_ascii_alphanumeric() || *c == '_')
-                .collect();
-            if name.is_empty() {
-                continue;
-            }
-            let rest = &trimmed[name.len()..];
-            if rest.trim_start().starts_with('(') || rest.trim_start().starts_with('{') {
-                variants.push(name);
+            enum_brace_depth += trimmed.matches('{').count() as i32;
+            enum_brace_depth -= trimmed.matches('}').count() as i32;
+            if in_enum && enum_brace_depth == 0 {
+                break;
             }
         }
 

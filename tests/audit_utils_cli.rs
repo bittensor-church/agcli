@@ -66,9 +66,7 @@ fn parse_convert_tao_to_rao() {
 
 #[test]
 fn parse_convert_tao_to_alpha() {
-    let cmd = utils_cmd(&[
-        "agcli", "utils", "convert", "--tao", "2.5", "--netuid", "1",
-    ]);
+    let cmd = utils_cmd(&["agcli", "utils", "convert", "--tao", "2.5", "--netuid", "1"]);
     match cmd {
         UtilsCommands::Convert {
             amount: None,
@@ -112,7 +110,9 @@ fn parse_convert_alpha_to_tao() {
 fn parse_convert_zero_amount() {
     let cmd = utils_cmd(&["agcli", "utils", "convert", "--amount", "0"]);
     match cmd {
-        UtilsCommands::Convert { amount: Some(a), .. } => {
+        UtilsCommands::Convert {
+            amount: Some(a), ..
+        } => {
             assert!((a - 0.0).abs() < f64::EPSILON);
         }
         other => panic!("unexpected variant: {:?}", other),
@@ -168,7 +168,10 @@ fn parse_convert_with_json_output() {
     ])
     .expect("parse should succeed");
     assert_eq!(cli.output, OutputFormat::Json);
-    assert!(matches!(cli.command, Commands::Utils(UtilsCommands::Convert { .. })));
+    assert!(matches!(
+        cli.command,
+        Commands::Utils(UtilsCommands::Convert { .. })
+    ));
 }
 
 // ─── convert: unknown flag rejected ──────────────────────────────────────────
@@ -176,7 +179,10 @@ fn parse_convert_with_json_output() {
 #[test]
 fn parse_convert_unknown_flag_rejected() {
     let result = parse(&["agcli", "utils", "convert", "--rao", "1000"]);
-    assert!(result.is_err(), "--rao is not a valid flag; clap must reject it");
+    assert!(
+        result.is_err(),
+        "--rao is not a valid flag; clap must reject it"
+    );
 }
 
 // ─── latency: defaults ───────────────────────────────────────────────────────
@@ -217,7 +223,10 @@ fn parse_latency_extra_single() {
         "ws://127.0.0.1:9944",
     ]);
     match cmd {
-        UtilsCommands::Latency { extra: Some(e), pings: 5 } => {
+        UtilsCommands::Latency {
+            extra: Some(e),
+            pings: 5,
+        } => {
             assert_eq!(e, "ws://127.0.0.1:9944");
         }
         other => panic!("unexpected variant: {:?}", other),
@@ -238,7 +247,10 @@ fn parse_latency_extra_comma_separated() {
         "3",
     ]);
     match cmd {
-        UtilsCommands::Latency { extra: Some(e), pings: 3 } => {
+        UtilsCommands::Latency {
+            extra: Some(e),
+            pings: 3,
+        } => {
             let parts: Vec<&str> = e.split(',').collect();
             assert_eq!(parts.len(), 2);
         }
@@ -341,7 +353,9 @@ fn classify_invalid_rao_amount_is_validation() {
     // "Invalid RAO amount: ... (must be a finite non-negative number within u64 range)"
     // contains the substring "must be " which matches the VALIDATION heuristic in
     // error::classify().  This is correct behaviour (VALIDATION = 12).
-    let err = anyhow::anyhow!("Invalid RAO amount: inf (must be a finite non-negative number within u64 range)");
+    let err = anyhow::anyhow!(
+        "Invalid RAO amount: inf (must be a finite non-negative number within u64 range)"
+    );
     let code = agcli::error::classify(&err);
     assert_eq!(code, agcli::error::exit_code::VALIDATION);
 }
@@ -364,7 +378,14 @@ fn green_path_utils() {
 
     // utils convert: RAO → TAO (no chain needed)
     let out = Command::new(&bin)
-        .args(["--output", "json", "utils", "convert", "--amount", "1000000000"])
+        .args([
+            "--output",
+            "json",
+            "utils",
+            "convert",
+            "--amount",
+            "1000000000",
+        ])
         .output()
         .expect("failed to spawn agcli");
     assert!(out.status.success(), "convert RAO→TAO failed: {:?}", out);
@@ -375,7 +396,9 @@ fn green_path_utils() {
 
     // utils convert: TAO → RAO (no chain needed)
     let out = Command::new(&bin)
-        .args(["--output", "json", "utils", "convert", "--amount", "1.5", "--to-rao"])
+        .args([
+            "--output", "json", "utils", "convert", "--amount", "1.5", "--to-rao",
+        ])
         .output()
         .expect("failed to spawn agcli");
     assert!(out.status.success(), "convert TAO→RAO failed: {:?}", out);
@@ -387,19 +410,31 @@ fn green_path_utils() {
     // utils latency: one ping to localhost
     let out = Command::new(&bin)
         .args([
-            "--network", "local",
-            "--output", "json",
-            "utils", "latency",
-            "--pings", "1",
+            "--network",
+            "local",
+            "--output",
+            "json",
+            "utils",
+            "latency",
+            "--pings",
+            "1",
         ])
         .output()
         .expect("failed to spawn agcli");
     assert!(out.status.success(), "latency failed: {:?}", out);
     let json: serde_json::Value =
         serde_json::from_slice(&out.stdout).expect("stdout must be valid JSON");
-    let results = json["latency"].as_array().expect("latency key must be array");
+    let results = json["latency"]
+        .as_array()
+        .expect("latency key must be array");
     assert!(!results.is_empty(), "must have at least one result");
     let first = &results[0];
-    assert!(first["connected"].as_bool().unwrap_or(false), "must connect to localnet");
-    assert!(first["avg_ms"].is_number(), "avg_ms must be present and numeric");
+    assert!(
+        first["connected"].as_bool().unwrap_or(false),
+        "must connect to localnet"
+    );
+    assert!(
+        first["avg_ms"].is_number(),
+        "avg_ms must be present and numeric"
+    );
 }

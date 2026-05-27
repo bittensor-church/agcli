@@ -278,7 +278,15 @@ fn parse_view_history_default_limit() {
 
 #[test]
 fn parse_view_history_explicit_args() {
-    let cli = parse(&["agcli", "view", "history", "--address", ALICE, "--limit", "50"]);
+    let cli = parse(&[
+        "agcli",
+        "view",
+        "history",
+        "--address",
+        ALICE,
+        "--limit",
+        "50",
+    ]);
     match view_cmd(cli) {
         ViewCommands::History {
             address: Some(addr),
@@ -376,7 +384,9 @@ fn parse_view_staking_analytics_with_address() {
 
 #[test]
 fn parse_view_swap_sim_tao_direction() {
-    let cli = parse(&["agcli", "view", "swap-sim", "--netuid", "1", "--tao", "10.0"]);
+    let cli = parse(&[
+        "agcli", "view", "swap-sim", "--netuid", "1", "--tao", "10.0",
+    ]);
     match view_cmd(cli) {
         ViewCommands::SwapSim {
             netuid,
@@ -393,13 +403,7 @@ fn parse_view_swap_sim_tao_direction() {
 #[test]
 fn parse_view_swap_sim_alpha_direction() {
     let cli = parse(&[
-        "agcli",
-        "view",
-        "swap-sim",
-        "--netuid",
-        "2",
-        "--alpha",
-        "500.5",
+        "agcli", "view", "swap-sim", "--netuid", "2", "--alpha", "500.5",
     ]);
     match view_cmd(cli) {
         ViewCommands::SwapSim {
@@ -802,8 +806,10 @@ fn green_path_view_network_localnet() {
             .await
             .expect("connect to localnet");
 
-        let (block, total_stake, total_networks, _total_issuance, _emission) =
-            client.get_network_overview().await.expect("get_network_overview");
+        let (block, total_stake, total_networks, _total_issuance, _emission) = client
+            .get_network_overview()
+            .await
+            .expect("get_network_overview");
 
         assert!(block > 0, "block number should be positive");
         // localnet starts with at least the root network (netuid 0)

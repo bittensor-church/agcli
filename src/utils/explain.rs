@@ -92,7 +92,10 @@ pub fn list_topics() -> Vec<(&'static str, &'static str)> {
             "Emergency chain protection mode, deposits, and exits",
         ),
         ("swap", "Hotkey/coldkey/EVM-key swap and rotation flows"),
-        ("evm", "EVM bridge calls, withdrawals, and H160 account flow"),
+        (
+            "evm",
+            "EVM bridge calls, withdrawals, and H160 account flow",
+        ),
         ("contracts", "Upload/instantiate/call smart contracts"),
         (
             "ss58-vs-evm-h160",

@@ -17,8 +17,7 @@ const BOB: &str = "5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty";
 const CHARLIE: &str = "5FLSigC9HGRKVhB9FiEo4Y3koPsNmBmLJbpXg2mp1hXcS59Y";
 
 /// 32-byte call hash used throughout
-const CALL_HASH: &str =
-    "0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef";
+const CALL_HASH: &str = "0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef";
 
 // ── helper ─────────────────────────────────────────────────────────────────
 
@@ -419,7 +418,10 @@ fn cancel_missing_timepoint_height_rejected() {
         "--timepoint-index",
         "0",
     ]);
-    assert!(err.is_err(), "cancel without --timepoint-height must be rejected");
+    assert!(
+        err.is_err(),
+        "cancel without --timepoint-height must be rejected"
+    );
 }
 
 #[test]
@@ -437,7 +439,10 @@ fn cancel_missing_timepoint_index_rejected() {
         "--timepoint-height",
         "12345",
     ]);
-    assert!(err.is_err(), "cancel without --timepoint-index must be rejected");
+    assert!(
+        err.is_err(),
+        "cancel without --timepoint-index must be rejected"
+    );
 }
 
 // ══════════════════════════════════════════════════════════════════════════
@@ -646,13 +651,7 @@ fn green_path_multisig_submit_list() {
         address_cli.err()
     );
 
-    let list_cli = parse(&[
-        "agcli",
-        "multisig",
-        "list",
-        "--address",
-        ALICE,
-    ]);
+    let list_cli = parse(&["agcli", "multisig", "list", "--address", ALICE]);
     assert!(
         list_cli.is_ok(),
         "green-path: list parse: {:?}",

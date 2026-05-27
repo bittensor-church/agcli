@@ -29,8 +29,7 @@ fn parse_safe_mode_enter_parses() {
 
 #[test]
 fn parse_safe_mode_enter_rejects_unknown_flag() {
-    let cli =
-        agcli::cli::Cli::try_parse_from(["agcli", "safe-mode", "enter", "--unknown-flag"]);
+    let cli = agcli::cli::Cli::try_parse_from(["agcli", "safe-mode", "enter", "--unknown-flag"]);
     assert!(cli.is_err(), "safe-mode enter with unknown flag must fail");
 }
 
@@ -54,8 +53,7 @@ fn parse_safe_mode_extend_parses() {
 
 #[test]
 fn parse_safe_mode_extend_rejects_unknown_flag() {
-    let cli =
-        agcli::cli::Cli::try_parse_from(["agcli", "safe-mode", "extend", "--bogus"]);
+    let cli = agcli::cli::Cli::try_parse_from(["agcli", "safe-mode", "extend", "--bogus"]);
     assert!(cli.is_err(), "safe-mode extend with unknown flag must fail");
 }
 
@@ -65,13 +63,8 @@ fn parse_safe_mode_extend_rejects_unknown_flag() {
 
 #[test]
 fn parse_safe_mode_force_enter_with_duration() {
-    let cli = agcli::cli::Cli::try_parse_from([
-        "agcli",
-        "safe-mode",
-        "force-enter",
-        "--duration",
-        "500",
-    ]);
+    let cli =
+        agcli::cli::Cli::try_parse_from(["agcli", "safe-mode", "force-enter", "--duration", "500"]);
     assert!(
         cli.is_ok(),
         "safe-mode force-enter --duration 500: {:?}",
@@ -79,9 +72,7 @@ fn parse_safe_mode_force_enter_with_duration() {
     );
     let parsed = cli.unwrap();
     match &parsed.command {
-        agcli::cli::Commands::SafeMode(agcli::cli::SafeModeCommands::ForceEnter {
-            duration,
-        }) => {
+        agcli::cli::Commands::SafeMode(agcli::cli::SafeModeCommands::ForceEnter { duration }) => {
             assert_eq!(*duration, 500u32, "duration should be 500");
         }
         other => panic!("expected SafeMode::ForceEnter, got {:?}", other),
@@ -100,13 +91,8 @@ fn parse_safe_mode_force_enter_missing_duration_fails() {
 
 #[test]
 fn parse_safe_mode_force_enter_duration_zero() {
-    let cli = agcli::cli::Cli::try_parse_from([
-        "agcli",
-        "safe-mode",
-        "force-enter",
-        "--duration",
-        "0",
-    ]);
+    let cli =
+        agcli::cli::Cli::try_parse_from(["agcli", "safe-mode", "force-enter", "--duration", "0"]);
     assert!(cli.is_ok(), "duration 0 is a valid u32: {:?}", cli.err());
 }
 
@@ -124,9 +110,8 @@ fn parse_safe_mode_force_enter_duration_max_u32() {
         "duration u32::MAX should parse: {:?}",
         cli.err()
     );
-    if let agcli::cli::Commands::SafeMode(agcli::cli::SafeModeCommands::ForceEnter {
-        duration,
-    }) = cli.unwrap().command
+    if let agcli::cli::Commands::SafeMode(agcli::cli::SafeModeCommands::ForceEnter { duration }) =
+        cli.unwrap().command
     {
         assert_eq!(duration, u32::MAX);
     }
@@ -142,10 +127,7 @@ fn parse_safe_mode_force_enter_duration_overflow_fails() {
         "--duration",
         "4294967296",
     ]);
-    assert!(
-        cli.is_err(),
-        "duration > u32::MAX must fail to parse"
-    );
+    assert!(cli.is_err(), "duration > u32::MAX must fail to parse");
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -191,17 +173,9 @@ fn safe_mode_subcommand_names_match_cli() {
     ];
     for args in cases {
         let cli = agcli::cli::Cli::try_parse_from(*args);
+        assert!(cli.is_ok(), "parse failed for {:?}: {:?}", args, cli.err());
         assert!(
-            cli.is_ok(),
-            "parse failed for {:?}: {:?}",
-            args,
-            cli.err()
-        );
-        assert!(
-            matches!(
-                cli.unwrap().command,
-                agcli::cli::Commands::SafeMode(_)
-            ),
+            matches!(cli.unwrap().command, agcli::cli::Commands::SafeMode(_)),
             "expected Commands::SafeMode for {:?}",
             args
         );
@@ -214,21 +188,15 @@ fn safe_mode_subcommand_names_match_cli() {
 
 #[test]
 fn safe_mode_enter_accepts_global_yes_flag() {
-    let cli =
-        agcli::cli::Cli::try_parse_from(["agcli", "--yes", "safe-mode", "enter"]);
+    let cli = agcli::cli::Cli::try_parse_from(["agcli", "--yes", "safe-mode", "enter"]);
     assert!(cli.is_ok(), "--yes + safe-mode enter: {:?}", cli.err());
     assert!(cli.unwrap().yes, "--yes flag should be set");
 }
 
 #[test]
 fn safe_mode_enter_accepts_wallet_flag() {
-    let cli = agcli::cli::Cli::try_parse_from([
-        "agcli",
-        "--wallet",
-        "my_wallet",
-        "safe-mode",
-        "enter",
-    ]);
+    let cli =
+        agcli::cli::Cli::try_parse_from(["agcli", "--wallet", "my_wallet", "safe-mode", "enter"]);
     assert!(cli.is_ok(), "--wallet + safe-mode enter: {:?}", cli.err());
     assert_eq!(
         cli.unwrap().wallet,
@@ -248,11 +216,7 @@ fn safe_mode_force_enter_accepts_network_flag() {
         "--duration",
         "100",
     ]);
-    assert!(
-        cli.is_ok(),
-        "--network + force-enter: {:?}",
-        cli.err()
-    );
+    assert!(cli.is_ok(), "--network + force-enter: {:?}", cli.err());
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -316,8 +280,7 @@ fn force_enter_duration_arg_exists_in_cli_but_not_in_pallet() {
 async fn green_path_safe_mode() {
     use subxt::OnlineClient;
 
-    let url = std::env::var("LOCALNET_URL")
-        .unwrap_or_else(|_| "ws://127.0.0.1:9944".to_string());
+    let url = std::env::var("LOCALNET_URL").unwrap_or_else(|_| "ws://127.0.0.1:9944".to_string());
 
     let client = OnlineClient::<subxt::PolkadotConfig>::from_url(&url)
         .await
@@ -331,7 +294,13 @@ async fn green_path_safe_mode() {
         .expect("SafeMode pallet must be present in runtime metadata");
 
     // 2. Expected dispatchables.
-    for call_name in &["enter", "extend", "force_enter", "force_exit", "release_deposit"] {
+    for call_name in &[
+        "enter",
+        "extend",
+        "force_enter",
+        "force_exit",
+        "release_deposit",
+    ] {
         assert!(
             pallet.call_variant_by_name(call_name).is_some(),
             "SafeMode pallet must expose '{}' dispatchable",
@@ -346,5 +315,8 @@ async fn green_path_safe_mode() {
         .storage()
         .map(|s| s.entries().iter().any(|e| e.name() == "EnteredUntil"))
         .unwrap_or(false);
-    assert!(has_entered_until, "SafeMode pallet must have EnteredUntil storage item");
+    assert!(
+        has_entered_until,
+        "SafeMode pallet must have EnteredUntil storage item"
+    );
 }

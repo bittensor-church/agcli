@@ -39,8 +39,7 @@ fn parse_completions_fish() {
 
 #[test]
 fn parse_completions_powershell() {
-    let cli =
-        agcli::cli::Cli::try_parse_from(["agcli", "completions", "--shell", "powershell"]);
+    let cli = agcli::cli::Cli::try_parse_from(["agcli", "completions", "--shell", "powershell"]);
     assert!(
         cli.is_ok(),
         "completions --shell powershell: {:?}",
@@ -115,26 +114,16 @@ fn parse_update_rejects_extra_args() {
 /// Global flags before `update` are accepted.
 #[test]
 fn parse_update_with_global_network_flag() {
-    let cli =
-        agcli::cli::Cli::try_parse_from(["agcli", "--network", "finney", "update"]);
-    assert!(
-        cli.is_ok(),
-        "--network finney update: {:?}",
-        cli.err()
-    );
+    let cli = agcli::cli::Cli::try_parse_from(["agcli", "--network", "finney", "update"]);
+    assert!(cli.is_ok(), "--network finney update: {:?}", cli.err());
 }
 
 // ──── utils convert ──────────────────────────────────────────────────────────
 
 #[test]
 fn parse_utils_convert_rao_to_tao() {
-    let cli = agcli::cli::Cli::try_parse_from([
-        "agcli",
-        "utils",
-        "convert",
-        "--amount",
-        "1000000000",
-    ]);
+    let cli =
+        agcli::cli::Cli::try_parse_from(["agcli", "utils", "convert", "--amount", "1000000000"]);
     assert!(
         cli.is_ok(),
         "utils convert --amount 1000000000: {:?}",
@@ -161,12 +150,7 @@ fn parse_utils_convert_rao_to_tao() {
 #[test]
 fn parse_utils_convert_tao_to_rao() {
     let cli = agcli::cli::Cli::try_parse_from([
-        "agcli",
-        "utils",
-        "convert",
-        "--amount",
-        "1.5",
-        "--to-rao",
+        "agcli", "utils", "convert", "--amount", "1.5", "--to-rao",
     ]);
     assert!(cli.is_ok(), "utils convert --to-rao: {:?}", cli.err());
     match cli.unwrap().command {
@@ -191,9 +175,7 @@ fn parse_utils_convert_tao_to_alpha() {
         cli.err()
     );
     match cli.unwrap().command {
-        agcli::cli::Commands::Utils(agcli::cli::UtilsCommands::Convert {
-            tao, netuid, ..
-        }) => {
+        agcli::cli::Commands::Utils(agcli::cli::UtilsCommands::Convert { tao, netuid, .. }) => {
             assert_eq!(tao, Some(1.0));
             assert_eq!(netuid, Some(1));
         }
@@ -365,8 +347,7 @@ async fn green_path_completions_update() {
     // already covered above. The placeholder localnet check is left as a stub
     // for a future CI environment where Docker is available.
 
-    let cli =
-        agcli::cli::Cli::try_parse_from(["agcli", "completions", "--shell", "zsh"]).unwrap();
+    let cli = agcli::cli::Cli::try_parse_from(["agcli", "completions", "--shell", "zsh"]).unwrap();
     assert!(matches!(
         cli.command,
         agcli::cli::Commands::Completions { .. }

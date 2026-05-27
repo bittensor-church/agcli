@@ -160,13 +160,7 @@ fn parse_identity_clear() {
 #[test]
 fn parse_identity_clear_with_wallet_flags() {
     // Global wallet flags should not interfere with the subcommand parse.
-    let cli = must_parse(&[
-        "agcli",
-        "--wallet",
-        "mywallet",
-        "identity",
-        "clear",
-    ]);
+    let cli = must_parse(&["agcli", "--wallet", "mywallet", "identity", "clear"]);
     assert!(matches!(
         cli.command,
         Commands::Identity(IdentityCommands::Clear)
@@ -392,7 +386,12 @@ fn identity_set_subnet_field_surface() {
     }
 
     // Flags that do NOT yet exist on set-subnet.
-    for absent in &["--discord", "--description", "--logo-url", "--subnet-contact"] {
+    for absent in &[
+        "--discord",
+        "--description",
+        "--logo-url",
+        "--subnet-contact",
+    ] {
         let argv = &[
             "agcli",
             "identity",

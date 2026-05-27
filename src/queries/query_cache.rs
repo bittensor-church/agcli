@@ -380,7 +380,8 @@ impl QueryCache {
         self.all_dynamic_at_block
             .try_get_with(key, async move {
                 if disk {
-                    if let Some(cached) = super::disk_cache::get::<Vec<DynamicInfo>>(&dk, DISK_TTL) {
+                    if let Some(cached) = super::disk_cache::get::<Vec<DynamicInfo>>(&dk, DISK_TTL)
+                    {
                         tracing::debug!(
                             block_hash = %log_hash,
                             count = cached.len(),
@@ -424,7 +425,8 @@ impl QueryCache {
         self.neurons_lite_at_block
             .try_get_with(key, async move {
                 if disk {
-                    if let Some(cached) = super::disk_cache::get::<Vec<NeuronInfoLite>>(&dk, DISK_TTL)
+                    if let Some(cached) =
+                        super::disk_cache::get::<Vec<NeuronInfoLite>>(&dk, DISK_TTL)
                     {
                         tracing::debug!(
                             netuid,

@@ -64,9 +64,7 @@ fn parse_root_register_dry_run() {
 /// `root weights` with a single netuid:weight pair.
 #[test]
 fn parse_root_weights_single_pair() {
-    let cli = agcli::cli::Cli::try_parse_from([
-        "agcli", "root", "weights", "--weights", "1:1000",
-    ]);
+    let cli = agcli::cli::Cli::try_parse_from(["agcli", "root", "weights", "--weights", "1:1000"]);
     assert!(
         cli.is_ok(),
         "root weights with single pair should parse: {:?}",
@@ -242,7 +240,11 @@ fn root_commands_variant_coverage() {
 #[test]
 fn weight_pairs_valid_multi() {
     let result = agcli::cli::helpers::parse_weight_pairs("1:500,2:300,3:200");
-    assert!(result.is_ok(), "valid weight pairs should parse: {:?}", result.err());
+    assert!(
+        result.is_ok(),
+        "valid weight pairs should parse: {:?}",
+        result.err()
+    );
     let (uids, weights) = result.unwrap();
     assert_eq!(uids, vec![1u16, 2, 3]);
     assert_eq!(weights, vec![500u16, 300, 200]);
@@ -302,10 +304,7 @@ fn weight_pairs_no_colon_rejected() {
 #[test]
 fn weight_pairs_extra_colon_rejected() {
     let result = agcli::cli::helpers::parse_weight_pairs("1:100:extra");
-    assert!(
-        result.is_err(),
-        "pair with extra ':' should be rejected"
-    );
+    assert!(result.is_err(), "pair with extra ':' should be rejected");
 }
 
 /// Empty string input is rejected because it cannot form a valid pair.

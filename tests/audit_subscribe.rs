@@ -30,8 +30,7 @@ fn subscribe_blocks_parses() {
 
 #[test]
 fn subscribe_blocks_with_json_output() {
-    let cli =
-        parse(&["agcli", "--output", "json", "subscribe", "blocks"]).expect("should parse");
+    let cli = parse(&["agcli", "--output", "json", "subscribe", "blocks"]).expect("should parse");
     assert!(matches!(subscribe_cmd(&cli), SubscribeCommands::Blocks));
     assert!(cli.output.is_json());
 }
@@ -112,7 +111,13 @@ filter_parses!(filter_fund_alias, "fund");
 #[test]
 fn subscribe_events_with_netuid() {
     let cli = parse(&[
-        "agcli", "subscribe", "events", "--filter", "staking", "--netuid", "1",
+        "agcli",
+        "subscribe",
+        "events",
+        "--filter",
+        "staking",
+        "--netuid",
+        "1",
     ])
     .expect("should parse");
     match subscribe_cmd(&cli) {
@@ -185,9 +190,7 @@ fn subscribe_events_rejects_missing_netuid_value() {
 
 #[test]
 fn subscribe_events_rejects_non_numeric_netuid() {
-    let result = parse(&[
-        "agcli", "subscribe", "events", "--netuid", "notanumber",
-    ]);
+    let result = parse(&["agcli", "subscribe", "events", "--netuid", "notanumber"]);
     assert!(result.is_err(), "non-numeric --netuid must be rejected");
 }
 
@@ -200,10 +203,33 @@ fn validate_event_filter_accepts_all_known_aliases() {
     use agcli::cli::helpers::validate_event_filter;
 
     let valid = &[
-        "all", "staking", "stake", "registration", "register", "reg", "transfer", "transfers",
-        "weights", "weight", "subnet", "subnets", "delegation", "delegate", "delegates", "keys",
-        "key", "swap", "dex", "liquidity", "governance", "gov", "sudo", "safemode", "crowdloan",
-        "crowdloans", "fund",
+        "all",
+        "staking",
+        "stake",
+        "registration",
+        "register",
+        "reg",
+        "transfer",
+        "transfers",
+        "weights",
+        "weight",
+        "subnet",
+        "subnets",
+        "delegation",
+        "delegate",
+        "delegates",
+        "keys",
+        "key",
+        "swap",
+        "dex",
+        "liquidity",
+        "governance",
+        "gov",
+        "sudo",
+        "safemode",
+        "crowdloan",
+        "crowdloans",
+        "fund",
     ];
     for alias in valid {
         assert!(
@@ -229,17 +255,44 @@ fn event_filter_from_str_canonical() {
     use agcli::events::EventFilter;
     use std::str::FromStr;
 
-    assert_eq!(EventFilter::from_str("staking").unwrap(), EventFilter::Staking);
-    assert_eq!(EventFilter::from_str("stake").unwrap(), EventFilter::Staking);
-    assert_eq!(EventFilter::from_str("registration").unwrap(), EventFilter::Registration);
-    assert_eq!(EventFilter::from_str("transfer").unwrap(), EventFilter::Transfer);
-    assert_eq!(EventFilter::from_str("weights").unwrap(), EventFilter::Weights);
-    assert_eq!(EventFilter::from_str("subnet").unwrap(), EventFilter::Subnet);
-    assert_eq!(EventFilter::from_str("delegation").unwrap(), EventFilter::Delegation);
+    assert_eq!(
+        EventFilter::from_str("staking").unwrap(),
+        EventFilter::Staking
+    );
+    assert_eq!(
+        EventFilter::from_str("stake").unwrap(),
+        EventFilter::Staking
+    );
+    assert_eq!(
+        EventFilter::from_str("registration").unwrap(),
+        EventFilter::Registration
+    );
+    assert_eq!(
+        EventFilter::from_str("transfer").unwrap(),
+        EventFilter::Transfer
+    );
+    assert_eq!(
+        EventFilter::from_str("weights").unwrap(),
+        EventFilter::Weights
+    );
+    assert_eq!(
+        EventFilter::from_str("subnet").unwrap(),
+        EventFilter::Subnet
+    );
+    assert_eq!(
+        EventFilter::from_str("delegation").unwrap(),
+        EventFilter::Delegation
+    );
     assert_eq!(EventFilter::from_str("keys").unwrap(), EventFilter::Keys);
     assert_eq!(EventFilter::from_str("swap").unwrap(), EventFilter::Swap);
-    assert_eq!(EventFilter::from_str("governance").unwrap(), EventFilter::Governance);
-    assert_eq!(EventFilter::from_str("crowdloan").unwrap(), EventFilter::Crowdloan);
+    assert_eq!(
+        EventFilter::from_str("governance").unwrap(),
+        EventFilter::Governance
+    );
+    assert_eq!(
+        EventFilter::from_str("crowdloan").unwrap(),
+        EventFilter::Crowdloan
+    );
     assert_eq!(EventFilter::from_str("all").unwrap(), EventFilter::All);
 }
 
@@ -248,9 +301,18 @@ fn event_filter_from_str_case_insensitive() {
     use agcli::events::EventFilter;
     use std::str::FromStr;
 
-    assert_eq!(EventFilter::from_str("STAKING").unwrap(), EventFilter::Staking);
-    assert_eq!(EventFilter::from_str("Transfer").unwrap(), EventFilter::Transfer);
-    assert_eq!(EventFilter::from_str("WEIGHTS").unwrap(), EventFilter::Weights);
+    assert_eq!(
+        EventFilter::from_str("STAKING").unwrap(),
+        EventFilter::Staking
+    );
+    assert_eq!(
+        EventFilter::from_str("Transfer").unwrap(),
+        EventFilter::Transfer
+    );
+    assert_eq!(
+        EventFilter::from_str("WEIGHTS").unwrap(),
+        EventFilter::Weights
+    );
 }
 
 // NOTE: EventFilter::from_str has `Infallible` error type, so unknown strings
@@ -263,7 +325,10 @@ fn event_filter_from_str_unknown_falls_back_to_all() {
     use std::str::FromStr;
 
     // Intentional silent fallback — documented audit finding.
-    assert_eq!(EventFilter::from_str("typo_filter").unwrap(), EventFilter::All);
+    assert_eq!(
+        EventFilter::from_str("typo_filter").unwrap(),
+        EventFilter::All
+    );
 }
 
 // ──── green-path integration test (requires localnet on 127.0.0.1:9944) ──────

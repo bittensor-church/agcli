@@ -32,7 +32,10 @@ fn parse_surface_evm_subcommands() {
         "0x0000000000000000000000000000000000000000000000000000000000000001",
     ])
     .expect("evm call should parse");
-    assert!(matches!(call_cli.command, Commands::Evm(EvmCommands::Call { .. })));
+    assert!(matches!(
+        call_cli.command,
+        Commands::Evm(EvmCommands::Call { .. })
+    ));
 
     let withdraw_cli = Cli::try_parse_from([
         "agcli",
@@ -125,7 +128,10 @@ async fn green_path_evm_localnet_call_and_withdraw() -> anyhow::Result<()> {
                 None,
             )
             .await?;
-        assert!(!call_hash.is_empty(), "evm call tx hash should be populated");
+        assert!(
+            !call_hash.is_empty(),
+            "evm call tx hash should be populated"
+        );
 
         let withdraw_hash = client.evm_withdraw(&signer, source, 0).await?;
         assert!(

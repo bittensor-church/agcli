@@ -317,13 +317,7 @@ fn reveal_missing_salt_is_error() {
 #[test]
 fn reveal_missing_weights_is_error() {
     err(&[
-        "agcli",
-        "weights",
-        "reveal",
-        "--netuid",
-        "1",
-        "--salt",
-        "abc",
+        "agcli", "weights", "reveal", "--netuid", "1", "--salt", "abc",
     ]);
 }
 
@@ -527,13 +521,7 @@ fn commit_reveal_file_weights() {
 
 #[test]
 fn commit_reveal_missing_netuid_is_error() {
-    err(&[
-        "agcli",
-        "weights",
-        "commit-reveal",
-        "--weights",
-        "0:100",
-    ]);
+    err(&["agcli", "weights", "commit-reveal", "--weights", "0:100"]);
 }
 
 #[test]
@@ -941,8 +929,8 @@ fn commit_hash_changes_with_different_uids() {
 
 #[test]
 fn commit_hash_is_32_bytes() {
-    let h = agcli::extrinsics::compute_weight_commit_hash(&[0, 1], &[100, 200], b"salt")
-        .expect("hash");
+    let h =
+        agcli::extrinsics::compute_weight_commit_hash(&[0, 1], &[100, 200], b"salt").expect("hash");
     assert_eq!(h.len(), 32);
 }
 
@@ -996,10 +984,7 @@ fn salt_u16_roundtrip_matches_raw_bytes_for_even_length() {
     let raw_bytes = salt.as_bytes();
     let encoded = encode_salt_u16(salt);
     // Reconstruct raw bytes from u16 LE
-    let reconstructed: Vec<u8> = encoded
-        .iter()
-        .flat_map(|w| w.to_le_bytes())
-        .collect();
+    let reconstructed: Vec<u8> = encoded.iter().flat_map(|w| w.to_le_bytes()).collect();
     assert_eq!(raw_bytes, reconstructed.as_slice());
 }
 
@@ -1238,11 +1223,5 @@ fn green_path_weights_localnet() {
         "--weights",
         "0:100",
     ]);
-    ok(&[
-        "agcli",
-        "weights",
-        "status",
-        "--netuid",
-        "1",
-    ]);
+    ok(&["agcli", "weights", "status", "--netuid", "1"]);
 }

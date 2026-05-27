@@ -19,7 +19,12 @@ fn parse_surface_drand_subcommands() {
 
     for args in parse_cases {
         let parsed = Cli::try_parse_from(*args);
-        assert!(parsed.is_ok(), "failed to parse {:?}: {:?}", args, parsed.err());
+        assert!(
+            parsed.is_ok(),
+            "failed to parse {:?}: {:?}",
+            args,
+            parsed.err()
+        );
     }
 
     let parsed = Cli::try_parse_from(parse_cases[0]).expect("drand write-pulse should parse");
@@ -34,16 +39,12 @@ fn parse_surface_drand_subcommands() {
 
 #[test]
 fn parse_drand_write_pulse_requires_payload_and_signature() {
-    let missing_payload = Cli::try_parse_from([
-        "agcli",
-        "drand",
-        "write-pulse",
-        "--signature",
-        "0x01",
-    ]);
+    let missing_payload =
+        Cli::try_parse_from(["agcli", "drand", "write-pulse", "--signature", "0x01"]);
     assert!(missing_payload.is_err());
 
-    let missing_signature = Cli::try_parse_from(["agcli", "drand", "write-pulse", "--payload", "0x01"]);
+    let missing_signature =
+        Cli::try_parse_from(["agcli", "drand", "write-pulse", "--payload", "0x01"]);
     assert!(missing_signature.is_err());
 }
 

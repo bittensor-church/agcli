@@ -220,15 +220,14 @@ pub fn classify(err: &anyhow::Error) -> i32 {
     // DispatchError mapping:
     // - surfaced pallets -> CHAIN
     // - unrecognized pallets -> GENERIC (message already contains pallet + variant)
-    let dispatch_context =
-        msg.contains("transaction failed")
-            || msg.contains("dispatch error")
-            || msg.contains("dispatch")
-            || msg.contains("pallet error")
-            || msg.contains("runtime pallet `");
+    let dispatch_context = msg.contains("transaction failed")
+        || msg.contains("dispatch error")
+        || msg.contains("dispatch")
+        || msg.contains("pallet error")
+        || msg.contains("runtime pallet `");
     if dispatch_context {
-        if let Some((pallet, _variant)) = parse_runtime_pallet_error(&msg)
-            .or_else(|| last_qualified_pallet_variant(&msg))
+        if let Some((pallet, _variant)) =
+            parse_runtime_pallet_error(&msg).or_else(|| last_qualified_pallet_variant(&msg))
         {
             if is_surfaced_dispatch_pallet(pallet) {
                 return exit_code::CHAIN;
@@ -784,9 +783,7 @@ mod tests {
         );
         assert_eq!(classify(&err), exit_code::VALIDATION);
         let msg = format!("{err:#}");
-        assert!(
-            hint(exit_code::VALIDATION, &msg).is_some_and(|s| s.contains("--max-slippage"))
-        );
+        assert!(hint(exit_code::VALIDATION, &msg).is_some_and(|s| s.contains("--max-slippage")));
     }
 
     #[test]
@@ -845,7 +842,8 @@ mod tests {
 
     #[test]
     fn classify_localnet_readiness_timeout() {
-        let err = anyhow::anyhow!("Chain at ws://127.0.0.1:9944 did not become ready after 60 seconds");
+        let err =
+            anyhow::anyhow!("Chain at ws://127.0.0.1:9944 did not become ready after 60 seconds");
         assert_eq!(classify(&err), exit_code::TIMEOUT);
     }
 

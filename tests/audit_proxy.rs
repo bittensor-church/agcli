@@ -247,41 +247,44 @@ fn proxy_kill_pure_all_opts() {
 
 #[test]
 fn proxy_kill_pure_missing_spawner_rejected() {
-    assert!(
-        parse(&["agcli", "proxy", "kill-pure", "--height", "100", "--ext-index", "0"]).is_err()
-    );
+    assert!(parse(&[
+        "agcli",
+        "proxy",
+        "kill-pure",
+        "--height",
+        "100",
+        "--ext-index",
+        "0"
+    ])
+    .is_err());
 }
 
 #[test]
 fn proxy_kill_pure_missing_height_rejected() {
-    assert!(
-        parse(&[
-            "agcli",
-            "proxy",
-            "kill-pure",
-            "--spawner",
-            ALICE,
-            "--ext-index",
-            "0"
-        ])
-        .is_err()
-    );
+    assert!(parse(&[
+        "agcli",
+        "proxy",
+        "kill-pure",
+        "--spawner",
+        ALICE,
+        "--ext-index",
+        "0"
+    ])
+    .is_err());
 }
 
 #[test]
 fn proxy_kill_pure_missing_ext_index_rejected() {
-    assert!(
-        parse(&[
-            "agcli",
-            "proxy",
-            "kill-pure",
-            "--spawner",
-            ALICE,
-            "--height",
-            "100"
-        ])
-        .is_err()
-    );
+    assert!(parse(&[
+        "agcli",
+        "proxy",
+        "kill-pure",
+        "--spawner",
+        ALICE,
+        "--height",
+        "100"
+    ])
+    .is_err());
 }
 
 // ──────── proxy list ────────
@@ -397,9 +400,7 @@ fn proxy_proxy_announced_with_optional_args() {
     .unwrap();
     match proxy_cmd(cli) {
         ProxyCommands::ProxyAnnounced {
-            proxy_type,
-            args,
-            ..
+            proxy_type, args, ..
         } => {
             assert_eq!(proxy_type.as_deref(), Some("staking"));
             assert_eq!(args.as_deref(), Some("[0, 100]"));
@@ -468,9 +469,14 @@ fn proxy_reject_announcement_required_args() {
 
 #[test]
 fn proxy_reject_announcement_missing_delegate_rejected() {
-    assert!(
-        parse(&["agcli", "proxy", "reject-announcement", "--call-hash", CALL_HASH]).is_err()
-    );
+    assert!(parse(&[
+        "agcli",
+        "proxy",
+        "reject-announcement",
+        "--call-hash",
+        CALL_HASH
+    ])
+    .is_err());
 }
 
 // ──────── proxy list-announcements ────────
@@ -534,7 +540,14 @@ fn proxy_remove_announcement_required_args() {
 
 #[test]
 fn proxy_remove_announcement_missing_real_rejected() {
-    assert!(parse(&["agcli", "proxy", "remove-announcement", "--call-hash", CALL_HASH]).is_err());
+    assert!(parse(&[
+        "agcli",
+        "proxy",
+        "remove-announcement",
+        "--call-hash",
+        CALL_HASH
+    ])
+    .is_err());
 }
 
 #[test]
@@ -568,7 +581,15 @@ fn proxy_add_all_known_proxy_types_parse() {
         "non_fungible",
         "sudo_unchecked_set_code",
     ] {
-        let result = parse(&["agcli", "proxy", "add", "--delegate", ALICE, "--proxy-type", pt]);
+        let result = parse(&[
+            "agcli",
+            "proxy",
+            "add",
+            "--delegate",
+            ALICE,
+            "--proxy-type",
+            pt,
+        ]);
         assert!(
             result.is_ok(),
             "proxy type '{}' should parse at clap level: {:?}",

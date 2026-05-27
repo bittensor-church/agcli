@@ -90,8 +90,7 @@ fn block_info_zero_block() {
 #[test]
 fn block_info_max_u32() {
     let max = u32::MAX.to_string();
-    let cli =
-        parse(&["agcli", "block", "info", "--number", &max]).expect("block info u32::MAX");
+    let cli = parse(&["agcli", "block", "info", "--number", &max]).expect("block info u32::MAX");
     match block_cmd(&cli) {
         BlockCommands::Info { number } => assert_eq!(*number, u32::MAX),
         other => panic!("expected Info, got {:?}", other),
@@ -109,8 +108,10 @@ fn block_info_overflow_rejected() {
 
 #[test]
 fn block_info_json_output() {
-    let cli = parse(&["agcli", "--output", "json", "block", "info", "--number", "1"])
-        .expect("block info json");
+    let cli = parse(&[
+        "agcli", "--output", "json", "block", "info", "--number", "1",
+    ])
+    .expect("block info json");
     assert!(cli.output.is_json());
     assert!(matches!(block_cmd(&cli), BlockCommands::Info { number: 1 }));
 }
@@ -161,10 +162,8 @@ fn block_range_same_block() {
 #[test]
 fn block_range_max_u32_both() {
     let max = u32::MAX.to_string();
-    let cli = parse(&[
-        "agcli", "block", "range", "--from", &max, "--to", &max,
-    ])
-    .expect("block range max u32");
+    let cli = parse(&["agcli", "block", "range", "--from", &max, "--to", &max])
+        .expect("block range max u32");
     match block_cmd(&cli) {
         BlockCommands::Range { from, to } => {
             assert_eq!(*from, u32::MAX);
@@ -239,7 +238,13 @@ fn diff_portfolio_parses() {
 #[test]
 fn diff_portfolio_without_address_parses() {
     let cli = parse(&[
-        "agcli", "diff", "portfolio", "--block1", "1000", "--block2", "2000",
+        "agcli",
+        "diff",
+        "portfolio",
+        "--block1",
+        "1000",
+        "--block2",
+        "2000",
     ])
     .expect("diff portfolio no address");
     match diff_cmd(&cli) {
@@ -251,10 +256,7 @@ fn diff_portfolio_without_address_parses() {
 #[test]
 fn diff_portfolio_requires_block1() {
     assert!(
-        parse(&[
-            "agcli", "diff", "portfolio", "--block2", "2000"
-        ])
-        .is_err(),
+        parse(&["agcli", "diff", "portfolio", "--block2", "2000"]).is_err(),
         "--block1 is required"
     );
 }
@@ -262,10 +264,7 @@ fn diff_portfolio_requires_block1() {
 #[test]
 fn diff_portfolio_requires_block2() {
     assert!(
-        parse(&[
-            "agcli", "diff", "portfolio", "--block1", "1000"
-        ])
-        .is_err(),
+        parse(&["agcli", "diff", "portfolio", "--block1", "1000"]).is_err(),
         "--block2 is required"
     );
 }
@@ -334,7 +333,15 @@ fn diff_network_requires_both_blocks() {
 #[test]
 fn diff_metagraph_parses() {
     let cli = parse(&[
-        "agcli", "diff", "metagraph", "--netuid", "3", "--block1", "500", "--block2", "600",
+        "agcli",
+        "diff",
+        "metagraph",
+        "--netuid",
+        "3",
+        "--block1",
+        "500",
+        "--block2",
+        "600",
     ])
     .expect("diff metagraph");
     match diff_cmd(&cli) {
@@ -355,7 +362,13 @@ fn diff_metagraph_parses() {
 fn diff_metagraph_requires_netuid() {
     assert!(
         parse(&[
-            "agcli", "diff", "metagraph", "--block1", "500", "--block2", "600"
+            "agcli",
+            "diff",
+            "metagraph",
+            "--block1",
+            "500",
+            "--block2",
+            "600"
         ])
         .is_err(),
         "--netuid is required"
@@ -366,15 +379,20 @@ fn diff_metagraph_requires_netuid() {
 
 #[test]
 fn block_latest_yes_flag() {
-    let cli =
-        parse(&["agcli", "--yes", "block", "latest"]).expect("block latest --yes");
+    let cli = parse(&["agcli", "--yes", "block", "latest"]).expect("block latest --yes");
     assert!(cli.yes);
 }
 
 #[test]
 fn block_info_wallet_flag() {
     let cli = parse(&[
-        "agcli", "--wallet", "my_wallet", "block", "info", "--number", "1",
+        "agcli",
+        "--wallet",
+        "my_wallet",
+        "block",
+        "info",
+        "--number",
+        "1",
     ])
     .expect("block info --wallet");
     assert_eq!(cli.wallet, "my_wallet");
@@ -388,7 +406,10 @@ fn range_guard_count_arithmetic() {
     let from: u32 = 0;
     let to: u32 = u32::MAX;
     let count = (to as u64 - from as u64 + 1) as usize;
-    assert!(count > 1000, "full u32 range must exceed the 1000-block cap");
+    assert!(
+        count > 1000,
+        "full u32 range must exceed the 1000-block cap"
+    );
 
     let from: u32 = 100;
     let to: u32 = 199;
@@ -417,13 +438,23 @@ fn get_block_header_returns_four_fields_not_five() {
     // If the return type ever becomes (u32, H256, H256, H256, H256) the destructure below
     // will fail to compile, alerting maintainers.
     fn _check_arity(
-        r: (u32, subxt::utils::H256, subxt::utils::H256, subxt::utils::H256),
+        r: (
+            u32,
+            subxt::utils::H256,
+            subxt::utils::H256,
+            subxt::utils::H256,
+        ),
     ) -> usize {
         let (_, _, _, _) = r;
         4
     }
     assert_eq!(
-        _check_arity((0, Default::default(), Default::default(), Default::default())),
+        _check_arity((
+            0,
+            Default::default(),
+            Default::default(),
+            Default::default()
+        )),
         4,
         "get_block_header returns 4 fields; doc comment says 5"
     );
@@ -461,12 +492,13 @@ async fn green_path_block() {
 
     // block latest: must return a non-zero block number.
     let block_num = client.get_block_number().await.expect("get_block_number");
-    assert!(block_num > 0, "localnet should have produced at least one block");
+    assert!(
+        block_num > 0,
+        "localnet should have produced at least one block"
+    );
 
     // block info: round-trip hash lookup.
-    let block_num_u32: u32 = block_num
-        .try_into()
-        .expect("block number within u32 range");
+    let block_num_u32: u32 = block_num.try_into().expect("block number within u32 range");
     let hash = client
         .get_block_hash(block_num_u32)
         .await
@@ -480,11 +512,10 @@ async fn green_path_block() {
     // block range: span of 3 blocks must return 3 hashes.
     let from = block_num_u32.saturating_sub(2);
     let to = block_num_u32;
-    let hashes: Vec<_> = futures::future::try_join_all(
-        (from..=to).map(|n| client.get_block_hash(n)),
-    )
-    .await
-    .expect("block range hashes");
+    let hashes: Vec<_> =
+        futures::future::try_join_all((from..=to).map(|n| client.get_block_hash(n)))
+            .await
+            .expect("block range hashes");
     assert_eq!(hashes.len(), 3, "range of 3 blocks must yield 3 hashes");
 
     // Timestamp: at least one block in the range should have a timestamp.
@@ -492,5 +523,8 @@ async fn green_path_block() {
         .get_block_timestamp(hash)
         .await
         .expect("get_block_timestamp");
-    assert!(ts.is_some(), "localnet blocks must carry a Timestamp::Now inherent");
+    assert!(
+        ts.is_some(),
+        "localnet blocks must carry a Timestamp::Now inherent"
+    );
 }

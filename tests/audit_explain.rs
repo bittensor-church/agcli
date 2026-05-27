@@ -102,7 +102,10 @@ fn parse_explain_surface_for_all_canonical_topics() {
         let cli = Cli::try_parse_from(["agcli", "explain", "--topic", *topic])
             .unwrap_or_else(|e| panic!("failed to parse canonical topic {topic}: {e}"));
         match &cli.command {
-            Commands::Explain { topic: parsed, full } => {
+            Commands::Explain {
+                topic: parsed,
+                full,
+            } => {
                 assert_eq!(parsed.as_deref(), Some(*topic));
                 assert!(!full);
             }
@@ -117,7 +120,10 @@ fn parse_explain_surface_for_all_alias_topics() {
         let cli = Cli::try_parse_from(["agcli", "explain", "--topic", *alias])
             .unwrap_or_else(|e| panic!("failed to parse alias topic {alias}: {e}"));
         match &cli.command {
-            Commands::Explain { topic: parsed, full } => {
+            Commands::Explain {
+                topic: parsed,
+                full,
+            } => {
                 assert_eq!(parsed.as_deref(), Some(*alias));
                 assert!(!full);
             }
@@ -148,13 +154,7 @@ fn parse_explain_list_and_full_modes() {
     }
 
     let full_topic = Cli::try_parse_from([
-        "agcli",
-        "--output",
-        "json",
-        "explain",
-        "--topic",
-        "weights",
-        "--full",
+        "agcli", "--output", "json", "explain", "--topic", "weights", "--full",
     ])
     .expect("explain --topic weights --full should parse");
     match &full_topic.command {

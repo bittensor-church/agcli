@@ -25,7 +25,11 @@ fn parse_upload_with_storage_deposit_limit() {
         "--storage-deposit-limit",
         "5000000000",
     ]);
-    assert!(cli.is_ok(), "upload with storage-deposit-limit: {:?}", cli.err());
+    assert!(
+        cli.is_ok(),
+        "upload with storage-deposit-limit: {:?}",
+        cli.err()
+    );
 }
 
 #[test]
@@ -93,7 +97,10 @@ fn parse_instantiate_default_gas_values_accepted() {
 #[test]
 fn parse_instantiate_missing_code_hash_rejected() {
     let cli = Cli::try_parse_from(["agcli", "contracts", "instantiate"]);
-    assert!(cli.is_err(), "instantiate without --code-hash must be rejected");
+    assert!(
+        cli.is_err(),
+        "instantiate without --code-hash must be rejected"
+    );
 }
 
 // ── call ──────────────────────────────────────────────────────────────────────
@@ -136,8 +143,7 @@ fn parse_call_full() {
 
 #[test]
 fn parse_call_missing_contract_rejected() {
-    let cli =
-        Cli::try_parse_from(["agcli", "contracts", "call", "--data", "0xdeadbeef"]);
+    let cli = Cli::try_parse_from(["agcli", "contracts", "call", "--data", "0xdeadbeef"]);
     assert!(cli.is_err(), "call without --contract must be rejected");
 }
 
@@ -170,7 +176,10 @@ fn parse_remove_code_minimal() {
 #[test]
 fn parse_remove_code_missing_hash_rejected() {
     let cli = Cli::try_parse_from(["agcli", "contracts", "remove-code"]);
-    assert!(cli.is_err(), "remove-code without --code-hash must be rejected");
+    assert!(
+        cli.is_err(),
+        "remove-code without --code-hash must be rejected"
+    );
 }
 
 // ── structural / routing ──────────────────────────────────────────────────────
@@ -189,7 +198,10 @@ fn parse_contracts_help_does_not_panic() {
 fn parse_contracts_no_subcommand_rejected() {
     // The contracts group requires a subcommand.
     let cli = Cli::try_parse_from(["agcli", "contracts"]);
-    assert!(cli.is_err(), "contracts without subcommand must be rejected");
+    assert!(
+        cli.is_err(),
+        "contracts without subcommand must be rejected"
+    );
 }
 
 // ── ignore-gated localnet integration test ────────────────────────────────────
@@ -248,5 +260,8 @@ async fn green_path_contracts() {
     fs::write(&bad_wasm, b"not wasm bytes").unwrap();
     let data = fs::read(&bad_wasm).unwrap();
     let result = agcli::cli::helpers::validate_wasm_file(&data, bad_wasm.to_str().unwrap());
-    assert!(result.is_err(), "validate_wasm_file should reject non-WASM bytes");
+    assert!(
+        result.is_err(),
+        "validate_wasm_file should reject non-WASM bytes"
+    );
 }

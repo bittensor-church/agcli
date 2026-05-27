@@ -32,7 +32,7 @@ def stop(container_name: str = DEFAULT_CONTAINER) -> None:
 async def status(
     container_name: str | None = None, port: int = 9944
 ) -> LocalnetStatus:
-    """Return current status for a named localnet container."""
+    """Return current status for a named localnet container (`started_at` + legacy `uptime`)."""
     return await _agcli.localnet.status(container_name, port)
 
 

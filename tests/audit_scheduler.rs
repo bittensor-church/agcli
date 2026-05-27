@@ -1,6 +1,6 @@
 use agcli::chain::Client;
 use clap::Parser;
-use sp_core::{Pair as _, sr25519};
+use sp_core::{sr25519, Pair as _};
 use subxt::dynamic::Value;
 
 #[test]
@@ -79,7 +79,12 @@ fn parse_surface_scheduler_subcommands() {
 
     for argv in &cases {
         let parsed = agcli::cli::Cli::try_parse_from(argv);
-        assert!(parsed.is_ok(), "failed to parse {:?}: {:?}", argv, parsed.err());
+        assert!(
+            parsed.is_ok(),
+            "failed to parse {:?}: {:?}",
+            argv,
+            parsed.err()
+        );
     }
 }
 
@@ -106,10 +111,16 @@ async fn green_path_scheduler_named_local_chain() -> anyhow::Result<()> {
             vec![Value::from_bytes(b"audit-scheduler-green-path".to_vec())],
         )
         .await?;
-    assert!(!schedule_hash.is_empty(), "schedule tx hash should be non-empty");
+    assert!(
+        !schedule_hash.is_empty(),
+        "schedule tx hash should be non-empty"
+    );
 
     let cancel_hash = client.cancel_named_scheduled(&alice, &task_id).await?;
-    assert!(!cancel_hash.is_empty(), "cancel tx hash should be non-empty");
+    assert!(
+        !cancel_hash.is_empty(),
+        "cancel tx hash should be non-empty"
+    );
 
     Ok(())
 }

@@ -893,7 +893,7 @@ async fn staking_wizard(
         return Ok(());
     }
     let mut subnets_with_pool: Vec<_> = dynamic.iter().filter(|d| d.tao_in.rao() > 0).collect();
-    subnets_with_pool.sort_by(|a, b| b.tao_in.rao().cmp(&a.tao_in.rao()));
+    subnets_with_pool.sort_by_key(|item| std::cmp::Reverse(item.tao_in.rao()));
 
     println!("\nTop subnets by TAO pool:");
     let display_count = subnets_with_pool.len().min(15);

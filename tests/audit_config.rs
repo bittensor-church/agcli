@@ -24,9 +24,10 @@ fn parse_config_show() {
 /// `config set --key network --value finney` parses correctly.
 #[test]
 fn parse_config_set_network() {
-    let cli =
-        Cli::try_parse_from(["agcli", "config", "set", "--key", "network", "--value", "finney"])
-            .expect("config set --key network --value finney should parse");
+    let cli = Cli::try_parse_from([
+        "agcli", "config", "set", "--key", "network", "--value", "finney",
+    ])
+    .expect("config set --key network --value finney should parse");
     match cli.command {
         agcli::cli::Commands::Config(ConfigCommands::Set { key, value }) => {
             assert_eq!(key, "network");
@@ -77,9 +78,10 @@ fn parse_config_set_spending_limit() {
 /// `config set --key batch --value true` parses correctly.
 #[test]
 fn parse_config_set_batch() {
-    let cli =
-        Cli::try_parse_from(["agcli", "config", "set", "--key", "batch", "--value", "true"])
-            .expect("config set batch should parse");
+    let cli = Cli::try_parse_from([
+        "agcli", "config", "set", "--key", "batch", "--value", "true",
+    ])
+    .expect("config set batch should parse");
     match cli.command {
         agcli::cli::Commands::Config(ConfigCommands::Set { key, value }) => {
             assert_eq!(key, "batch");
@@ -114,9 +116,10 @@ fn parse_config_set_live_interval() {
 /// `config set --key output --value json` parses correctly.
 #[test]
 fn parse_config_set_output() {
-    let cli =
-        Cli::try_parse_from(["agcli", "config", "set", "--key", "output", "--value", "json"])
-            .expect("config set output should parse");
+    let cli = Cli::try_parse_from([
+        "agcli", "config", "set", "--key", "output", "--value", "json",
+    ])
+    .expect("config set output should parse");
     match cli.command {
         agcli::cli::Commands::Config(ConfigCommands::Set { key, value }) => {
             assert_eq!(key, "output");
@@ -163,9 +166,8 @@ fn parse_config_unset() {
 /// `config unset --key spending_limit.97` parses correctly.
 #[test]
 fn parse_config_unset_spending_limit() {
-    let cli =
-        Cli::try_parse_from(["agcli", "config", "unset", "--key", "spending_limit.97"])
-            .expect("config unset spending_limit should parse");
+    let cli = Cli::try_parse_from(["agcli", "config", "unset", "--key", "spending_limit.97"])
+        .expect("config unset spending_limit should parse");
     match cli.command {
         agcli::cli::Commands::Config(ConfigCommands::Unset { key }) => {
             assert_eq!(key, "spending_limit.97");
@@ -177,8 +179,7 @@ fn parse_config_unset_spending_limit() {
 /// `config path` parses without error.
 #[test]
 fn parse_config_path() {
-    let cli =
-        Cli::try_parse_from(["agcli", "config", "path"]).expect("config path should parse");
+    let cli = Cli::try_parse_from(["agcli", "config", "path"]).expect("config path should parse");
     assert!(matches!(
         cli.command,
         agcli::cli::Commands::Config(ConfigCommands::Path)
@@ -396,7 +397,8 @@ fn green_path_config_set_and_show_roundtrip() {
     let mut cfg2 = agcli::Config::load_from(&path).unwrap_or_default();
     let limits = cfg2.spending_limits.get_or_insert_with(HashMap::new);
     limits.insert("1".to_string(), 50.0);
-    cfg2.save_to(&path).expect("config save with limits should succeed");
+    cfg2.save_to(&path)
+        .expect("config save with limits should succeed");
 
     let loaded2 = agcli::Config::load_from(&path).expect("reload after limits save");
     let sl = loaded2
@@ -414,7 +416,10 @@ fn green_path_config_set_and_show_roundtrip() {
     cfg3.save_to(&path).expect("unset save should succeed");
 
     let loaded3 = agcli::Config::load_from(&path).expect("reload after unset");
-    assert!(loaded3.network.is_none(), "network should be None after unset");
+    assert!(
+        loaded3.network.is_none(),
+        "network should be None after unset"
+    );
 }
 
 /// Green-path: `config path` returns a valid filesystem path string.

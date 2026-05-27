@@ -106,7 +106,10 @@ fn parse_surface_all_crowdloan_subcommands() {
             ],
         ),
         ("list", &["agcli", "crowdloan", "list"]),
-        ("info", &["agcli", "crowdloan", "info", "--crowdloan-id", "7"]),
+        (
+            "info",
+            &["agcli", "crowdloan", "info", "--crowdloan-id", "7"],
+        ),
         (
             "contributors",
             &["agcli", "crowdloan", "contributors", "--crowdloan-id", "7"],

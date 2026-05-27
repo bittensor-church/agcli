@@ -362,6 +362,7 @@ class LocalnetStatus:
     image: str | None
     endpoint: str | None
     block_height: int | None
+    started_at: str | None
     uptime: str | None
     def to_dict(self) -> dict[str, Any]: ...
 

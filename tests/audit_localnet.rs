@@ -4,7 +4,12 @@ use clap::Parser;
 
 fn assert_parses(args: &[&str]) {
     let parsed = Cli::try_parse_from(args);
-    assert!(parsed.is_ok(), "failed to parse {:?}: {:?}", args, parsed.err());
+    assert!(
+        parsed.is_ok(),
+        "failed to parse {:?}: {:?}",
+        args,
+        parsed.err()
+    );
 }
 
 #[test]
@@ -28,13 +33,7 @@ fn parse_surface_localnet_start() {
 
 #[test]
 fn parse_surface_localnet_stop() {
-    assert_parses(&[
-        "agcli",
-        "localnet",
-        "stop",
-        "--container",
-        "audit-localnet",
-    ]);
+    assert_parses(&["agcli", "localnet", "stop", "--container", "audit-localnet"]);
 }
 
 #[test]

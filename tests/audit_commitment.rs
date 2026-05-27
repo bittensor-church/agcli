@@ -43,15 +43,19 @@ fn parse_surface_commitment_subcommands_with_realistic_args() {
 
     for args in scenarios {
         let parsed = agcli::cli::Cli::try_parse_from(args);
-        assert!(parsed.is_ok(), "failed to parse args {:?}: {:?}", args, parsed);
+        assert!(
+            parsed.is_ok(),
+            "failed to parse args {:?}: {:?}",
+            args,
+            parsed
+        );
     }
 }
 
 #[tokio::test]
 #[ignore = "requires a running local chain (default ws://127.0.0.1:9944)"]
 async fn green_path_commitment_local_chain() {
-    let ws =
-        std::env::var("AGCLI_LOCAL_WS").unwrap_or_else(|_| "ws://127.0.0.1:9944".to_string());
+    let ws = std::env::var("AGCLI_LOCAL_WS").unwrap_or_else(|_| "ws://127.0.0.1:9944".to_string());
     let netuid = std::env::var("AGCLI_COMMITMENT_NETUID")
         .ok()
         .and_then(|s| s.parse::<u16>().ok())
@@ -72,11 +76,15 @@ async fn green_path_commitment_local_chain() {
         listed.len()
     );
 
-    if std::env::var("AGCLI_AUDIT_COMMITMENT_WRITE").ok().as_deref() != Some("1") {
+    if std::env::var("AGCLI_AUDIT_COMMITMENT_WRITE")
+        .ok()
+        .as_deref()
+        != Some("1")
+    {
         return;
     }
 
-    use sp_core::{Pair, crypto::Ss58Codec, sr25519};
+    use sp_core::{crypto::Ss58Codec, sr25519, Pair};
 
     let signer = sr25519::Pair::from_string("//Alice", None)
         .unwrap_or_else(|e| panic!("failed to derive //Alice signer: {}", e));
@@ -100,7 +108,9 @@ async fn green_path_commitment_local_chain() {
         )
     });
     assert!(
-        fields.iter().any(|f| f.contains("endpoint:http://127.0.0.1:8091")),
+        fields
+            .iter()
+            .any(|f| f.contains("endpoint:http://127.0.0.1:8091")),
         "expected endpoint field in returned commitment fields: {:?}",
         fields
     );

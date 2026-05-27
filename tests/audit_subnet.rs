@@ -7,7 +7,15 @@ fn parse_surface_subnet_all_subcommands() {
         vec!["agcli", "subnet", "list", "--at-block", "500000"],
         vec!["agcli", "subnet", "show", "--netuid", "1"],
         vec!["agcli", "subnet", "info", "--netuid", "1"],
-        vec!["agcli", "subnet", "hyperparams", "--netuid", "1", "--at-block", "400000"],
+        vec![
+            "agcli",
+            "subnet",
+            "hyperparams",
+            "--netuid",
+            "1",
+            "--at-block",
+            "400000",
+        ],
         vec![
             "agcli",
             "subnet",
@@ -19,7 +27,15 @@ fn parse_surface_subnet_all_subcommands() {
             "--full",
             "--save",
         ],
-        vec!["agcli", "subnet", "cache-load", "--netuid", "1", "--block", "777"],
+        vec![
+            "agcli",
+            "subnet",
+            "cache-load",
+            "--netuid",
+            "1",
+            "--block",
+            "777",
+        ],
         vec!["agcli", "subnet", "cache-list", "--netuid", "1"],
         vec![
             "agcli",
@@ -32,7 +48,15 @@ fn parse_surface_subnet_all_subcommands() {
             "--to-block",
             "777",
         ],
-        vec!["agcli", "subnet", "cache-prune", "--netuid", "1", "--keep", "5"],
+        vec![
+            "agcli",
+            "subnet",
+            "cache-prune",
+            "--netuid",
+            "1",
+            "--keep",
+            "5",
+        ],
         vec![
             "agcli",
             "subnet",
@@ -67,13 +91,27 @@ fn parse_surface_subnet_all_subcommands() {
             "--additional",
             "integration-audit",
         ],
-        vec!["agcli", "subnet", "register-leased", "--end-block", "123456"],
+        vec![
+            "agcli",
+            "subnet",
+            "register-leased",
+            "--end-block",
+            "123456",
+        ],
         vec!["agcli", "subnet", "terminate-lease", "--netuid", "1"],
         vec!["agcli", "subnet", "root-dissolve", "--netuid", "1"],
         vec!["agcli", "subnet", "register-neuron", "--netuid", "1"],
         vec!["agcli", "subnet", "pow", "--netuid", "1", "--threads", "8"],
         vec!["agcli", "subnet", "dissolve", "--netuid", "1"],
-        vec!["agcli", "subnet", "watch", "--netuid", "1", "--interval", "12"],
+        vec![
+            "agcli",
+            "subnet",
+            "watch",
+            "--netuid",
+            "1",
+            "--interval",
+            "12",
+        ],
         vec!["agcli", "subnet", "liquidity"],
         vec!["agcli", "subnet", "liquidity", "--netuid", "1"],
         vec![
@@ -99,7 +137,15 @@ fn parse_surface_subnet_all_subcommands() {
             "--hotkey-address",
             "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY",
         ],
-        vec!["agcli", "subnet", "set-param", "--netuid", "1", "--param", "list"],
+        vec![
+            "agcli",
+            "subnet",
+            "set-param",
+            "--netuid",
+            "1",
+            "--param",
+            "list",
+        ],
         vec![
             "agcli",
             "subnet",
@@ -111,9 +157,25 @@ fn parse_surface_subnet_all_subcommands() {
             "--value",
             "360",
         ],
-        vec!["agcli", "subnet", "set-symbol", "--netuid", "1", "--symbol", "SN1"],
+        vec![
+            "agcli",
+            "subnet",
+            "set-symbol",
+            "--netuid",
+            "1",
+            "--symbol",
+            "SN1",
+        ],
         vec!["agcli", "subnet", "emission-split", "--netuid", "1"],
-        vec!["agcli", "subnet", "trim", "--netuid", "1", "--max-uids", "256"],
+        vec![
+            "agcli",
+            "subnet",
+            "trim",
+            "--netuid",
+            "1",
+            "--max-uids",
+            "256",
+        ],
         vec!["agcli", "subnet", "check-start", "--netuid", "1"],
         vec!["agcli", "subnet", "start", "--netuid", "1"],
         vec!["agcli", "subnet", "mechanism-count", "--netuid", "1"],
@@ -153,7 +215,12 @@ fn parse_surface_subnet_all_subcommands() {
 
     for argv in cases {
         let parsed = agcli::cli::Cli::try_parse_from(argv.clone());
-        assert!(parsed.is_ok(), "failed to parse {:?}: {:?}", argv, parsed.err());
+        assert!(
+            parsed.is_ok(),
+            "failed to parse {:?}: {:?}",
+            argv,
+            parsed.err()
+        );
     }
 }
 
@@ -172,5 +239,8 @@ async fn green_path_subnet_local_chain_smoke() {
         .expect("query subnet registration cost");
 
     let subnets = client.get_all_subnets().await.expect("query all subnets");
-    assert!(!subnets.is_empty(), "expected at least one subnet on local chain");
+    assert!(
+        !subnets.is_empty(),
+        "expected at least one subnet on local chain"
+    );
 }

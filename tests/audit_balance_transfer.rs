@@ -39,8 +39,7 @@ fn parse_balance_no_args() {
 
 #[test]
 fn parse_balance_with_address() {
-    let cli =
-        agcli::cli::Cli::try_parse_from(["agcli", "balance", "--address", ALICE]).unwrap();
+    let cli = agcli::cli::Cli::try_parse_from(["agcli", "balance", "--address", ALICE]).unwrap();
     match cli.command {
         agcli::cli::Commands::Balance { address, .. } => {
             assert_eq!(address.as_deref(), Some(ALICE));
@@ -51,8 +50,7 @@ fn parse_balance_with_address() {
 
 #[test]
 fn parse_balance_with_at_block() {
-    let cli =
-        agcli::cli::Cli::try_parse_from(["agcli", "balance", "--at-block", "1000"]).unwrap();
+    let cli = agcli::cli::Cli::try_parse_from(["agcli", "balance", "--at-block", "1000"]).unwrap();
     match cli.command {
         agcli::cli::Commands::Balance { at_block, .. } => {
             assert_eq!(at_block, Some(1000u32));
@@ -64,8 +62,7 @@ fn parse_balance_with_at_block() {
 #[test]
 fn parse_balance_watch_no_interval() {
     // --watch without a value means "use default interval"
-    let cli =
-        agcli::cli::Cli::try_parse_from(["agcli", "balance", "--watch"]).unwrap();
+    let cli = agcli::cli::Cli::try_parse_from(["agcli", "balance", "--watch"]).unwrap();
     match cli.command {
         agcli::cli::Commands::Balance { watch, .. } => {
             // watch == Some(None): flag present, no numeric arg
@@ -77,8 +74,7 @@ fn parse_balance_watch_no_interval() {
 
 #[test]
 fn parse_balance_watch_with_interval() {
-    let cli =
-        agcli::cli::Cli::try_parse_from(["agcli", "balance", "--watch", "30"]).unwrap();
+    let cli = agcli::cli::Cli::try_parse_from(["agcli", "balance", "--watch", "30"]).unwrap();
     match cli.command {
         agcli::cli::Commands::Balance { watch, .. } => {
             assert_eq!(watch, Some(Some(30u64)));
@@ -89,8 +85,7 @@ fn parse_balance_watch_with_interval() {
 
 #[test]
 fn parse_balance_with_threshold() {
-    let cli =
-        agcli::cli::Cli::try_parse_from(["agcli", "balance", "--threshold", "5.0"]).unwrap();
+    let cli = agcli::cli::Cli::try_parse_from(["agcli", "balance", "--threshold", "5.0"]).unwrap();
     match cli.command {
         agcli::cli::Commands::Balance { threshold, .. } => {
             assert!((threshold.unwrap() - 5.0f64).abs() < 1e-9);
@@ -134,10 +129,9 @@ fn parse_balance_all_flags() {
 
 #[test]
 fn parse_transfer_minimal() {
-    let cli = agcli::cli::Cli::try_parse_from([
-        "agcli", "transfer", "--dest", BOB, "--amount", "1.0",
-    ])
-    .unwrap();
+    let cli =
+        agcli::cli::Cli::try_parse_from(["agcli", "transfer", "--dest", BOB, "--amount", "1.0"])
+            .unwrap();
     match cli.command {
         agcli::cli::Commands::Transfer { dest, amount } => {
             assert_eq!(dest, BOB);
@@ -190,8 +184,7 @@ fn parse_transfer_missing_amount_fails() {
 
 #[test]
 fn parse_transfer_all_minimal() {
-    let cli = agcli::cli::Cli::try_parse_from(["agcli", "transfer-all", "--dest", BOB])
-        .unwrap();
+    let cli = agcli::cli::Cli::try_parse_from(["agcli", "transfer-all", "--dest", BOB]).unwrap();
     match cli.command {
         agcli::cli::Commands::TransferAll { dest, keep_alive } => {
             assert_eq!(dest, BOB);
@@ -203,10 +196,9 @@ fn parse_transfer_all_minimal() {
 
 #[test]
 fn parse_transfer_all_keep_alive() {
-    let cli = agcli::cli::Cli::try_parse_from([
-        "agcli", "transfer-all", "--dest", BOB, "--keep-alive",
-    ])
-    .unwrap();
+    let cli =
+        agcli::cli::Cli::try_parse_from(["agcli", "transfer-all", "--dest", BOB, "--keep-alive"])
+            .unwrap();
     match cli.command {
         agcli::cli::Commands::TransferAll { dest, keep_alive } => {
             assert_eq!(dest, BOB);
@@ -219,7 +211,12 @@ fn parse_transfer_all_keep_alive() {
 #[test]
 fn parse_transfer_all_with_global_yes() {
     let cli = agcli::cli::Cli::try_parse_from([
-        "agcli", "--yes", "transfer-all", "--dest", BOB, "--keep-alive",
+        "agcli",
+        "--yes",
+        "transfer-all",
+        "--dest",
+        BOB,
+        "--keep-alive",
     ])
     .unwrap();
     assert!(cli.yes);
@@ -293,8 +290,7 @@ fn parse_transfer_keep_alive_missing_dest_fails() {
 
 #[test]
 fn parse_transfer_keep_alive_missing_amount_fails() {
-    let result =
-        agcli::cli::Cli::try_parse_from(["agcli", "transfer-keep-alive", "--dest", BOB]);
+    let result = agcli::cli::Cli::try_parse_from(["agcli", "transfer-keep-alive", "--dest", BOB]);
     assert!(result.is_err(), "should fail: --amount is required");
 }
 
@@ -304,10 +300,21 @@ fn parse_transfer_keep_alive_missing_amount_fails() {
 fn validate_amount_rejects_negative() {
     let err = agcli::cli::helpers::validate_amount(-1.0, "transfer amount").unwrap_err();
     let msg = format!("{:#}", err);
-    assert!(msg.contains("transfer amount"), "label should appear in error: {}", msg);
-    assert!(msg.contains("negative") || msg.contains("cannot be negative"), "{}", msg);
+    assert!(
+        msg.contains("transfer amount"),
+        "label should appear in error: {}",
+        msg
+    );
+    assert!(
+        msg.contains("negative") || msg.contains("cannot be negative"),
+        "{}",
+        msg
+    );
     // Classifies as VALIDATION exit code
-    assert_eq!(agcli::error::classify(&err), agcli::error::exit_code::VALIDATION);
+    assert_eq!(
+        agcli::error::classify(&err),
+        agcli::error::exit_code::VALIDATION
+    );
 }
 
 #[test]
@@ -315,34 +322,50 @@ fn validate_amount_rejects_zero() {
     let err = agcli::cli::helpers::validate_amount(0.0, "transfer amount").unwrap_err();
     let msg = format!("{:#}", err);
     assert!(msg.contains("transfer amount"), "{}", msg);
-    assert_eq!(agcli::error::classify(&err), agcli::error::exit_code::VALIDATION);
+    assert_eq!(
+        agcli::error::classify(&err),
+        agcli::error::exit_code::VALIDATION
+    );
 }
 
 #[test]
 fn validate_amount_rejects_inf() {
-    let err =
-        agcli::cli::helpers::validate_amount(f64::INFINITY, "transfer amount").unwrap_err();
-    assert_eq!(agcli::error::classify(&err), agcli::error::exit_code::VALIDATION);
+    let err = agcli::cli::helpers::validate_amount(f64::INFINITY, "transfer amount").unwrap_err();
+    assert_eq!(
+        agcli::error::classify(&err),
+        agcli::error::exit_code::VALIDATION
+    );
 }
 
 #[test]
 fn validate_amount_accepts_positive() {
     agcli::cli::helpers::validate_amount(1.0, "transfer amount").unwrap();
-    agcli::cli::helpers::validate_amount(0.000000001, "transfer amount").unwrap(); // 1 RAO
+    agcli::cli::helpers::validate_amount(0.000000001, "transfer amount").unwrap();
+    // 1 RAO
 }
 
 #[test]
 fn validate_ss58_rejects_empty() {
     let err = agcli::cli::helpers::validate_ss58("", "destination").unwrap_err();
     let msg = format!("{:#}", err);
-    assert!(msg.contains("destination") || msg.contains("Invalid"), "{}", msg);
-    assert_eq!(agcli::error::classify(&err), agcli::error::exit_code::VALIDATION);
+    assert!(
+        msg.contains("destination") || msg.contains("Invalid"),
+        "{}",
+        msg
+    );
+    assert_eq!(
+        agcli::error::classify(&err),
+        agcli::error::exit_code::VALIDATION
+    );
 }
 
 #[test]
 fn validate_ss58_rejects_garbage() {
     let err = agcli::cli::helpers::validate_ss58("not_an_ss58", "destination").unwrap_err();
-    assert_eq!(agcli::error::classify(&err), agcli::error::exit_code::VALIDATION);
+    assert_eq!(
+        agcli::error::classify(&err),
+        agcli::error::exit_code::VALIDATION
+    );
 }
 
 #[test]
@@ -353,22 +376,26 @@ fn validate_ss58_accepts_valid_address() {
 
 #[test]
 fn validate_threshold_rejects_negative() {
-    let err =
-        agcli::cli::helpers::validate_threshold(-0.1, "balance --threshold").unwrap_err();
+    let err = agcli::cli::helpers::validate_threshold(-0.1, "balance --threshold").unwrap_err();
     let msg = format!("{:#}", err);
     assert!(
         msg.contains("balance --threshold"),
         "label should appear: {}",
         msg
     );
-    assert_eq!(agcli::error::classify(&err), agcli::error::exit_code::VALIDATION);
+    assert_eq!(
+        agcli::error::classify(&err),
+        agcli::error::exit_code::VALIDATION
+    );
 }
 
 #[test]
 fn validate_threshold_rejects_nan() {
-    let err =
-        agcli::cli::helpers::validate_threshold(f64::NAN, "balance --threshold").unwrap_err();
-    assert_eq!(agcli::error::classify(&err), agcli::error::exit_code::VALIDATION);
+    let err = agcli::cli::helpers::validate_threshold(f64::NAN, "balance --threshold").unwrap_err();
+    assert_eq!(
+        agcli::error::classify(&err),
+        agcli::error::exit_code::VALIDATION
+    );
 }
 
 #[test]
@@ -381,9 +408,8 @@ fn validate_threshold_accepts_zero() {
 
 #[test]
 fn classify_insufficient_balance_error_is_chain() {
-    let err = anyhow::anyhow!(
-        "Insufficient balance: you have 0.5 TAO but trying to transfer 1.0 TAO."
-    );
+    let err =
+        anyhow::anyhow!("Insufficient balance: you have 0.5 TAO but trying to transfer 1.0 TAO.");
     // Contains "insufficient" → CHAIN
     assert_eq!(agcli::error::classify(&err), agcli::error::exit_code::CHAIN);
 }
@@ -391,13 +417,19 @@ fn classify_insufficient_balance_error_is_chain() {
 #[test]
 fn classify_bad_ss58_dest_is_validation() {
     let err = anyhow::anyhow!("Invalid destination address 'garbage'.");
-    assert_eq!(agcli::error::classify(&err), agcli::error::exit_code::VALIDATION);
+    assert_eq!(
+        agcli::error::classify(&err),
+        agcli::error::exit_code::VALIDATION
+    );
 }
 
 #[test]
 fn classify_bad_amount_is_validation() {
     let err = anyhow::anyhow!("Invalid transfer amount: -1. Amount cannot be negative.");
-    assert_eq!(agcli::error::classify(&err), agcli::error::exit_code::VALIDATION);
+    assert_eq!(
+        agcli::error::classify(&err),
+        agcli::error::exit_code::VALIDATION
+    );
 }
 
 // ──── balance type round-trip ─────────────────────────────────────────────────
@@ -432,12 +464,24 @@ fn balance_zero_is_zero() {
 fn dry_run_is_global_not_subcommand() {
     // --dry-run must be before the subcommand
     let ok = agcli::cli::Cli::try_parse_from([
-        "agcli", "--dry-run", "transfer", "--dest", BOB, "--amount", "1.0",
+        "agcli",
+        "--dry-run",
+        "transfer",
+        "--dest",
+        BOB,
+        "--amount",
+        "1.0",
     ]);
     assert!(ok.is_ok());
     // --dry-run after the subcommand is not recognized
     let bad = agcli::cli::Cli::try_parse_from([
-        "agcli", "transfer", "--dest", BOB, "--amount", "1.0", "--dry-run",
+        "agcli",
+        "transfer",
+        "--dest",
+        BOB,
+        "--amount",
+        "1.0",
+        "--dry-run",
     ]);
     assert!(bad.is_err(), "dry-run after subcommand should not parse");
 }
@@ -476,7 +520,10 @@ async fn green_path_balance_transfer_localnet() {
         .get_balance_ss58(ALICE)
         .await
         .expect("get_balance_ss58 must succeed");
-    assert!(alice_balance.rao() > 0, "Alice should have funds on devnet-ready");
+    assert!(
+        alice_balance.rao() > 0,
+        "Alice should have funds on devnet-ready"
+    );
 
     // 2. Balance query — Bob (may be zero)
     let bob_before = client
@@ -485,10 +532,7 @@ async fn green_path_balance_transfer_localnet() {
         .expect("get_balance_ss58 Bob must succeed");
 
     // 3. Historical query — block 0 must resolve (devnet starts at 0)
-    let block_hash = client
-        .get_block_hash(0)
-        .await
-        .expect("block 0 must exist");
+    let block_hash = client.get_block_hash(0).await.expect("block 0 must exist");
     let _genesis_balance = client
         .get_balance_at_block(ALICE, block_hash)
         .await
@@ -496,8 +540,8 @@ async fn green_path_balance_transfer_localnet() {
 
     // 4. transfer_allow_death: Alice → Bob, 0.001 TAO
     use sp_core::Pair as _;
-    let alice_pair = sp_core::sr25519::Pair::from_string("//Alice", None)
-        .expect("//Alice is a valid dev key");
+    let alice_pair =
+        sp_core::sr25519::Pair::from_string("//Alice", None).expect("//Alice is a valid dev key");
     let amount = agcli::types::Balance::from_tao(0.001);
     let hash = client
         .transfer(&alice_pair, BOB, amount)

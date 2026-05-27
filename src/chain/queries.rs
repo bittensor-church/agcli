@@ -1619,7 +1619,7 @@ impl Client {
                 }
             }
         }
-        results.sort_by(|a, b| b.1.cmp(&a.1)); // Sort by amount descending
+        results.sort_by_key(|item| std::cmp::Reverse(item.1)); // Sort by amount descending
         Ok(results)
     }
 

@@ -38,18 +38,30 @@ fn is_stake(cli: &Cli) -> &StakeCommands {
 fn parse_stake_list_minimal() {
     let cli = parse(&["agcli", "stake", "list"]);
     let cmd = is_stake(&cli);
-    assert!(matches!(cmd, StakeCommands::List { address: None, at_block: None }));
+    assert!(matches!(
+        cmd,
+        StakeCommands::List {
+            address: None,
+            at_block: None
+        }
+    ));
 }
 
 #[test]
 fn parse_stake_list_with_address() {
     let cli = parse(&[
-        "agcli", "stake", "list",
-        "--address", "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY",
+        "agcli",
+        "stake",
+        "list",
+        "--address",
+        "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY",
     ]);
     let cmd = is_stake(&cli);
     match cmd {
-        StakeCommands::List { address: Some(a), at_block: None } => {
+        StakeCommands::List {
+            address: Some(a),
+            at_block: None,
+        } => {
             assert_eq!(a, "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY");
         }
         other => panic!("unexpected variant: {other:?}"),
@@ -61,7 +73,10 @@ fn parse_stake_list_at_block() {
     let cli = parse(&["agcli", "stake", "list", "--at-block", "4000000"]);
     let cmd = is_stake(&cli);
     match cmd {
-        StakeCommands::List { address: None, at_block: Some(b) } => assert_eq!(*b, 4_000_000),
+        StakeCommands::List {
+            address: None,
+            at_block: Some(b),
+        } => assert_eq!(*b, 4_000_000),
         other => panic!("unexpected: {other:?}"),
     }
 }
@@ -69,14 +84,21 @@ fn parse_stake_list_at_block() {
 #[test]
 fn parse_stake_list_address_and_block() {
     let cli = parse(&[
-        "agcli", "stake", "list",
-        "--address", "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY",
-        "--at-block", "3500000",
+        "agcli",
+        "stake",
+        "list",
+        "--address",
+        "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY",
+        "--at-block",
+        "3500000",
     ]);
     let cmd = is_stake(&cli);
     assert!(matches!(
         cmd,
-        StakeCommands::List { address: Some(_), at_block: Some(_) }
+        StakeCommands::List {
+            address: Some(_),
+            at_block: Some(_)
+        }
     ));
 }
 
@@ -85,14 +107,25 @@ fn parse_stake_list_address_and_block() {
 #[test]
 fn parse_stake_add_minimal() {
     let cli = parse(&[
-        "agcli", "--yes", "--password", "p",
-        "stake", "add",
-        "--amount", "10.0",
-        "--netuid", "1",
+        "agcli",
+        "--yes",
+        "--password",
+        "p",
+        "stake",
+        "add",
+        "--amount",
+        "10.0",
+        "--netuid",
+        "1",
     ]);
     let cmd = is_stake(&cli);
     match cmd {
-        StakeCommands::Add { amount, netuid, hotkey: None, max_slippage: None } => {
+        StakeCommands::Add {
+            amount,
+            netuid,
+            hotkey: None,
+            max_slippage: None,
+        } => {
             assert_eq!(*netuid, 1u16);
             assert!((*amount - 10.0).abs() < 1e-9);
         }
@@ -103,16 +136,29 @@ fn parse_stake_add_minimal() {
 #[test]
 fn parse_stake_add_with_hotkey_and_slippage() {
     let cli = parse(&[
-        "agcli", "--yes", "--password", "p",
-        "stake", "add",
-        "--amount", "5.0",
-        "--netuid", "3",
-        "--hotkey-address", "5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty",
-        "--max-slippage", "2.0",
+        "agcli",
+        "--yes",
+        "--password",
+        "p",
+        "stake",
+        "add",
+        "--amount",
+        "5.0",
+        "--netuid",
+        "3",
+        "--hotkey-address",
+        "5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty",
+        "--max-slippage",
+        "2.0",
     ]);
     let cmd = is_stake(&cli);
     match cmd {
-        StakeCommands::Add { amount, netuid, hotkey: Some(hk), max_slippage: Some(slip) } => {
+        StakeCommands::Add {
+            amount,
+            netuid,
+            hotkey: Some(hk),
+            max_slippage: Some(slip),
+        } => {
             assert_eq!(*netuid, 3u16);
             assert!((amount - 5.0).abs() < 1e-9);
             assert_eq!(hk, "5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty");
@@ -145,14 +191,25 @@ fn parse_stake_add_missing_netuid_fails() {
 #[test]
 fn parse_stake_remove_minimal() {
     let cli = parse(&[
-        "agcli", "--yes", "--password", "p",
-        "stake", "remove",
-        "--amount", "1.0",
-        "--netuid", "1",
+        "agcli",
+        "--yes",
+        "--password",
+        "p",
+        "stake",
+        "remove",
+        "--amount",
+        "1.0",
+        "--netuid",
+        "1",
     ]);
     let cmd = is_stake(&cli);
     match cmd {
-        StakeCommands::Remove { amount, netuid, hotkey: None, max_slippage: None } => {
+        StakeCommands::Remove {
+            amount,
+            netuid,
+            hotkey: None,
+            max_slippage: None,
+        } => {
             assert_eq!(*netuid, 1u16);
             assert!((amount - 1.0).abs() < 1e-9);
         }
@@ -163,16 +220,26 @@ fn parse_stake_remove_minimal() {
 #[test]
 fn parse_stake_remove_with_slippage() {
     let cli = parse(&[
-        "agcli", "--yes", "--password", "p",
-        "stake", "remove",
-        "--amount", "2.0",
-        "--netuid", "2",
-        "--max-slippage", "1.5",
+        "agcli",
+        "--yes",
+        "--password",
+        "p",
+        "stake",
+        "remove",
+        "--amount",
+        "2.0",
+        "--netuid",
+        "2",
+        "--max-slippage",
+        "1.5",
     ]);
     let cmd = is_stake(&cli);
     assert!(matches!(
         cmd,
-        StakeCommands::Remove { max_slippage: Some(_), .. }
+        StakeCommands::Remove {
+            max_slippage: Some(_),
+            ..
+        }
     ));
 }
 
@@ -181,15 +248,27 @@ fn parse_stake_remove_with_slippage() {
 #[test]
 fn parse_stake_move_minimal() {
     let cli = parse(&[
-        "agcli", "--yes", "--password", "p",
-        "stake", "move",
-        "--amount", "1.0",
-        "--from", "1",
-        "--to", "2",
+        "agcli",
+        "--yes",
+        "--password",
+        "p",
+        "stake",
+        "move",
+        "--amount",
+        "1.0",
+        "--from",
+        "1",
+        "--to",
+        "2",
     ]);
     let cmd = is_stake(&cli);
     match cmd {
-        StakeCommands::Move { amount, from, to, hotkey: None } => {
+        StakeCommands::Move {
+            amount,
+            from,
+            to,
+            hotkey: None,
+        } => {
             assert_eq!(*from, 1u16);
             assert_eq!(*to, 2u16);
             assert!((amount - 1.0).abs() < 1e-9);
@@ -201,15 +280,29 @@ fn parse_stake_move_minimal() {
 #[test]
 fn parse_stake_move_with_hotkey() {
     let cli = parse(&[
-        "agcli", "--yes", "--password", "p",
-        "stake", "move",
-        "--amount", "0.5",
-        "--from", "1",
-        "--to", "3",
-        "--hotkey-address", "5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty",
+        "agcli",
+        "--yes",
+        "--password",
+        "p",
+        "stake",
+        "move",
+        "--amount",
+        "0.5",
+        "--from",
+        "1",
+        "--to",
+        "3",
+        "--hotkey-address",
+        "5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty",
     ]);
     let cmd = is_stake(&cli);
-    assert!(matches!(cmd, StakeCommands::Move { hotkey: Some(_), .. }));
+    assert!(matches!(
+        cmd,
+        StakeCommands::Move {
+            hotkey: Some(_),
+            ..
+        }
+    ));
 }
 
 // ── stake swap ───────────────────────────────────────────────────────────────
@@ -217,11 +310,18 @@ fn parse_stake_move_with_hotkey() {
 #[test]
 fn parse_stake_swap_minimal() {
     let cli = parse(&[
-        "agcli", "--yes", "--password", "p",
-        "stake", "swap",
-        "--amount", "1.0",
-        "--from", "1",
-        "--to", "2",
+        "agcli",
+        "--yes",
+        "--password",
+        "p",
+        "stake",
+        "swap",
+        "--amount",
+        "1.0",
+        "--from",
+        "1",
+        "--to",
+        "2",
     ]);
     let cmd = is_stake(&cli);
     assert!(matches!(cmd, StakeCommands::Swap { .. }));
@@ -239,9 +339,14 @@ fn parse_stake_unstake_all_minimal() {
 #[test]
 fn parse_stake_unstake_all_with_hotkey() {
     let cli = parse(&[
-        "agcli", "--yes", "--password", "p",
-        "stake", "unstake-all",
-        "--hotkey-address", "5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty",
+        "agcli",
+        "--yes",
+        "--password",
+        "p",
+        "stake",
+        "unstake-all",
+        "--hotkey-address",
+        "5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty",
     ]);
     let cmd = is_stake(&cli);
     assert!(matches!(cmd, StakeCommands::UnstakeAll { hotkey: Some(_) }));
@@ -251,20 +356,38 @@ fn parse_stake_unstake_all_with_hotkey() {
 
 #[test]
 fn parse_stake_unstake_all_alpha_minimal() {
-    let cli = parse(&["agcli", "--yes", "--password", "p", "stake", "unstake-all-alpha"]);
+    let cli = parse(&[
+        "agcli",
+        "--yes",
+        "--password",
+        "p",
+        "stake",
+        "unstake-all-alpha",
+    ]);
     let cmd = is_stake(&cli);
-    assert!(matches!(cmd, StakeCommands::UnstakeAllAlpha { hotkey: None }));
+    assert!(matches!(
+        cmd,
+        StakeCommands::UnstakeAllAlpha { hotkey: None }
+    ));
 }
 
 #[test]
 fn parse_stake_unstake_all_alpha_with_hotkey() {
     let cli = parse(&[
-        "agcli", "--yes", "--password", "p",
-        "stake", "unstake-all-alpha",
-        "--hotkey-address", "5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty",
+        "agcli",
+        "--yes",
+        "--password",
+        "p",
+        "stake",
+        "unstake-all-alpha",
+        "--hotkey-address",
+        "5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty",
     ]);
     let cmd = is_stake(&cli);
-    assert!(matches!(cmd, StakeCommands::UnstakeAllAlpha { hotkey: Some(_) }));
+    assert!(matches!(
+        cmd,
+        StakeCommands::UnstakeAllAlpha { hotkey: Some(_) }
+    ));
 }
 
 // ── stake claim-root ──────────────────────────────────────────────────────────
@@ -272,9 +395,14 @@ fn parse_stake_unstake_all_alpha_with_hotkey() {
 #[test]
 fn parse_stake_claim_root_with_netuid() {
     let cli = parse(&[
-        "agcli", "--yes", "--password", "p",
-        "stake", "claim-root",
-        "--netuid", "1",
+        "agcli",
+        "--yes",
+        "--password",
+        "p",
+        "stake",
+        "claim-root",
+        "--netuid",
+        "1",
     ]);
     let cmd = is_stake(&cli);
     match cmd {
@@ -297,15 +425,28 @@ fn parse_stake_claim_root_missing_netuid_fails() {
 #[test]
 fn parse_stake_add_limit_minimal() {
     let cli = parse(&[
-        "agcli", "--yes", "--password", "p",
-        "stake", "add-limit",
-        "--amount", "10.0",
-        "--netuid", "1",
-        "--price", "0.5",
+        "agcli",
+        "--yes",
+        "--password",
+        "p",
+        "stake",
+        "add-limit",
+        "--amount",
+        "10.0",
+        "--netuid",
+        "1",
+        "--price",
+        "0.5",
     ]);
     let cmd = is_stake(&cli);
     match cmd {
-        StakeCommands::AddLimit { amount, netuid, price, partial, hotkey: None } => {
+        StakeCommands::AddLimit {
+            amount,
+            netuid,
+            price,
+            partial,
+            hotkey: None,
+        } => {
             assert!((amount - 10.0).abs() < 1e-9);
             assert_eq!(*netuid, 1u16);
             assert!((price - 0.5).abs() < 1e-9);
@@ -318,11 +459,18 @@ fn parse_stake_add_limit_minimal() {
 #[test]
 fn parse_stake_add_limit_with_partial() {
     let cli = parse(&[
-        "agcli", "--yes", "--password", "p",
-        "stake", "add-limit",
-        "--amount", "10.0",
-        "--netuid", "1",
-        "--price", "0.5",
+        "agcli",
+        "--yes",
+        "--password",
+        "p",
+        "stake",
+        "add-limit",
+        "--amount",
+        "10.0",
+        "--netuid",
+        "1",
+        "--price",
+        "0.5",
         "--partial",
     ]);
     let cmd = is_stake(&cli);
@@ -334,15 +482,28 @@ fn parse_stake_add_limit_with_partial() {
 #[test]
 fn parse_stake_remove_limit_minimal() {
     let cli = parse(&[
-        "agcli", "--yes", "--password", "p",
-        "stake", "remove-limit",
-        "--amount", "5.0",
-        "--netuid", "1",
-        "--price", "0.8",
+        "agcli",
+        "--yes",
+        "--password",
+        "p",
+        "stake",
+        "remove-limit",
+        "--amount",
+        "5.0",
+        "--netuid",
+        "1",
+        "--price",
+        "0.8",
     ]);
     let cmd = is_stake(&cli);
     match cmd {
-        StakeCommands::RemoveLimit { amount, netuid, price, partial, hotkey: None } => {
+        StakeCommands::RemoveLimit {
+            amount,
+            netuid,
+            price,
+            partial,
+            hotkey: None,
+        } => {
             assert!((amount - 5.0).abs() < 1e-9);
             assert_eq!(*netuid, 1u16);
             assert!((price - 0.8).abs() < 1e-9);
@@ -357,16 +518,31 @@ fn parse_stake_remove_limit_minimal() {
 #[test]
 fn parse_stake_swap_limit_minimal() {
     let cli = parse(&[
-        "agcli", "--yes", "--password", "p",
-        "stake", "swap-limit",
-        "--amount", "5.0",
-        "--from", "1",
-        "--to", "2",
-        "--price", "0.5",
+        "agcli",
+        "--yes",
+        "--password",
+        "p",
+        "stake",
+        "swap-limit",
+        "--amount",
+        "5.0",
+        "--from",
+        "1",
+        "--to",
+        "2",
+        "--price",
+        "0.5",
     ]);
     let cmd = is_stake(&cli);
     match cmd {
-        StakeCommands::SwapLimit { amount, from, to, price, partial, hotkey: None } => {
+        StakeCommands::SwapLimit {
+            amount,
+            from,
+            to,
+            price,
+            partial,
+            hotkey: None,
+        } => {
             assert!((amount - 5.0).abs() < 1e-9);
             assert_eq!(*from, 1u16);
             assert_eq!(*to, 2u16);
@@ -380,16 +556,27 @@ fn parse_stake_swap_limit_minimal() {
 #[test]
 fn parse_stake_swap_limit_with_partial() {
     let cli = parse(&[
-        "agcli", "--yes", "--password", "p",
-        "stake", "swap-limit",
-        "--amount", "5.0",
-        "--from", "1",
-        "--to", "2",
-        "--price", "0.5",
+        "agcli",
+        "--yes",
+        "--password",
+        "p",
+        "stake",
+        "swap-limit",
+        "--amount",
+        "5.0",
+        "--from",
+        "1",
+        "--to",
+        "2",
+        "--price",
+        "0.5",
         "--partial",
     ]);
     let cmd = is_stake(&cli);
-    assert!(matches!(cmd, StakeCommands::SwapLimit { partial: true, .. }));
+    assert!(matches!(
+        cmd,
+        StakeCommands::SwapLimit { partial: true, .. }
+    ));
 }
 
 // ── stake childkey-take ───────────────────────────────────────────────────────
@@ -397,14 +584,24 @@ fn parse_stake_swap_limit_with_partial() {
 #[test]
 fn parse_stake_childkey_take_minimal() {
     let cli = parse(&[
-        "agcli", "--yes", "--password", "p",
-        "stake", "childkey-take",
-        "--take", "10.0",
-        "--netuid", "1",
+        "agcli",
+        "--yes",
+        "--password",
+        "p",
+        "stake",
+        "childkey-take",
+        "--take",
+        "10.0",
+        "--netuid",
+        "1",
     ]);
     let cmd = is_stake(&cli);
     match cmd {
-        StakeCommands::ChildkeyTake { take, netuid, hotkey: None } => {
+        StakeCommands::ChildkeyTake {
+            take,
+            netuid,
+            hotkey: None,
+        } => {
             assert!((take - 10.0).abs() < 1e-9);
             assert_eq!(*netuid, 1u16);
         }
@@ -415,10 +612,16 @@ fn parse_stake_childkey_take_minimal() {
 #[test]
 fn parse_stake_childkey_take_max_allowed() {
     let cli = parse(&[
-        "agcli", "--yes", "--password", "p",
-        "stake", "childkey-take",
-        "--take", "18.0",
-        "--netuid", "1",
+        "agcli",
+        "--yes",
+        "--password",
+        "p",
+        "stake",
+        "childkey-take",
+        "--take",
+        "18.0",
+        "--netuid",
+        "1",
     ]);
     let cmd = is_stake(&cli);
     assert!(matches!(cmd, StakeCommands::ChildkeyTake { .. }));
@@ -427,10 +630,16 @@ fn parse_stake_childkey_take_max_allowed() {
 #[test]
 fn parse_stake_childkey_take_zero() {
     let cli = parse(&[
-        "agcli", "--yes", "--password", "p",
-        "stake", "childkey-take",
-        "--take", "0.0",
-        "--netuid", "1",
+        "agcli",
+        "--yes",
+        "--password",
+        "p",
+        "stake",
+        "childkey-take",
+        "--take",
+        "0.0",
+        "--netuid",
+        "1",
     ]);
     // Clap parses 0.0 successfully (validation is runtime, not clap-layer)
     assert!(matches!(is_stake(&cli), StakeCommands::ChildkeyTake { .. }));
@@ -441,15 +650,24 @@ fn parse_stake_childkey_take_zero() {
 #[test]
 fn parse_stake_set_children_minimal() {
     let cli = parse(&[
-        "agcli", "--yes", "--password", "p",
-        "stake", "set-children",
-        "--netuid", "1",
+        "agcli",
+        "--yes",
+        "--password",
+        "p",
+        "stake",
+        "set-children",
+        "--netuid",
+        "1",
         "--children",
         "0.5:5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty",
     ]);
     let cmd = is_stake(&cli);
     match cmd {
-        StakeCommands::SetChildren { netuid, children, hotkey: None } => {
+        StakeCommands::SetChildren {
+            netuid,
+            children,
+            hotkey: None,
+        } => {
             assert_eq!(*netuid, 1u16);
             assert!(children.contains("5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty"));
         }
@@ -475,14 +693,24 @@ fn parse_stake_set_children_multiple() {
 #[test]
 fn parse_stake_recycle_alpha_minimal() {
     let cli = parse(&[
-        "agcli", "--yes", "--password", "p",
-        "stake", "recycle-alpha",
-        "--amount", "100.0",
-        "--netuid", "1",
+        "agcli",
+        "--yes",
+        "--password",
+        "p",
+        "stake",
+        "recycle-alpha",
+        "--amount",
+        "100.0",
+        "--netuid",
+        "1",
     ]);
     let cmd = is_stake(&cli);
     match cmd {
-        StakeCommands::RecycleAlpha { amount, netuid, hotkey: None } => {
+        StakeCommands::RecycleAlpha {
+            amount,
+            netuid,
+            hotkey: None,
+        } => {
             assert!((amount - 100.0).abs() < 1e-9);
             assert_eq!(*netuid, 1u16);
         }
@@ -495,14 +723,24 @@ fn parse_stake_recycle_alpha_minimal() {
 #[test]
 fn parse_stake_burn_alpha_minimal() {
     let cli = parse(&[
-        "agcli", "--yes", "--password", "p",
-        "stake", "burn-alpha",
-        "--amount", "50.0",
-        "--netuid", "1",
+        "agcli",
+        "--yes",
+        "--password",
+        "p",
+        "stake",
+        "burn-alpha",
+        "--amount",
+        "50.0",
+        "--netuid",
+        "1",
     ]);
     let cmd = is_stake(&cli);
     match cmd {
-        StakeCommands::BurnAlpha { amount, netuid, hotkey: None } => {
+        StakeCommands::BurnAlpha {
+            amount,
+            netuid,
+            hotkey: None,
+        } => {
             assert!((amount - 50.0).abs() < 1e-9);
             assert_eq!(*netuid, 1u16);
         }
@@ -515,13 +753,21 @@ fn parse_stake_burn_alpha_minimal() {
 #[test]
 fn parse_stake_set_auto_minimal() {
     let cli = parse(&[
-        "agcli", "--yes", "--password", "p",
-        "stake", "set-auto",
-        "--netuid", "1",
+        "agcli",
+        "--yes",
+        "--password",
+        "p",
+        "stake",
+        "set-auto",
+        "--netuid",
+        "1",
     ]);
     let cmd = is_stake(&cli);
     match cmd {
-        StakeCommands::SetAuto { netuid, hotkey: None } => assert_eq!(*netuid, 1u16),
+        StakeCommands::SetAuto {
+            netuid,
+            hotkey: None,
+        } => assert_eq!(*netuid, 1u16),
         other => panic!("unexpected: {other:?}"),
     }
 }
@@ -529,13 +775,25 @@ fn parse_stake_set_auto_minimal() {
 #[test]
 fn parse_stake_set_auto_with_hotkey() {
     let cli = parse(&[
-        "agcli", "--yes", "--password", "p",
-        "stake", "set-auto",
-        "--netuid", "1",
-        "--hotkey-address", "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY",
+        "agcli",
+        "--yes",
+        "--password",
+        "p",
+        "stake",
+        "set-auto",
+        "--netuid",
+        "1",
+        "--hotkey-address",
+        "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY",
     ]);
     let cmd = is_stake(&cli);
-    assert!(matches!(cmd, StakeCommands::SetAuto { hotkey: Some(_), .. }));
+    assert!(matches!(
+        cmd,
+        StakeCommands::SetAuto {
+            hotkey: Some(_),
+            ..
+        }
+    ));
 }
 
 // ── stake show-auto ───────────────────────────────────────────────────────────
@@ -550,8 +808,11 @@ fn parse_stake_show_auto_minimal() {
 #[test]
 fn parse_stake_show_auto_with_address() {
     let cli = parse(&[
-        "agcli", "stake", "show-auto",
-        "--address", "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY",
+        "agcli",
+        "stake",
+        "show-auto",
+        "--address",
+        "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY",
     ]);
     let cmd = is_stake(&cli);
     assert!(matches!(cmd, StakeCommands::ShowAuto { address: Some(_) }));
@@ -561,24 +822,41 @@ fn parse_stake_show_auto_with_address() {
 
 #[test]
 fn parse_stake_process_claim_minimal() {
-    let cli = parse(&["agcli", "--yes", "--password", "p", "stake", "process-claim"]);
+    let cli = parse(&[
+        "agcli",
+        "--yes",
+        "--password",
+        "p",
+        "stake",
+        "process-claim",
+    ]);
     let cmd = is_stake(&cli);
     assert!(matches!(
         cmd,
-        StakeCommands::ProcessClaim { hotkey: None, netuids: None }
+        StakeCommands::ProcessClaim {
+            hotkey: None,
+            netuids: None
+        }
     ));
 }
 
 #[test]
 fn parse_stake_process_claim_with_netuids() {
     let cli = parse(&[
-        "agcli", "--yes", "--password", "p",
-        "stake", "process-claim",
-        "--netuids", "1,2,3",
+        "agcli",
+        "--yes",
+        "--password",
+        "p",
+        "stake",
+        "process-claim",
+        "--netuids",
+        "1,2,3",
     ]);
     let cmd = is_stake(&cli);
     match cmd {
-        StakeCommands::ProcessClaim { netuids: Some(n), .. } => {
+        StakeCommands::ProcessClaim {
+            netuids: Some(n), ..
+        } => {
             assert_eq!(n, "1,2,3");
         }
         other => panic!("unexpected: {other:?}"),
@@ -588,15 +866,24 @@ fn parse_stake_process_claim_with_netuids() {
 #[test]
 fn parse_stake_process_claim_with_hotkey_and_netuids() {
     let cli = parse(&[
-        "agcli", "--yes", "--password", "p",
-        "stake", "process-claim",
-        "--hotkey-address", "5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty",
-        "--netuids", "5,10",
+        "agcli",
+        "--yes",
+        "--password",
+        "p",
+        "stake",
+        "process-claim",
+        "--hotkey-address",
+        "5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty",
+        "--netuids",
+        "5,10",
     ]);
     let cmd = is_stake(&cli);
     assert!(matches!(
         cmd,
-        StakeCommands::ProcessClaim { hotkey: Some(_), netuids: Some(_) }
+        StakeCommands::ProcessClaim {
+            hotkey: Some(_),
+            netuids: Some(_)
+        }
     ));
 }
 
@@ -605,13 +892,21 @@ fn parse_stake_process_claim_with_hotkey_and_netuids() {
 #[test]
 fn parse_stake_set_claim_swap() {
     let cli = parse(&[
-        "agcli", "--yes", "--password", "p",
-        "stake", "set-claim",
-        "--claim-type", "swap",
+        "agcli",
+        "--yes",
+        "--password",
+        "p",
+        "stake",
+        "set-claim",
+        "--claim-type",
+        "swap",
     ]);
     let cmd = is_stake(&cli);
     match cmd {
-        StakeCommands::SetClaim { claim_type, subnets: None } => {
+        StakeCommands::SetClaim {
+            claim_type,
+            subnets: None,
+        } => {
             assert_eq!(claim_type, "swap");
         }
         other => panic!("unexpected: {other:?}"),
@@ -621,9 +916,14 @@ fn parse_stake_set_claim_swap() {
 #[test]
 fn parse_stake_set_claim_keep() {
     let cli = parse(&[
-        "agcli", "--yes", "--password", "p",
-        "stake", "set-claim",
-        "--claim-type", "keep",
+        "agcli",
+        "--yes",
+        "--password",
+        "p",
+        "stake",
+        "set-claim",
+        "--claim-type",
+        "keep",
     ]);
     let cmd = is_stake(&cli);
     assert!(matches!(cmd, StakeCommands::SetClaim { claim_type, .. } if claim_type == "keep"));
@@ -632,14 +932,23 @@ fn parse_stake_set_claim_keep() {
 #[test]
 fn parse_stake_set_claim_keep_subnets() {
     let cli = parse(&[
-        "agcli", "--yes", "--password", "p",
-        "stake", "set-claim",
-        "--claim-type", "keep-subnets",
-        "--subnets", "1,2,3",
+        "agcli",
+        "--yes",
+        "--password",
+        "p",
+        "stake",
+        "set-claim",
+        "--claim-type",
+        "keep-subnets",
+        "--subnets",
+        "1,2,3",
     ]);
     let cmd = is_stake(&cli);
     match cmd {
-        StakeCommands::SetClaim { claim_type, subnets: Some(s) } => {
+        StakeCommands::SetClaim {
+            claim_type,
+            subnets: Some(s),
+        } => {
             assert_eq!(claim_type, "keep-subnets");
             assert_eq!(s, "1,2,3");
         }
@@ -650,8 +959,11 @@ fn parse_stake_set_claim_keep_subnets() {
 #[test]
 fn parse_stake_set_claim_invalid_type_fails() {
     let err = parse_fails(&[
-        "agcli", "stake", "set-claim",
-        "--claim-type", "invalid-type",
+        "agcli",
+        "stake",
+        "set-claim",
+        "--claim-type",
+        "invalid-type",
     ]);
     // clap value_parser should reject invalid claim types
     assert!(
@@ -665,16 +977,30 @@ fn parse_stake_set_claim_invalid_type_fails() {
 #[test]
 fn parse_stake_transfer_stake_minimal() {
     let cli = parse(&[
-        "agcli", "--yes", "--password", "p",
-        "stake", "transfer-stake",
-        "--dest", "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY",
-        "--amount", "10.0",
-        "--from", "1",
-        "--to", "2",
+        "agcli",
+        "--yes",
+        "--password",
+        "p",
+        "stake",
+        "transfer-stake",
+        "--dest",
+        "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY",
+        "--amount",
+        "10.0",
+        "--from",
+        "1",
+        "--to",
+        "2",
     ]);
     let cmd = is_stake(&cli);
     match cmd {
-        StakeCommands::TransferStake { dest, amount, from, to, hotkey: None } => {
+        StakeCommands::TransferStake {
+            dest,
+            amount,
+            from,
+            to,
+            hotkey: None,
+        } => {
             assert_eq!(dest, "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY");
             assert!((amount - 10.0).abs() < 1e-9);
             assert_eq!(*from, 1u16);
@@ -687,10 +1013,15 @@ fn parse_stake_transfer_stake_minimal() {
 #[test]
 fn parse_stake_transfer_stake_missing_dest_fails() {
     let err = parse_fails(&[
-        "agcli", "stake", "transfer-stake",
-        "--amount", "10.0",
-        "--from", "1",
-        "--to", "2",
+        "agcli",
+        "stake",
+        "transfer-stake",
+        "--amount",
+        "10.0",
+        "--from",
+        "1",
+        "--to",
+        "2",
     ]);
     assert!(
         err.contains("dest") || err.contains("required"),
@@ -703,14 +1034,24 @@ fn parse_stake_transfer_stake_missing_dest_fails() {
 #[test]
 fn parse_stake_remove_full_limit_minimal() {
     let cli = parse(&[
-        "agcli", "--yes", "--password", "p",
-        "stake", "remove-full-limit",
-        "--netuid", "1",
-        "--price", "0.001",
+        "agcli",
+        "--yes",
+        "--password",
+        "p",
+        "stake",
+        "remove-full-limit",
+        "--netuid",
+        "1",
+        "--price",
+        "0.001",
     ]);
     let cmd = is_stake(&cli);
     match cmd {
-        StakeCommands::RemoveFullLimit { netuid, price, hotkey: None } => {
+        StakeCommands::RemoveFullLimit {
+            netuid,
+            price,
+            hotkey: None,
+        } => {
             assert_eq!(*netuid, 1u16);
             assert!((price - 0.001).abs() < 1e-9);
         }
@@ -721,14 +1062,27 @@ fn parse_stake_remove_full_limit_minimal() {
 #[test]
 fn parse_stake_remove_full_limit_with_hotkey() {
     let cli = parse(&[
-        "agcli", "--yes", "--password", "p",
-        "stake", "remove-full-limit",
-        "--netuid", "1",
-        "--price", "0.5",
-        "--hotkey-address", "5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty",
+        "agcli",
+        "--yes",
+        "--password",
+        "p",
+        "stake",
+        "remove-full-limit",
+        "--netuid",
+        "1",
+        "--price",
+        "0.5",
+        "--hotkey-address",
+        "5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty",
     ]);
     let cmd = is_stake(&cli);
-    assert!(matches!(cmd, StakeCommands::RemoveFullLimit { hotkey: Some(_), .. }));
+    assert!(matches!(
+        cmd,
+        StakeCommands::RemoveFullLimit {
+            hotkey: Some(_),
+            ..
+        }
+    ));
 }
 
 // ── stake wizard ──────────────────────────────────────────────────────────────
@@ -736,15 +1090,26 @@ fn parse_stake_remove_full_limit_with_hotkey() {
 #[test]
 fn parse_stake_wizard_all_flags() {
     let cli = parse(&[
-        "agcli", "--yes", "--password", "p",
-        "stake", "wizard",
-        "--netuid", "1",
-        "--amount", "5.0",
-        "--hotkey-address", "5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty",
+        "agcli",
+        "--yes",
+        "--password",
+        "p",
+        "stake",
+        "wizard",
+        "--netuid",
+        "1",
+        "--amount",
+        "5.0",
+        "--hotkey-address",
+        "5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty",
     ]);
     let cmd = is_stake(&cli);
     match cmd {
-        StakeCommands::Wizard { netuid: Some(n), amount: Some(a), hotkey: Some(_) } => {
+        StakeCommands::Wizard {
+            netuid: Some(n),
+            amount: Some(a),
+            hotkey: Some(_),
+        } => {
             assert_eq!(*n, 1u16);
             assert!((a - 5.0).abs() < 1e-9);
         }
@@ -759,7 +1124,11 @@ fn parse_stake_wizard_minimal_no_flags() {
     let cmd = is_stake(&cli);
     assert!(matches!(
         cmd,
-        StakeCommands::Wizard { netuid: None, amount: None, hotkey: None }
+        StakeCommands::Wizard {
+            netuid: None,
+            amount: None,
+            hotkey: None
+        }
     ));
 }
 
@@ -768,10 +1137,17 @@ fn parse_stake_wizard_minimal_no_flags() {
 #[test]
 fn parse_stake_add_with_mev_flag() {
     let cli = parse(&[
-        "agcli", "--yes", "--password", "p", "--mev",
-        "stake", "add",
-        "--amount", "10.0",
-        "--netuid", "1",
+        "agcli",
+        "--yes",
+        "--password",
+        "p",
+        "--mev",
+        "stake",
+        "add",
+        "--amount",
+        "10.0",
+        "--netuid",
+        "1",
     ]);
     assert!(cli.mev, "--mev flag should set mev=true");
     assert!(matches!(is_stake(&cli), StakeCommands::Add { .. }));
@@ -854,8 +1230,14 @@ fn safe_rao_consistent_with_balance_from_tao() {
 #[test]
 fn validate_limit_price_rejects_zero_and_negative() {
     use agcli::cli::helpers::validate_limit_price;
-    assert!(validate_limit_price(0.0, "price").is_err(), "zero price should fail");
-    assert!(validate_limit_price(-0.1, "price").is_err(), "negative price should fail");
+    assert!(
+        validate_limit_price(0.0, "price").is_err(),
+        "zero price should fail"
+    );
+    assert!(
+        validate_limit_price(-0.1, "price").is_err(),
+        "negative price should fail"
+    );
 }
 
 #[test]
@@ -889,12 +1271,20 @@ fn process_claim_netuid_parsing_warns_on_invalid() {
 fn set_claim_empty_subnets_string_does_not_panic() {
     // The SetClaim handler splits on ',' and skips empty tokens — verify parse accepts optional
     let cli = parse(&[
-        "agcli", "--yes", "--password", "p",
-        "stake", "set-claim",
-        "--claim-type", "keep-subnets",
+        "agcli",
+        "--yes",
+        "--password",
+        "p",
+        "stake",
+        "set-claim",
+        "--claim-type",
+        "keep-subnets",
     ]);
     // Missing --subnets is fine — it's Option<String>
-    assert!(matches!(is_stake(&cli), StakeCommands::SetClaim { subnets: None, .. }));
+    assert!(matches!(
+        is_stake(&cli),
+        StakeCommands::SetClaim { subnets: None, .. }
+    ));
 }
 
 // ── error classification cross-check ─────────────────────────────────────────
@@ -975,10 +1365,14 @@ fn green_path_stake_localnet() {
     // 1. stake list — read-only, no wallet required
     let out = Command::new(&bin)
         .args([
-            "--endpoint", "ws://127.0.0.1:9944",
-            "--output", "json",
-            "stake", "list",
-            "--address", "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY",
+            "--endpoint",
+            "ws://127.0.0.1:9944",
+            "--output",
+            "json",
+            "stake",
+            "list",
+            "--address",
+            "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY",
         ])
         .output()
         .expect("failed to run agcli stake list");
@@ -989,8 +1383,9 @@ fn green_path_stake_localnet() {
     );
     let stdout = String::from_utf8_lossy(&out.stdout);
     // JSON output must be valid JSON (array or object)
-    let parsed: serde_json::Value = serde_json::from_str(&stdout)
-        .unwrap_or_else(|e| panic!("stake list --output json produced invalid JSON: {e}\nstdout: {stdout}"));
+    let parsed: serde_json::Value = serde_json::from_str(&stdout).unwrap_or_else(|e| {
+        panic!("stake list --output json produced invalid JSON: {e}\nstdout: {stdout}")
+    });
     assert!(
         parsed.is_array() || parsed.is_object(),
         "stake list JSON must be array or object"
@@ -999,9 +1394,12 @@ fn green_path_stake_localnet() {
     // 2. stake show-auto — read-only
     let out = Command::new(&bin)
         .args([
-            "--endpoint", "ws://127.0.0.1:9944",
-            "stake", "show-auto",
-            "--address", "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY",
+            "--endpoint",
+            "ws://127.0.0.1:9944",
+            "stake",
+            "show-auto",
+            "--address",
+            "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY",
         ])
         .output()
         .expect("failed to run agcli stake show-auto");

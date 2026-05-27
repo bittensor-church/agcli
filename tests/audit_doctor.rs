@@ -73,7 +73,10 @@ async fn doctor_green_path_local_chain() {
         .get_total_networks()
         .await
         .expect("total-networks probe should succeed");
-    assert!(head > 0, "local chain should have produced at least one block");
+    assert!(
+        head > 0,
+        "local chain should have produced at least one block"
+    );
 
     cli::commands::execute(cli)
         .await

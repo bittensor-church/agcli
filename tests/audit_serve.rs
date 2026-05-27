@@ -37,8 +37,19 @@ fn parse_serve_axon_required_args() {
 #[test]
 fn parse_serve_axon_with_protocol_and_version() {
     assert_parses(&[
-        "agcli", "serve", "axon", "--netuid", "1", "--ip", "10.0.0.1", "--port", "8091",
-        "--protocol", "4", "--version", "720",
+        "agcli",
+        "serve",
+        "axon",
+        "--netuid",
+        "1",
+        "--ip",
+        "10.0.0.1",
+        "--port",
+        "8091",
+        "--protocol",
+        "4",
+        "--version",
+        "720",
     ]);
 }
 
@@ -75,15 +86,26 @@ fn parse_serve_axon_missing_port_fails() {
 
 #[test]
 fn parse_serve_axon_missing_netuid_fails() {
-    assert_fails(&["agcli", "serve", "axon", "--ip", "1.2.3.4", "--port", "8091"]);
+    assert_fails(&[
+        "agcli", "serve", "axon", "--ip", "1.2.3.4", "--port", "8091",
+    ]);
 }
 
 // no --ip-type flag exists (audit finding: IPv6 not exposed)
 #[test]
 fn parse_serve_axon_no_ip_type_flag() {
     assert_fails(&[
-        "agcli", "serve", "axon", "--netuid", "1", "--ip", "::1", "--port", "8091",
-        "--ip-type", "6",
+        "agcli",
+        "serve",
+        "axon",
+        "--netuid",
+        "1",
+        "--ip",
+        "::1",
+        "--port",
+        "8091",
+        "--ip-type",
+        "6",
     ]);
 }
 
@@ -124,10 +146,7 @@ fn parse_serve_batch_axon_missing_file_fails() {
 
 #[test]
 fn parse_serve_batch_axon_file_field() {
-    let cli = parse(&[
-        "agcli", "serve", "batch-axon", "--file", "/tmp/axons.json",
-    ])
-    .unwrap();
+    let cli = parse(&["agcli", "serve", "batch-axon", "--file", "/tmp/axons.json"]).unwrap();
     match cli.command {
         agcli::cli::Commands::Serve(agcli::cli::ServeCommands::BatchAxon { file }) => {
             assert_eq!(file, "/tmp/axons.json");
@@ -141,25 +160,57 @@ fn parse_serve_batch_axon_file_field() {
 #[test]
 fn parse_serve_prometheus_required_args() {
     assert_parses(&[
-        "agcli", "serve", "prometheus", "--netuid", "1", "--ip", "1.2.3.4", "--port", "9090",
+        "agcli",
+        "serve",
+        "prometheus",
+        "--netuid",
+        "1",
+        "--ip",
+        "1.2.3.4",
+        "--port",
+        "9090",
     ]);
 }
 
 #[test]
 fn parse_serve_prometheus_missing_netuid_fails() {
     // Audit finding: docs example omits --netuid but CLI requires it
-    assert_fails(&["agcli", "serve", "prometheus", "--ip", "1.2.3.4", "--port", "9090"]);
+    assert_fails(&[
+        "agcli",
+        "serve",
+        "prometheus",
+        "--ip",
+        "1.2.3.4",
+        "--port",
+        "9090",
+    ]);
 }
 
 #[test]
 fn parse_serve_prometheus_missing_ip_fails() {
-    assert_fails(&["agcli", "serve", "prometheus", "--netuid", "1", "--port", "9090"]);
+    assert_fails(&[
+        "agcli",
+        "serve",
+        "prometheus",
+        "--netuid",
+        "1",
+        "--port",
+        "9090",
+    ]);
 }
 
 #[test]
 fn parse_serve_prometheus_version_default_is_0() {
     let cli = parse(&[
-        "agcli", "serve", "prometheus", "--netuid", "1", "--ip", "1.2.3.4", "--port", "9090",
+        "agcli",
+        "serve",
+        "prometheus",
+        "--netuid",
+        "1",
+        "--ip",
+        "1.2.3.4",
+        "--port",
+        "9090",
     ])
     .unwrap();
     match cli.command {
@@ -182,8 +233,17 @@ fn parse_serve_prometheus_version_default_is_0() {
 #[test]
 fn parse_serve_axon_tls_required_args() {
     assert_parses(&[
-        "agcli", "serve", "axon-tls", "--netuid", "1", "--ip", "1.2.3.4", "--port", "8091",
-        "--cert", "/tmp/cert.pem",
+        "agcli",
+        "serve",
+        "axon-tls",
+        "--netuid",
+        "1",
+        "--ip",
+        "1.2.3.4",
+        "--port",
+        "8091",
+        "--cert",
+        "/tmp/cert.pem",
     ]);
 }
 
@@ -197,7 +257,14 @@ fn parse_serve_axon_tls_missing_cert_fails() {
 #[test]
 fn parse_serve_axon_tls_missing_netuid_fails() {
     assert_fails(&[
-        "agcli", "serve", "axon-tls", "--ip", "1.2.3.4", "--port", "8091", "--cert",
+        "agcli",
+        "serve",
+        "axon-tls",
+        "--ip",
+        "1.2.3.4",
+        "--port",
+        "8091",
+        "--cert",
         "/tmp/cert.pem",
     ]);
 }
@@ -205,8 +272,21 @@ fn parse_serve_axon_tls_missing_netuid_fails() {
 #[test]
 fn parse_serve_axon_tls_fields() {
     let cli = parse(&[
-        "agcli", "serve", "axon-tls", "--netuid", "2", "--ip", "192.168.1.1", "--port", "8091",
-        "--protocol", "4", "--version", "100", "--cert", "/tmp/cert.der",
+        "agcli",
+        "serve",
+        "axon-tls",
+        "--netuid",
+        "2",
+        "--ip",
+        "192.168.1.1",
+        "--port",
+        "8091",
+        "--protocol",
+        "4",
+        "--version",
+        "100",
+        "--cert",
+        "/tmp/cert.der",
     ])
     .unwrap();
     match cli.command {
@@ -255,8 +335,17 @@ fn parse_serve_axon_with_global_yes_and_wallet() {
 #[test]
 fn parse_serve_axon_with_network_flag() {
     let cli = parse(&[
-        "agcli", "--network", "test", "serve", "axon", "--netuid", "1", "--ip", "1.2.3.4",
-        "--port", "8091",
+        "agcli",
+        "--network",
+        "test",
+        "serve",
+        "axon",
+        "--netuid",
+        "1",
+        "--ip",
+        "1.2.3.4",
+        "--port",
+        "8091",
     ])
     .unwrap();
     assert_eq!(cli.network, "test");
@@ -277,7 +366,11 @@ fn parse_serve_unknown_subcommand_fails() {
 #[test]
 fn helper_validate_ipv4_valid() {
     let result = agcli::cli::helpers::validate_ipv4("1.2.3.4");
-    assert!(result.is_ok(), "valid IPv4 should parse: {:?}", result.err());
+    assert!(
+        result.is_ok(),
+        "valid IPv4 should parse: {:?}",
+        result.err()
+    );
 }
 
 #[test]
@@ -308,7 +401,11 @@ fn helper_validate_port_valid() {
 fn helper_validate_batch_axon_json_minimal() {
     let json = r#"[{"netuid":1,"ip":"1.2.3.4","port":8091}]"#;
     let result = agcli::cli::helpers::validate_batch_axon_json(json);
-    assert!(result.is_ok(), "minimal batch entry should be valid: {:?}", result.err());
+    assert!(
+        result.is_ok(),
+        "minimal batch entry should be valid: {:?}",
+        result.err()
+    );
     assert_eq!(result.unwrap().len(), 1);
 }
 
@@ -344,7 +441,10 @@ fn helper_validate_batch_axon_json_empty_array() {
     // the validator gate means an empty file fails before reaching that path.
     let json = r#"[]"#;
     let result = agcli::cli::helpers::validate_batch_axon_json(json);
-    assert!(result.is_err(), "empty array is rejected by validate_batch_axon_json");
+    assert!(
+        result.is_err(),
+        "empty array is rejected by validate_batch_axon_json"
+    );
 }
 
 // ─── localnet green-path (requires Docker + running subtensor localnet) ─────
@@ -374,10 +474,8 @@ async fn green_path_serve_axon_localnet() {
 
     // Use Alice's well-known test mnemonic so we don't need to register first.
     // Alice is pre-funded and registered in the localnet genesis.
-    let mnemonic =
-        "bottom drive obey lake curtain smoke basket hold race lonely fit walk";
-    let pair = agcli::wallet::keypair::pair_from_mnemonic(mnemonic)
-        .expect("derive alice pair");
+    let mnemonic = "bottom drive obey lake curtain smoke basket hold race lonely fit walk";
+    let pair = agcli::wallet::keypair::pair_from_mnemonic(mnemonic).expect("derive alice pair");
 
     let ip_u128 = agcli::cli::helpers::validate_ipv4("1.2.3.4").expect("parse IP");
     let axon = agcli::types::chain_data::AxonInfo {
@@ -396,15 +494,11 @@ async fn green_path_serve_axon_localnet() {
     assert!(!hash.is_empty(), "tx hash should be non-empty: {hash}");
 
     let hash2 = client
-        .serve_prometheus(
-            &pair,
-            agcli::types::network::NetUid(0),
-            0,
-            ip_u128,
-            9090,
-            4,
-        )
+        .serve_prometheus(&pair, agcli::types::network::NetUid(0), 0, ip_u128, 9090, 4)
         .await
         .expect("serve_prometheus on root net");
-    assert!(!hash2.is_empty(), "prometheus tx hash should be non-empty: {hash2}");
+    assert!(
+        !hash2.is_empty(),
+        "prometheus tx hash should be non-empty: {hash2}"
+    );
 }

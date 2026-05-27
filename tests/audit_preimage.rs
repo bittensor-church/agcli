@@ -18,7 +18,11 @@ fn parse_surface_preimage_note_with_args() {
         "--args",
         r#"["0x68656c6c6f", 42, true]"#,
     ]);
-    assert!(cli.is_ok(), "preimage note with args should parse: {:?}", cli.err());
+    assert!(
+        cli.is_ok(),
+        "preimage note with args should parse: {:?}",
+        cli.err()
+    );
 }
 
 #[test]

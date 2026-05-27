@@ -28,7 +28,7 @@ fn parse_wallet_create_minimal() {
             hotkey_name,
             password,
             no_mnemonic,
-        })         => {
+        }) => {
             assert_eq!(name, "default");
             // Audit finding: WalletCommands::Create::hotkey_name conflicts with the global
             // Cli::hotkey_name (flag --hotkey-name, default "default"). Clap resolves this by
@@ -117,7 +117,11 @@ fn parse_wallet_import_with_mnemonic() {
     ])
     .unwrap();
     match cli.command {
-        agcli::cli::Commands::Wallet(WalletCommands::Import { name, mnemonic, password }) => {
+        agcli::cli::Commands::Wallet(WalletCommands::Import {
+            name,
+            mnemonic,
+            password,
+        }) => {
             assert_eq!(name, "imported");
             assert!(mnemonic.is_some());
             assert_eq!(password.as_deref(), Some("pw"));
@@ -168,8 +172,7 @@ fn parse_wallet_regen_coldkey_with_mnemonic() {
 
 #[test]
 fn parse_wallet_regen_hotkey() {
-    let cli = Cli::try_parse_from(["agcli", "wallet", "regen-hotkey", "--name", "miner1"])
-        .unwrap();
+    let cli = Cli::try_parse_from(["agcli", "wallet", "regen-hotkey", "--name", "miner1"]).unwrap();
     match cli.command {
         agcli::cli::Commands::Wallet(WalletCommands::RegenHotkey { name, .. }) => {
             assert_eq!(name, "miner1");
@@ -420,8 +423,7 @@ fn parse_wallet_show_mnemonic_minimal() {
 #[test]
 fn parse_wallet_show_mnemonic_with_password() {
     let cli =
-        Cli::try_parse_from(["agcli", "wallet", "show-mnemonic", "--password", "hunter2"])
-            .unwrap();
+        Cli::try_parse_from(["agcli", "wallet", "show-mnemonic", "--password", "hunter2"]).unwrap();
     match cli.command {
         agcli::cli::Commands::Wallet(WalletCommands::ShowMnemonic { password }) => {
             assert_eq!(password.as_deref(), Some("hunter2"));
@@ -455,14 +457,17 @@ async fn green_path_wallet_create() {
     .await;
     assert!(result.is_ok(), "wallet create failed: {:?}", result.err());
     assert!(dir.path().join("audit_test").join("coldkey").exists());
-    assert!(dir.path().join("audit_test").join("coldkeypub.txt").exists());
-    assert!(
-        dir.path()
-            .join("audit_test")
-            .join("hotkeys")
-            .join("default")
-            .exists()
-    );
+    assert!(dir
+        .path()
+        .join("audit_test")
+        .join("coldkeypub.txt")
+        .exists());
+    assert!(dir
+        .path()
+        .join("audit_test")
+        .join("hotkeys")
+        .join("default")
+        .exists());
 }
 
 #[tokio::test]
@@ -573,13 +578,12 @@ async fn green_path_wallet_regen_hotkey() {
         "wallet regen-hotkey failed: {:?}",
         result.err()
     );
-    assert!(
-        dir.path()
-            .join("regen_hk")
-            .join("hotkeys")
-            .join("newhotkey")
-            .exists()
-    );
+    assert!(dir
+        .path()
+        .join("regen_hk")
+        .join("hotkeys")
+        .join("newhotkey")
+        .exists());
 }
 
 #[tokio::test]
@@ -601,13 +605,12 @@ async fn green_path_wallet_new_hotkey() {
         "wallet new-hotkey failed: {:?}",
         result.err()
     );
-    assert!(
-        dir.path()
-            .join("newhk_test")
-            .join("hotkeys")
-            .join("miner99")
-            .exists()
-    );
+    assert!(dir
+        .path()
+        .join("newhk_test")
+        .join("hotkeys")
+        .join("miner99")
+        .exists());
 }
 
 #[tokio::test]
@@ -616,8 +619,7 @@ async fn green_path_wallet_derive_pubkey() {
     // Alice's known public key in 0x hex (32 bytes)
     let result = handle_wallet(
         WalletCommands::Derive {
-            input: "0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d"
-                .to_string(),
+            input: "0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d".to_string(),
         },
         dir.path().to_str().unwrap(),
         "default",
@@ -625,7 +627,11 @@ async fn green_path_wallet_derive_pubkey() {
         OutputFormat::Json,
     )
     .await;
-    assert!(result.is_ok(), "wallet derive pubkey failed: {:?}", result.err());
+    assert!(
+        result.is_ok(),
+        "wallet derive pubkey failed: {:?}",
+        result.err()
+    );
 }
 
 #[tokio::test]
@@ -672,7 +678,9 @@ async fn green_path_wallet_dev_key() {
         std::fs::read_to_string(dir.path().join("alice").join("coldkeypub.txt")).unwrap();
     // Alice's known hex public key (32 bytes, no 0x prefix)
     assert!(
-        pub_content.trim().contains("d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d"),
+        pub_content
+            .trim()
+            .contains("d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d"),
         "Alice's hex pubkey not found in coldkeypub.txt: {}",
         pub_content
     );
@@ -681,9 +689,13 @@ async fn green_path_wallet_dev_key() {
 #[tokio::test]
 async fn green_path_wallet_sign_and_verify() {
     let dir = tempfile::tempdir().unwrap();
-    let (wallet, _, _) =
-        agcli::Wallet::create(dir.path().to_str().unwrap(), "sv_audit", "signpw", "default")
-            .unwrap();
+    let (wallet, _, _) = agcli::Wallet::create(
+        dir.path().to_str().unwrap(),
+        "sv_audit",
+        "signpw",
+        "default",
+    )
+    .unwrap();
     let coldkey_ss58 = wallet.coldkey_ss58().unwrap().to_string();
 
     // Sign a message
@@ -697,7 +709,11 @@ async fn green_path_wallet_sign_and_verify() {
         OutputFormat::Json,
     )
     .await;
-    assert!(sign_result.is_ok(), "wallet sign failed: {:?}", sign_result.err());
+    assert!(
+        sign_result.is_ok(),
+        "wallet sign failed: {:?}",
+        sign_result.err()
+    );
 
     // Verify always uses the signer's public key — just test parse path here
     let verify_result = handle_wallet(
@@ -832,7 +848,11 @@ async fn wallet_sign_hex_message_roundtrip() {
         OutputFormat::Json,
     )
     .await;
-    assert!(result.is_ok(), "hex message sign failed: {:?}", result.err());
+    assert!(
+        result.is_ok(),
+        "hex message sign failed: {:?}",
+        result.err()
+    );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -853,8 +873,7 @@ async fn green_path_associate_hotkey_localnet() {
     let base = dir.path().to_str().unwrap();
 
     // Create Alice wallet (well-funded dev account on localnet)
-    let alice_wallet =
-        agcli::Wallet::create_from_uri(base, "//Alice", "alicepw").unwrap();
+    let alice_wallet = agcli::Wallet::create_from_uri(base, "//Alice", "alicepw").unwrap();
     let coldkey_ss58 = alice_wallet.coldkey_ss58().unwrap().to_string();
 
     // Create a fresh hotkey
@@ -862,9 +881,9 @@ async fn green_path_associate_hotkey_localnet() {
     let hk_ss58 = agcli::wallet::keypair::to_ss58(&hk_pair.public(), 42);
 
     // Connect to local chain
-    let client = agcli::Client::connect("ws://127.0.0.1:9944").await.expect(
-        "localnet not reachable — ensure `agcli localnet start` is running on port 9944",
-    );
+    let client = agcli::Client::connect("ws://127.0.0.1:9944")
+        .await
+        .expect("localnet not reachable — ensure `agcli localnet start` is running on port 9944");
 
     // Unlock Alice's coldkey
     let mut wallet = agcli::Wallet::open(format!("{}/alice", base)).unwrap();
@@ -879,7 +898,11 @@ async fn green_path_associate_hotkey_localnet() {
         result.err()
     );
     let tx_hash = result.unwrap();
-    assert!(tx_hash.starts_with("0x"), "expected tx hash, got: {}", tx_hash);
+    assert!(
+        tx_hash.starts_with("0x"),
+        "expected tx hash, got: {}",
+        tx_hash
+    );
 
     println!(
         "associate-hotkey green path: coldkey={} hotkey={} tx={}",
