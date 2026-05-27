@@ -447,15 +447,15 @@
       "dependsOn": [
         "audit-contracts"
       ],
-      "agentId": null,
-      "runId": null,
+      "agentId": "bc-2f9b9b50-a84e-4a2e-ad62-475336b3ff3c",
+      "runId": "run-e0ed0387-33e3-464e-88d7-84cf2cfa6f88",
       "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
       "status": "running",
       "resultStatus": null,
       "handoffPath": null,
       "startedAt": "2026-05-27T12:35:11.542Z",
       "finishedAt": null,
-      "lastUpdate": "2026-05-27T12:35:11.542Z",
+      "lastUpdate": "2026-05-27T12:35:15.401Z",
       "note": "respawned by self-planner (was error; attempts=2)",
       "attempts": 3,
       "slackTs": null,
@@ -676,17 +676,17 @@
       "agentId": "bc-2c8c9a3a-a338-4b1d-b72c-ed00d1c2716d",
       "runId": "run-c581318a-1445-4ca4-bf20-2f72b3bd841d",
       "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
-      "status": "running",
-      "resultStatus": null,
-      "handoffPath": null,
+      "status": "error",
+      "resultStatus": "error",
+      "handoffPath": "handoffs/audit-completions-update.md",
       "startedAt": "2026-05-27T12:34:57.966Z",
-      "finishedAt": null,
-      "lastUpdate": "2026-05-27T12:35:01.539Z",
+      "finishedAt": "2026-05-27T12:35:22.631Z",
+      "lastUpdate": "2026-05-27T12:35:22.631Z",
       "note": "respawned by self-planner (was error; attempts=2)",
       "attempts": 3,
       "slackTs": null,
       "prNumber": null,
-      "failureMode": null,
+      "failureMode": "unknown",
       "verification": null
     },
     {
@@ -2470,6 +2470,10 @@
     {
       "at": "2026-05-27T12:35:09.480Z",
       "message": "audit-view: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-view-failure.md"
+    },
+    {
+      "at": "2026-05-27T12:35:22.629Z",
+      "message": "audit-completions-update: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status"
     }
   ]
 }
