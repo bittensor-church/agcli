@@ -340,12 +340,12 @@
       "agentId": "bc-9ef1dd41-e414-4fe7-bde5-12dfd77910d2",
       "runId": "run-be17fce9-bd8d-4ff5-8263-d5a8e94c8f12",
       "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
-      "status": "running",
-      "resultStatus": null,
-      "handoffPath": null,
+      "status": "handed-off",
+      "resultStatus": "finished",
+      "handoffPath": "handoffs/audit-scheduler.md",
       "startedAt": "2026-05-27T11:34:11.028Z",
-      "finishedAt": null,
-      "lastUpdate": "2026-05-27T11:34:14.009Z",
+      "finishedAt": "2026-05-27T11:45:11.101Z",
+      "lastUpdate": "2026-05-27T11:45:11.101Z",
       "note": "respawned by self-planner (was error; attempts=1)",
       "attempts": 2,
       "slackTs": null,
@@ -455,13 +455,13 @@
       "handoffPath": "handoffs/audit-drand.md",
       "startedAt": "2026-05-27T11:34:20.233Z",
       "finishedAt": "2026-05-27T11:44:37.271Z",
-      "lastUpdate": "2026-05-27T11:44:37.271Z",
+      "lastUpdate": "2026-05-27T11:45:11.077Z",
       "note": "respawned by self-planner (was error; attempts=1)",
       "attempts": 2,
       "slackTs": null,
       "prNumber": null,
       "failureMode": null,
-      "verification": null
+      "verification": "unit-test-verified"
     },
     {
       "name": "audit-crowdloan",
@@ -2105,6 +2105,10 @@
     {
       "at": "2026-05-27T11:39:45.185Z",
       "message": "audit-swap-keys: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-swap-keys-failure.md"
+    },
+    {
+      "at": "2026-05-27T11:45:11.078Z",
+      "message": "audit-drand: verification self-reported (unit-test-verified)"
     }
   ]
 }
