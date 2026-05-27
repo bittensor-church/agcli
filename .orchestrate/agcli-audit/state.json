@@ -29,20 +29,20 @@
       "branch": "orch/agcli-audit/audit-wallet",
       "startingRef": "cursor/agcli-subtensor-audit-e2e7",
       "dependsOn": [],
-      "agentId": "bc-9b380bd6-7b10-456f-8921-d351f2c5522a",
-      "runId": "run-dbb80bce-4055-42a5-8acc-21b56decb98d",
+      "agentId": null,
+      "runId": null,
       "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
-      "status": "error",
-      "resultStatus": "error",
-      "handoffPath": "handoffs/audit-wallet.md",
-      "startedAt": "2026-05-27T11:33:25.383Z",
-      "finishedAt": "2026-05-27T11:34:12.235Z",
-      "lastUpdate": "2026-05-27T11:34:12.235Z",
-      "note": "respawned by self-planner (was error; attempts=1)",
+      "status": "pending",
+      "resultStatus": null,
+      "handoffPath": null,
+      "startedAt": null,
+      "finishedAt": null,
+      "lastUpdate": "2026-05-27T11:58:24.513Z",
+      "note": "respawned by self-planner (was error; attempts=2)",
       "attempts": 2,
       "slackTs": null,
       "prNumber": null,
-      "failureMode": "unknown",
+      "failureMode": null,
       "verification": null
     },
     {
@@ -2134,6 +2134,10 @@
     {
       "at": "2026-05-27T11:50:40.579Z",
       "message": "audit-admin: verification self-reported (type-check-only)"
+    },
+    {
+      "at": "2026-05-27T11:58:24.137Z",
+      "message": "bootstrap-env: respawned by self-planner (was error)"
     }
   ]
 }
