@@ -384,17 +384,17 @@
       "agentId": "bc-90359b80-dc83-460b-b669-c12e2abb64c1",
       "runId": "run-114b8196-a496-461d-9e32-60461854be5b",
       "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
-      "status": "running",
-      "resultStatus": null,
-      "handoffPath": null,
+      "status": "error",
+      "resultStatus": "error",
+      "handoffPath": "handoffs/audit-contracts.md",
       "startedAt": "2026-05-27T11:34:14.011Z",
-      "finishedAt": null,
-      "lastUpdate": "2026-05-27T11:34:17.096Z",
+      "finishedAt": "2026-05-27T11:35:04.555Z",
+      "lastUpdate": "2026-05-27T11:35:04.555Z",
       "note": "respawned by self-planner (was error; attempts=1)",
       "attempts": 2,
       "slackTs": null,
       "prNumber": null,
-      "failureMode": null,
+      "failureMode": "unknown",
       "verification": null
     },
     {
@@ -733,15 +733,15 @@
       "branch": "orch/agcli-audit/audit-admin",
       "startingRef": "cursor/agcli-subtensor-audit-e2e7",
       "dependsOn": [],
-      "agentId": null,
-      "runId": null,
+      "agentId": "bc-f85e68a1-ec09-4e9b-9e79-4f4154fd48ae",
+      "runId": "run-8d11a630-ca8e-4555-9159-5ff5e57c36b9",
       "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
       "status": "running",
       "resultStatus": null,
       "handoffPath": null,
       "startedAt": "2026-05-27T11:34:58.478Z",
       "finishedAt": null,
-      "lastUpdate": "2026-05-27T11:34:58.478Z",
+      "lastUpdate": "2026-05-27T11:35:01.865Z",
       "note": "respawned by self-planner (was error; attempts=1)",
       "attempts": 2,
       "slackTs": null,
@@ -1985,6 +1985,10 @@
     {
       "at": "2026-05-27T11:34:55.893Z",
       "message": "audit-safe-mode: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-safe-mode-failure.md"
+    },
+    {
+      "at": "2026-05-27T11:35:04.551Z",
+      "message": "audit-contracts: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status"
     }
   ]
 }
