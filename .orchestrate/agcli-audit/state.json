@@ -675,13 +675,13 @@
       "handoffPath": "handoffs/audit-audit-cmd.md",
       "startedAt": "2026-05-27T11:34:45.454Z",
       "finishedAt": "2026-05-27T11:47:00.283Z",
-      "lastUpdate": "2026-05-27T11:47:00.284Z",
+      "lastUpdate": "2026-05-27T11:47:30.582Z",
       "note": "respawned by self-planner (was error; attempts=1)",
       "attempts": 2,
       "slackTs": null,
       "prNumber": null,
       "failureMode": null,
-      "verification": null
+      "verification": "unit-test-verified"
     },
     {
       "name": "audit-batch",
@@ -869,17 +869,18 @@
       "agentId": null,
       "runId": null,
       "parentAgentId": null,
-      "status": "pending",
+      "status": "running",
       "resultStatus": null,
       "handoffPath": null,
-      "startedAt": null,
+      "startedAt": "2026-05-27T11:47:30.606Z",
       "finishedAt": null,
-      "lastUpdate": null,
+      "lastUpdate": "2026-05-27T11:47:30.606Z",
       "note": null,
       "slackTs": null,
       "prNumber": null,
       "failureMode": null,
-      "verification": null
+      "verification": null,
+      "attempts": 1
     },
     {
       "name": "verify-readonly-batch",
@@ -2121,6 +2122,10 @@
     {
       "at": "2026-05-27T11:47:00.279Z",
       "message": "audit-crowdloan: verification self-reported (type-check-only)"
+    },
+    {
+      "at": "2026-05-27T11:47:30.583Z",
+      "message": "audit-audit-cmd: verification self-reported (unit-test-verified)"
     }
   ]
 }
