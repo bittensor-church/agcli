@@ -7,15 +7,15 @@
       "branch": "orch/agcli-audit/bootstrap-env",
       "startingRef": "cursor/agcli-subtensor-audit-e2e7",
       "dependsOn": [],
-      "agentId": null,
-      "runId": null,
+      "agentId": "bc-ad166916-bce6-4acc-9653-4be1c1579983",
+      "runId": "run-a6223dad-e15e-436a-8c05-2dc44a90590a",
       "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
       "status": "running",
       "resultStatus": null,
       "handoffPath": null,
       "startedAt": "2026-05-27T12:09:49.037Z",
       "finishedAt": null,
-      "lastUpdate": "2026-05-27T12:09:49.037Z",
+      "lastUpdate": "2026-05-27T12:10:58.326Z",
       "note": "respawned by self-planner (was error; attempts=3)",
       "attempts": 4,
       "slackTs": null,
@@ -32,14 +32,14 @@
       "agentId": null,
       "runId": null,
       "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
-      "status": "pending",
+      "status": "running",
       "resultStatus": null,
       "handoffPath": null,
-      "startedAt": null,
+      "startedAt": "2026-05-27T12:10:58.329Z",
       "finishedAt": null,
-      "lastUpdate": "2026-05-27T11:58:24.513Z",
+      "lastUpdate": "2026-05-27T12:10:58.329Z",
       "note": "respawned by self-planner (was error; attempts=2)",
-      "attempts": 2,
+      "attempts": 3,
       "slackTs": null,
       "prNumber": null,
       "failureMode": null,
@@ -499,13 +499,13 @@
       "handoffPath": "handoffs/audit-crowdloan.md",
       "startedAt": "2026-05-27T11:34:23.080Z",
       "finishedAt": "2026-05-27T11:46:25.485Z",
-      "lastUpdate": "2026-05-27T11:47:00.278Z",
+      "lastUpdate": "2026-05-27T12:10:58.321Z",
       "note": "respawned by self-planner (was error; attempts=1)",
       "attempts": 2,
       "slackTs": null,
       "prNumber": null,
       "failureMode": null,
-      "verification": "type-check-only"
+      "verification": "verifier-failed"
     },
     {
       "name": "audit-liquidity",
@@ -2258,6 +2258,10 @@
     {
       "at": "2026-05-27T12:09:20.880Z",
       "message": "audit-utils-cli: respawned by self-planner (was error)"
+    },
+    {
+      "at": "2026-05-27T12:10:58.323Z",
+      "message": "audit-crowdloan: verification recorded (verifier-failed) by verifier verify-economy-batch"
     }
   ]
 }
