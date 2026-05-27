@@ -447,20 +447,20 @@
       "dependsOn": [
         "audit-contracts"
       ],
-      "agentId": "bc-2f9b9b50-a84e-4a2e-ad62-475336b3ff3c",
-      "runId": "run-e0ed0387-33e3-464e-88d7-84cf2cfa6f88",
+      "agentId": null,
+      "runId": null,
       "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
-      "status": "error",
-      "resultStatus": "error",
-      "handoffPath": "handoffs/audit-safe-mode.md",
-      "startedAt": "2026-05-27T12:35:11.542Z",
-      "finishedAt": "2026-05-27T12:36:11.371Z",
-      "lastUpdate": "2026-05-27T12:36:11.371Z",
-      "note": "respawned by self-planner (was error; attempts=2)",
+      "status": "pending",
+      "resultStatus": null,
+      "handoffPath": null,
+      "startedAt": null,
+      "finishedAt": null,
+      "lastUpdate": "2026-05-27T12:42:14.157Z",
+      "note": "respawned by self-planner (was error; attempts=3)",
       "attempts": 3,
       "slackTs": null,
       "prNumber": null,
-      "failureMode": "unknown",
+      "failureMode": null,
       "verification": null
     },
     {
@@ -2510,6 +2510,10 @@
     {
       "at": "2026-05-27T12:42:11.506Z",
       "message": "audit-view: respawned by self-planner (was error)"
+    },
+    {
+      "at": "2026-05-27T12:42:13.719Z",
+      "message": "audit-swap-keys: respawned by self-planner (was error)"
     }
   ]
 }
