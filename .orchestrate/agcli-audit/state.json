@@ -827,11 +827,11 @@
       "finishedAt": null,
       "lastUpdate": "2026-05-27T13:49:23.927Z",
       "note": null,
+      "attempts": 1,
       "slackTs": null,
       "prNumber": null,
       "failureMode": null,
-      "verification": null,
-      "attempts": 1
+      "verification": null
     },
     {
       "name": "verify-network-batch",
@@ -1003,11 +1003,11 @@
       "finishedAt": null,
       "lastUpdate": "2026-05-27T13:49:27.245Z",
       "note": null,
+      "attempts": 1,
       "slackTs": null,
       "prNumber": null,
       "failureMode": null,
-      "verification": null,
-      "attempts": 1
+      "verification": null
     },
     {
       "name": "fix-events-pretty",
@@ -1060,11 +1060,11 @@
       "finishedAt": null,
       "lastUpdate": "2026-05-27T13:49:31.063Z",
       "note": null,
+      "attempts": 1,
       "slackTs": null,
       "prNumber": null,
       "failureMode": null,
-      "verification": null,
-      "attempts": 1
+      "verification": null
     },
     {
       "name": "fix-explain-topics",
@@ -1117,11 +1117,11 @@
       "finishedAt": null,
       "lastUpdate": "2026-05-27T13:49:34.333Z",
       "note": null,
+      "attempts": 1,
       "slackTs": null,
       "prNumber": null,
       "failureMode": null,
-      "verification": null,
-      "attempts": 1
+      "verification": null
     },
     {
       "name": "fix-llm-txt",
@@ -1174,11 +1174,11 @@
       "finishedAt": "2026-05-27T13:50:33.512Z",
       "lastUpdate": "2026-05-27T13:50:33.512Z",
       "note": null,
+      "attempts": 1,
       "slackTs": null,
       "prNumber": null,
       "failureMode": "unknown",
-      "verification": null,
-      "attempts": 1
+      "verification": null
     },
     {
       "name": "fix-chain-queries",
@@ -1231,11 +1231,11 @@
       "finishedAt": null,
       "lastUpdate": "2026-05-27T13:49:40.713Z",
       "note": null,
+      "attempts": 1,
       "slackTs": null,
       "prNumber": null,
       "failureMode": null,
-      "verification": null,
-      "attempts": 1
+      "verification": null
     },
     {
       "name": "fix-chain-extrinsics",
@@ -1288,11 +1288,11 @@
       "finishedAt": null,
       "lastUpdate": "2026-05-27T13:49:44.264Z",
       "note": null,
+      "attempts": 1,
       "slackTs": null,
       "prNumber": null,
       "failureMode": null,
-      "verification": null,
-      "attempts": 1
+      "verification": null
     },
     {
       "name": "fix-scaffold-localnet",
@@ -1345,11 +1345,11 @@
       "finishedAt": "2026-05-27T13:50:49.187Z",
       "lastUpdate": "2026-05-27T13:50:49.187Z",
       "note": null,
+      "attempts": 1,
       "slackTs": null,
       "prNumber": null,
       "failureMode": "unknown",
-      "verification": null,
-      "attempts": 1
+      "verification": null
     },
     {
       "name": "verify-xcut-batch",

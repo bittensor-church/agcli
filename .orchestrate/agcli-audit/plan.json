@@ -876,7 +876,7 @@
         "Handoff Findings section names every fix you applied and links it to the audit handoff(s) that motivated it."
       ],
       "verify": "Run `cargo check --all-targets` and `cargo build --bin agcli` on the worker branch. Both must succeed.",
-      "model": "gpt-5.3-codex-high-fast",
+      "model": "claude-sonnet-4-6",
       "maxAttempts": 5,
       "dependsOn": [
         "audit-wallet",
@@ -930,7 +930,7 @@
         "Handoff Findings section names every fix you applied and links it to the audit handoff(s) that motivated it."
       ],
       "verify": "Run `cargo check --all-targets` and `cargo build --bin agcli` on the worker branch. Both must succeed.",
-      "model": "gpt-5.3-codex-high-fast",
+      "model": "claude-sonnet-4-6",
       "maxAttempts": 5,
       "dependsOn": [
         "audit-wallet",
@@ -984,7 +984,7 @@
         "Handoff Findings section names every fix you applied and links it to the audit handoff(s) that motivated it."
       ],
       "verify": "Run `cargo check --all-targets` and `cargo build --bin agcli` on the worker branch. Both must succeed.",
-      "model": "gpt-5.3-codex-high-fast",
+      "model": "claude-sonnet-4-6",
       "maxAttempts": 5,
       "dependsOn": [
         "audit-wallet",
@@ -1041,7 +1041,7 @@
         "Handoff Findings section names every fix you applied and links it to the audit handoff(s) that motivated it."
       ],
       "verify": "Run `cargo check --all-targets` and `cargo build --bin agcli` on the worker branch. Both must succeed.",
-      "model": "gpt-5.3-codex-high-fast",
+      "model": "claude-sonnet-4-6",
       "maxAttempts": 5,
       "dependsOn": [
         "audit-wallet",
@@ -1098,7 +1098,7 @@
         "Handoff Findings section names every fix you applied and links it to the audit handoff(s) that motivated it."
       ],
       "verify": "Run `cargo check --all-targets` and `cargo build --bin agcli` on the worker branch. Both must succeed.",
-      "model": "gpt-5.3-codex-high-fast",
+      "model": "claude-sonnet-4-6",
       "maxAttempts": 5,
       "dependsOn": [
         "audit-wallet",
@@ -1153,7 +1153,7 @@
         "Handoff Findings section names every fix you applied and links it to the audit handoff(s) that motivated it."
       ],
       "verify": "Run `cargo check --all-targets` and `cargo build --bin agcli` on the worker branch. Both must succeed.",
-      "model": "gpt-5.3-codex-high-fast",
+      "model": "claude-sonnet-4-6",
       "maxAttempts": 5,
       "dependsOn": [
         "audit-wallet",
@@ -1209,7 +1209,7 @@
         "Handoff Findings section names every fix you applied and links it to the audit handoff(s) that motivated it."
       ],
       "verify": "Run `cargo check --all-targets` and `cargo build --bin agcli` on the worker branch. Both must succeed.",
-      "model": "gpt-5.3-codex-high-fast",
+      "model": "claude-sonnet-4-6",
       "maxAttempts": 5,
       "dependsOn": [
         "audit-wallet",
