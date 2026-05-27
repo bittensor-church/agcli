@@ -1732,7 +1732,7 @@
         "Verdict handoff consolidates the dependent workers' Findings into a single rollup.",
         "Verdict handoff Status reflects the actual pass/fail of the cargo checks."
       ],
-      "model": "claude-opus-4-7",
+      "model": "gpt-xhigh",
       "maxAttempts": 2,
       "dependsOn": [
         "audit-wallet",
@@ -1766,7 +1766,7 @@
         "Verdict handoff consolidates the dependent workers' Findings into a single rollup.",
         "Verdict handoff Status reflects the actual pass/fail of the cargo checks."
       ],
-      "model": "claude-opus-4-7",
+      "model": "gpt-xhigh",
       "maxAttempts": 2,
       "dependsOn": [
         "audit-identity",
@@ -1799,7 +1799,7 @@
         "Verdict handoff consolidates the dependent workers' Findings into a single rollup.",
         "Verdict handoff Status reflects the actual pass/fail of the cargo checks."
       ],
-      "model": "claude-opus-4-7",
+      "model": "gpt-xhigh",
       "maxAttempts": 2,
       "dependsOn": [
         "audit-scheduler",
@@ -1832,7 +1832,7 @@
         "Verdict handoff consolidates the dependent workers' Findings into a single rollup.",
         "Verdict handoff Status reflects the actual pass/fail of the cargo checks."
       ],
-      "model": "claude-opus-4-7",
+      "model": "gpt-xhigh",
       "maxAttempts": 2,
       "dependsOn": [
         "audit-crowdloan",
@@ -1862,7 +1862,7 @@
         "Verdict handoff consolidates the dependent workers' Findings into a single rollup.",
         "Verdict handoff Status reflects the actual pass/fail of the cargo checks."
       ],
-      "model": "claude-opus-4-7",
+      "model": "gpt-xhigh",
       "maxAttempts": 2,
       "dependsOn": [
         "audit-view",
@@ -2286,7 +2286,7 @@
         "Verdict handoff consolidates each cross-cutting worker's findings.",
         "Verdict handoff Status reflects actual cargo results."
       ],
-      "model": "claude-opus-4-7",
+      "model": "gpt-xhigh",
       "maxAttempts": 2,
       "dependsOn": [
         "fix-error-mapping",
