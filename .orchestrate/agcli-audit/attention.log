@@ -1,0 +1,22 @@
+2026-05-27T09:33:00Z planner: ENV BLOCKER
+  workspace: .orchestrate/agcli-audit
+  symptom:   `bun cli.ts run --root .orchestrate/agcli-audit` exits 2 with
+             "CURSOR_API_KEY required; see cursor-sdk/references/auth.md".
+  root cause: The cloud-agent VM that runs this planner has only
+              CLOUD_AGENT_ALL_SECRET_NAMES=SUBNET_66_HOTKEY_MNEMONIC injected.
+              The orchestrate skill spawns children via `@cursor/sdk`, which
+              requires a personal CURSOR_API_KEY to authenticate.
+  fix:       Add CURSOR_API_KEY (and ideally a SLACK_BOT_TOKEN +
+             SLACK_CHANNEL_ID for run visibility) under Cursor Dashboard >
+             Cloud Agents > Secrets, then resume this planner. The plan.json
+             is structurally valid (48 tasks), discovery.md is curated, and
+             the workspace state is on this branch.
+  resume:    `bun .../orchestrate/scripts/cli.ts run --root .orchestrate/agcli-audit`
+             from this branch will pick up the existing plan and start
+             spawning workers from `bootstrap-env`.
+
+2026-05-27T09:33:01Z planner: docker recipe captured
+  Docker is also missing in the cloud-agent VM by default but `apt-get install
+  -y docker.io` + a /etc/docker/daemon.json with vfs + `sudo dockerd &` works.
+  Recipe is captured in .orchestrate/agcli-audit/discovery.md so workers can
+  reproduce.
