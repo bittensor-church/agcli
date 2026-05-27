@@ -1,12 +1,30 @@
-use agcli::Wallet;
+use std::sync::Arc;
+
 use agcli::chain::subxt::ext::sp_core::{crypto::Ss58Codec, sr25519, Pair as _};
+use agcli::Wallet;
 use pyo3::prelude::*;
+use tokio::sync::Mutex;
 
 use crate::errors::map_error;
+use crate::runtime::runtime;
+
+pub(crate) type SharedWallet = Arc<Mutex<Wallet>>;
 
 #[pyclass(name = "Wallet", module = "agcli._agcli")]
 pub struct PyWallet {
-    inner: Wallet,
+    inner: SharedWallet,
+}
+
+impl PyWallet {
+    pub(crate) fn shared_wallet(&self) -> SharedWallet {
+        Arc::clone(&self.inner)
+    }
+}
+
+fn wrap_wallet(wallet: Wallet) -> PyWallet {
+    PyWallet {
+        inner: Arc::new(Mutex::new(wallet)),
+    }
 }
 
 #[pymethods]
@@ -14,7 +32,7 @@ impl PyWallet {
     #[staticmethod]
     fn open(path: String) -> PyResult<Self> {
         let wallet = Wallet::open(path).map_err(map_error)?;
-        Ok(Self { inner: wallet })
+        Ok(wrap_wallet(wallet))
     }
 
     #[staticmethod]
@@ -28,11 +46,7 @@ impl PyWallet {
         let hotkey_name = hotkey_name.unwrap_or_else(|| "default".to_string());
         let (wallet, coldkey_mnemonic, hotkey_mnemonic) =
             Wallet::create(wallet_dir, &name, &password, &hotkey_name).map_err(map_error)?;
-        Ok((
-            Self { inner: wallet },
-            coldkey_mnemonic,
-            hotkey_mnemonic,
-        ))
+        Ok((wrap_wallet(wallet), coldkey_mnemonic, hotkey_mnemonic))
     }
 
     #[staticmethod]
@@ -43,15 +57,15 @@ impl PyWallet {
         mnemonic: String,
         password: String,
     ) -> PyResult<Self> {
-        let wallet =
-            Wallet::import_from_mnemonic(wallet_dir, &name, &mnemonic, &password).map_err(map_error)?;
-        Ok(Self { inner: wallet })
+        let wallet = Wallet::import_from_mnemonic(wallet_dir, &name, &mnemonic, &password)
+            .map_err(map_error)?;
+        Ok(wrap_wallet(wallet))
     }
 
     #[staticmethod]
     fn create_from_uri(wallet_dir: String, uri: String, password: String) -> PyResult<Self> {
         let wallet = Wallet::create_from_uri(wallet_dir, &uri, &password).map_err(map_error)?;
-        Ok(Self { inner: wallet })
+        Ok(wrap_wallet(wallet))
     }
 
     #[staticmethod]
@@ -59,54 +73,144 @@ impl PyWallet {
         Wallet::list_wallets(wallet_dir).map_err(map_error)
     }
 
-    fn unlock_coldkey(&mut self, password: String) -> PyResult<()> {
-        self.inner.unlock_coldkey(&password).map_err(map_error)
+    fn unlock_coldkey(&self, password: String) -> PyResult<()> {
+        let wallet = self.shared_wallet();
+        runtime()
+            .block_on(async move {
+                let mut wallet = wallet.lock().await;
+                wallet.unlock_coldkey(&password)
+            })
+            .map_err(map_error)
     }
 
-    fn load_hotkey(&mut self, hotkey_name: String) -> PyResult<()> {
-        self.inner.load_hotkey(&hotkey_name).map_err(map_error)
+    fn unlock_coldkey_with_password(&self, password: String) -> PyResult<()> {
+        self.unlock_coldkey(password)
+    }
+
+    fn load_hotkey(&self, hotkey_name: String) -> PyResult<()> {
+        let wallet = self.shared_wallet();
+        runtime()
+            .block_on(async move {
+                let mut wallet = wallet.lock().await;
+                wallet.load_hotkey(&hotkey_name)
+            })
+            .map_err(map_error)
+    }
+
+    fn lock(&self) -> PyResult<()> {
+        let wallet = self.shared_wallet();
+        runtime()
+            .block_on(async move {
+                let mut wallet = wallet.lock().await;
+                let reopened = Wallet::open(&wallet.path)?;
+                *wallet = reopened;
+                Ok(())
+            })
+            .map_err(map_error)
     }
 
     #[getter]
-    fn name(&self) -> String {
-        self.inner.name.clone()
+    fn is_coldkey_unlocked(&self) -> PyResult<bool> {
+        let wallet = self.shared_wallet();
+        runtime()
+            .block_on(async move {
+                let wallet = wallet.lock().await;
+                Ok(wallet.coldkey().is_ok())
+            })
+            .map_err(map_error)
     }
 
     #[getter]
-    fn path(&self) -> String {
-        self.inner.path.display().to_string()
+    fn is_hotkey_loaded(&self) -> PyResult<bool> {
+        let wallet = self.shared_wallet();
+        runtime()
+            .block_on(async move {
+                let wallet = wallet.lock().await;
+                Ok(wallet.hotkey().is_ok())
+            })
+            .map_err(map_error)
     }
 
     #[getter]
-    fn coldkey_ss58(&self) -> Option<String> {
-        self.inner.coldkey_ss58().map(str::to_string)
+    fn name(&self) -> PyResult<String> {
+        let wallet = self.shared_wallet();
+        runtime()
+            .block_on(async move {
+                let wallet = wallet.lock().await;
+                Ok(wallet.name.clone())
+            })
+            .map_err(map_error)
     }
 
     #[getter]
-    fn coldkey_public_ss58(&self) -> Option<String> {
-        self.inner.coldkey_ss58().map(str::to_string)
+    fn path(&self) -> PyResult<String> {
+        let wallet = self.shared_wallet();
+        runtime()
+            .block_on(async move {
+                let wallet = wallet.lock().await;
+                Ok(wallet.path.display().to_string())
+            })
+            .map_err(map_error)
     }
 
     #[getter]
-    fn hotkey_ss58(&self) -> Option<String> {
-        self.inner.hotkey_ss58().map(str::to_string)
+    fn coldkey_ss58(&self) -> PyResult<Option<String>> {
+        let wallet = self.shared_wallet();
+        runtime()
+            .block_on(async move {
+                let wallet = wallet.lock().await;
+                Ok(wallet.coldkey_ss58().map(str::to_string))
+            })
+            .map_err(map_error)
+    }
+
+    #[getter]
+    fn coldkey_public_ss58(&self) -> PyResult<Option<String>> {
+        let wallet = self.shared_wallet();
+        runtime()
+            .block_on(async move {
+                let wallet = wallet.lock().await;
+                Ok(wallet.coldkey_ss58().map(str::to_string))
+            })
+            .map_err(map_error)
+    }
+
+    #[getter]
+    fn hotkey_ss58(&self) -> PyResult<Option<String>> {
+        let wallet = self.shared_wallet();
+        runtime()
+            .block_on(async move {
+                let wallet = wallet.lock().await;
+                Ok(wallet.hotkey_ss58().map(str::to_string))
+            })
+            .map_err(map_error)
     }
 
     fn list_hotkeys(&self) -> PyResult<Vec<String>> {
-        self.inner.list_hotkeys().map_err(map_error)
+        let wallet = self.shared_wallet();
+        runtime()
+            .block_on(async move {
+                let wallet = wallet.lock().await;
+                wallet.list_hotkeys()
+            })
+            .map_err(map_error)
     }
 
     fn sign_message(&self, role: &str, message: Vec<u8>) -> PyResult<Vec<u8>> {
-        let signature = match role {
-            "coldkey" => self.inner.coldkey().map_err(map_error)?.sign(&message),
-            "hotkey" => self.inner.hotkey().map_err(map_error)?.sign(&message),
-            other => {
-                return Err(map_error(anyhow::anyhow!(
-                    "invalid role '{other}', expected 'coldkey' or 'hotkey'"
-                )))
-            }
-        };
-        Ok(signature.0.to_vec())
+        let wallet = self.shared_wallet();
+        runtime()
+            .block_on(async move {
+                let wallet = wallet.lock().await;
+                let signature = match role {
+                    "coldkey" => wallet.coldkey()?.sign(&message),
+                    "hotkey" => wallet.hotkey()?.sign(&message),
+                    other => {
+                        anyhow::bail!("invalid role '{other}', expected 'coldkey' or 'hotkey'")
+                    }
+                };
+                Ok(signature.0.to_vec())
+            })
+            .map_err(map_error)
     }
 
     #[staticmethod]
@@ -126,10 +230,16 @@ impl PyWallet {
     }
 
     fn __repr__(&self) -> String {
-        format!(
-            "Wallet(name={:?}, path={:?})",
-            self.inner.name,
-            self.inner.path
-        )
+        let wallet = self.shared_wallet();
+        match runtime().block_on(async move {
+            let wallet = wallet.lock().await;
+            Ok::<String, anyhow::Error>(format!(
+                "Wallet(name={:?}, path={:?})",
+                wallet.name, wallet.path
+            ))
+        }) {
+            Ok(value) => value,
+            Err(_) => "Wallet(<unavailable>)".to_string(),
+        }
     }
 }

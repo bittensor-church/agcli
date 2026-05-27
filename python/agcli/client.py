@@ -20,6 +20,7 @@ from agcli.types import (
     SubnetIdentity,
     SubnetInfo,
 )
+from agcli.wallet import Wallet
 
 HashInput = bytes | str
 
@@ -390,6 +391,741 @@ class AsyncClient:
 
     async def fetch_portfolio(self, coldkey_ss58: str) -> dict[str, Any]:
         return await self._inner.fetch_portfolio(coldkey_ss58)
+
+    async def transfer(
+        self,
+        wallet: Wallet,
+        dest_ss58: str,
+        amount: Balance | int,
+        *,
+        wait: bool = True,
+        mev: bool = True,
+        dry_run: bool = False,
+        finalization_timeout: int | None = None,
+        mortality_blocks: int | None = None,
+    ) -> str:
+        return await self._inner.transfer(
+            wallet._inner,
+            dest_ss58,
+            amount,
+            wait=wait,
+            mev=mev,
+            dry_run=dry_run,
+            finalization_timeout=finalization_timeout,
+            mortality_blocks=mortality_blocks,
+        )
+
+    async def transfer_all(
+        self,
+        wallet: Wallet,
+        dest_ss58: str,
+        *,
+        keep_alive: bool = False,
+        wait: bool = True,
+        mev: bool = True,
+        dry_run: bool = False,
+        finalization_timeout: int | None = None,
+        mortality_blocks: int | None = None,
+    ) -> str:
+        return await self._inner.transfer_all(
+            wallet._inner,
+            dest_ss58,
+            keep_alive=keep_alive,
+            wait=wait,
+            mev=mev,
+            dry_run=dry_run,
+            finalization_timeout=finalization_timeout,
+            mortality_blocks=mortality_blocks,
+        )
+
+    async def add_stake(
+        self,
+        wallet: Wallet,
+        netuid: NetUid | int,
+        amount: Balance | int,
+        *,
+        wait: bool = True,
+        mev: bool = True,
+        dry_run: bool = False,
+        finalization_timeout: int | None = None,
+        mortality_blocks: int | None = None,
+    ) -> str:
+        return await self._inner.add_stake(
+            wallet._inner,
+            netuid,
+            amount,
+            wait=wait,
+            mev=mev,
+            dry_run=dry_run,
+            finalization_timeout=finalization_timeout,
+            mortality_blocks=mortality_blocks,
+        )
+
+    async def remove_stake(
+        self,
+        wallet: Wallet,
+        netuid: NetUid | int,
+        amount: Balance | int,
+        *,
+        wait: bool = True,
+        mev: bool = True,
+        dry_run: bool = False,
+        finalization_timeout: int | None = None,
+        mortality_blocks: int | None = None,
+    ) -> str:
+        return await self._inner.remove_stake(
+            wallet._inner,
+            netuid,
+            amount,
+            wait=wait,
+            mev=mev,
+            dry_run=dry_run,
+            finalization_timeout=finalization_timeout,
+            mortality_blocks=mortality_blocks,
+        )
+
+    async def add_stake_limit(
+        self,
+        wallet: Wallet,
+        netuid: NetUid | int,
+        amount: Balance | int,
+        limit_price: int,
+        *,
+        allow_partial: bool = True,
+        wait: bool = True,
+        mev: bool = True,
+        dry_run: bool = False,
+        finalization_timeout: int | None = None,
+        mortality_blocks: int | None = None,
+    ) -> str:
+        return await self._inner.add_stake_limit(
+            wallet._inner,
+            netuid,
+            amount,
+            limit_price,
+            allow_partial=allow_partial,
+            wait=wait,
+            mev=mev,
+            dry_run=dry_run,
+            finalization_timeout=finalization_timeout,
+            mortality_blocks=mortality_blocks,
+        )
+
+    async def remove_stake_limit(
+        self,
+        wallet: Wallet,
+        netuid: NetUid | int,
+        amount: Balance | int,
+        limit_price: int,
+        *,
+        allow_partial: bool = True,
+        wait: bool = True,
+        mev: bool = True,
+        dry_run: bool = False,
+        finalization_timeout: int | None = None,
+        mortality_blocks: int | None = None,
+    ) -> str:
+        return await self._inner.remove_stake_limit(
+            wallet._inner,
+            netuid,
+            amount,
+            limit_price,
+            allow_partial=allow_partial,
+            wait=wait,
+            mev=mev,
+            dry_run=dry_run,
+            finalization_timeout=finalization_timeout,
+            mortality_blocks=mortality_blocks,
+        )
+
+    async def move_stake(
+        self,
+        wallet: Wallet,
+        from_netuid: NetUid | int,
+        to_netuid: NetUid | int,
+        amount: Balance | int,
+        *,
+        wait: bool = True,
+        mev: bool = True,
+        dry_run: bool = False,
+        finalization_timeout: int | None = None,
+        mortality_blocks: int | None = None,
+    ) -> str:
+        return await self._inner.move_stake(
+            wallet._inner,
+            from_netuid,
+            to_netuid,
+            amount,
+            wait=wait,
+            mev=mev,
+            dry_run=dry_run,
+            finalization_timeout=finalization_timeout,
+            mortality_blocks=mortality_blocks,
+        )
+
+    async def swap_stake(
+        self,
+        wallet: Wallet,
+        from_netuid: NetUid | int,
+        to_netuid: NetUid | int,
+        amount: Balance | int,
+        *,
+        wait: bool = True,
+        mev: bool = True,
+        dry_run: bool = False,
+        finalization_timeout: int | None = None,
+        mortality_blocks: int | None = None,
+    ) -> str:
+        return await self._inner.swap_stake(
+            wallet._inner,
+            from_netuid,
+            to_netuid,
+            amount,
+            wait=wait,
+            mev=mev,
+            dry_run=dry_run,
+            finalization_timeout=finalization_timeout,
+            mortality_blocks=mortality_blocks,
+        )
+
+    async def swap_stake_limit(
+        self,
+        wallet: Wallet,
+        from_netuid: NetUid | int,
+        to_netuid: NetUid | int,
+        amount: Balance | int,
+        limit_price: int,
+        *,
+        allow_partial: bool = True,
+        wait: bool = True,
+        mev: bool = True,
+        dry_run: bool = False,
+        finalization_timeout: int | None = None,
+        mortality_blocks: int | None = None,
+    ) -> str:
+        return await self._inner.swap_stake_limit(
+            wallet._inner,
+            from_netuid,
+            to_netuid,
+            amount,
+            limit_price,
+            allow_partial=allow_partial,
+            wait=wait,
+            mev=mev,
+            dry_run=dry_run,
+            finalization_timeout=finalization_timeout,
+            mortality_blocks=mortality_blocks,
+        )
+
+    async def transfer_stake(
+        self,
+        wallet: Wallet,
+        dest_ss58: str,
+        from_netuid: NetUid | int,
+        to_netuid: NetUid | int,
+        amount: Balance | int,
+        *,
+        wait: bool = True,
+        mev: bool = True,
+        dry_run: bool = False,
+        finalization_timeout: int | None = None,
+        mortality_blocks: int | None = None,
+    ) -> str:
+        return await self._inner.transfer_stake(
+            wallet._inner,
+            dest_ss58,
+            from_netuid,
+            to_netuid,
+            amount,
+            wait=wait,
+            mev=mev,
+            dry_run=dry_run,
+            finalization_timeout=finalization_timeout,
+            mortality_blocks=mortality_blocks,
+        )
+
+    async def unstake_all(
+        self,
+        wallet: Wallet,
+        *,
+        wait: bool = True,
+        mev: bool = True,
+        dry_run: bool = False,
+        finalization_timeout: int | None = None,
+        mortality_blocks: int | None = None,
+    ) -> str:
+        return await self._inner.unstake_all(
+            wallet._inner,
+            wait=wait,
+            mev=mev,
+            dry_run=dry_run,
+            finalization_timeout=finalization_timeout,
+            mortality_blocks=mortality_blocks,
+        )
+
+    async def unstake_all_alpha(
+        self,
+        wallet: Wallet,
+        *,
+        wait: bool = True,
+        mev: bool = True,
+        dry_run: bool = False,
+        finalization_timeout: int | None = None,
+        mortality_blocks: int | None = None,
+    ) -> str:
+        return await self._inner.unstake_all_alpha(
+            wallet._inner,
+            wait=wait,
+            mev=mev,
+            dry_run=dry_run,
+            finalization_timeout=finalization_timeout,
+            mortality_blocks=mortality_blocks,
+        )
+
+    async def recycle_alpha(
+        self,
+        wallet: Wallet,
+        netuid: NetUid | int,
+        amount: int,
+        *,
+        wait: bool = True,
+        mev: bool = True,
+        dry_run: bool = False,
+        finalization_timeout: int | None = None,
+        mortality_blocks: int | None = None,
+    ) -> str:
+        return await self._inner.recycle_alpha(
+            wallet._inner,
+            netuid,
+            amount,
+            wait=wait,
+            mev=mev,
+            dry_run=dry_run,
+            finalization_timeout=finalization_timeout,
+            mortality_blocks=mortality_blocks,
+        )
+
+    async def burn_alpha(
+        self,
+        wallet: Wallet,
+        netuid: NetUid | int,
+        amount: int,
+        *,
+        wait: bool = True,
+        mev: bool = True,
+        dry_run: bool = False,
+        finalization_timeout: int | None = None,
+        mortality_blocks: int | None = None,
+    ) -> str:
+        return await self._inner.burn_alpha(
+            wallet._inner,
+            netuid,
+            amount,
+            wait=wait,
+            mev=mev,
+            dry_run=dry_run,
+            finalization_timeout=finalization_timeout,
+            mortality_blocks=mortality_blocks,
+        )
+
+    async def claim_root(
+        self,
+        wallet: Wallet,
+        subnets: list[int],
+        *,
+        wait: bool = True,
+        mev: bool = True,
+        dry_run: bool = False,
+        finalization_timeout: int | None = None,
+        mortality_blocks: int | None = None,
+    ) -> str:
+        return await self._inner.claim_root(
+            wallet._inner,
+            subnets,
+            wait=wait,
+            mev=mev,
+            dry_run=dry_run,
+            finalization_timeout=finalization_timeout,
+            mortality_blocks=mortality_blocks,
+        )
+
+    async def set_weights(
+        self,
+        wallet: Wallet,
+        netuid: NetUid | int,
+        uids: list[int],
+        values: list[int],
+        version_key: int,
+        *,
+        wait: bool = True,
+        mev: bool = True,
+        dry_run: bool = False,
+        finalization_timeout: int | None = None,
+        mortality_blocks: int | None = None,
+    ) -> str:
+        return await self._inner.set_weights(
+            wallet._inner,
+            netuid,
+            uids,
+            values,
+            version_key,
+            wait=wait,
+            mev=mev,
+            dry_run=dry_run,
+            finalization_timeout=finalization_timeout,
+            mortality_blocks=mortality_blocks,
+        )
+
+    async def commit_weights(
+        self,
+        wallet: Wallet,
+        netuid: NetUid | int,
+        commit_hash: HashInput,
+        *,
+        wait: bool = True,
+        mev: bool = True,
+        dry_run: bool = False,
+        finalization_timeout: int | None = None,
+        mortality_blocks: int | None = None,
+    ) -> str:
+        return await self._inner.commit_weights(
+            wallet._inner,
+            netuid,
+            commit_hash,
+            wait=wait,
+            mev=mev,
+            dry_run=dry_run,
+            finalization_timeout=finalization_timeout,
+            mortality_blocks=mortality_blocks,
+        )
+
+    async def reveal_weights(
+        self,
+        wallet: Wallet,
+        netuid: NetUid | int,
+        uids: list[int],
+        values: list[int],
+        salt: list[int],
+        version_key: int,
+        *,
+        wait: bool = True,
+        mev: bool = True,
+        dry_run: bool = False,
+        finalization_timeout: int | None = None,
+        mortality_blocks: int | None = None,
+    ) -> str:
+        return await self._inner.reveal_weights(
+            wallet._inner,
+            netuid,
+            uids,
+            values,
+            salt,
+            version_key,
+            wait=wait,
+            mev=mev,
+            dry_run=dry_run,
+            finalization_timeout=finalization_timeout,
+            mortality_blocks=mortality_blocks,
+        )
+
+    async def register_network(
+        self,
+        wallet: Wallet,
+        *,
+        wait: bool = True,
+        mev: bool = True,
+        dry_run: bool = False,
+        finalization_timeout: int | None = None,
+        mortality_blocks: int | None = None,
+    ) -> str:
+        return await self._inner.register_network(
+            wallet._inner,
+            wait=wait,
+            mev=mev,
+            dry_run=dry_run,
+            finalization_timeout=finalization_timeout,
+            mortality_blocks=mortality_blocks,
+        )
+
+    async def burned_register(
+        self,
+        wallet: Wallet,
+        netuid: NetUid | int,
+        *,
+        wait: bool = True,
+        mev: bool = True,
+        dry_run: bool = False,
+        finalization_timeout: int | None = None,
+        mortality_blocks: int | None = None,
+    ) -> str:
+        return await self._inner.burned_register(
+            wallet._inner,
+            netuid,
+            wait=wait,
+            mev=mev,
+            dry_run=dry_run,
+            finalization_timeout=finalization_timeout,
+            mortality_blocks=mortality_blocks,
+        )
+
+    async def pow_register(
+        self,
+        wallet: Wallet,
+        netuid: NetUid | int,
+        block_number: int,
+        nonce: int,
+        work: HashInput,
+        *,
+        wait: bool = True,
+        mev: bool = True,
+        dry_run: bool = False,
+        finalization_timeout: int | None = None,
+        mortality_blocks: int | None = None,
+    ) -> str:
+        return await self._inner.pow_register(
+            wallet._inner,
+            netuid,
+            block_number,
+            nonce,
+            work,
+            wait=wait,
+            mev=mev,
+            dry_run=dry_run,
+            finalization_timeout=finalization_timeout,
+            mortality_blocks=mortality_blocks,
+        )
+
+    async def root_register(
+        self,
+        wallet: Wallet,
+        *,
+        wait: bool = True,
+        mev: bool = True,
+        dry_run: bool = False,
+        finalization_timeout: int | None = None,
+        mortality_blocks: int | None = None,
+    ) -> str:
+        return await self._inner.root_register(
+            wallet._inner,
+            wait=wait,
+            mev=mev,
+            dry_run=dry_run,
+            finalization_timeout=finalization_timeout,
+            mortality_blocks=mortality_blocks,
+        )
+
+    async def dissolve_network(
+        self,
+        wallet: Wallet,
+        netuid: NetUid | int,
+        *,
+        wait: bool = True,
+        mev: bool = True,
+        dry_run: bool = False,
+        finalization_timeout: int | None = None,
+        mortality_blocks: int | None = None,
+    ) -> str:
+        return await self._inner.dissolve_network(
+            wallet._inner,
+            netuid,
+            wait=wait,
+            mev=mev,
+            dry_run=dry_run,
+            finalization_timeout=finalization_timeout,
+            mortality_blocks=mortality_blocks,
+        )
+
+    async def add_proxy(
+        self,
+        wallet: Wallet,
+        delegate_ss58: str,
+        proxy_type: str,
+        *,
+        delay: int = 0,
+        wait: bool = True,
+        mev: bool = True,
+        dry_run: bool = False,
+        finalization_timeout: int | None = None,
+        mortality_blocks: int | None = None,
+    ) -> str:
+        return await self._inner.add_proxy(
+            wallet._inner,
+            delegate_ss58,
+            proxy_type,
+            delay=delay,
+            wait=wait,
+            mev=mev,
+            dry_run=dry_run,
+            finalization_timeout=finalization_timeout,
+            mortality_blocks=mortality_blocks,
+        )
+
+    async def remove_proxy(
+        self,
+        wallet: Wallet,
+        delegate_ss58: str,
+        proxy_type: str,
+        *,
+        delay: int = 0,
+        wait: bool = True,
+        mev: bool = True,
+        dry_run: bool = False,
+        finalization_timeout: int | None = None,
+        mortality_blocks: int | None = None,
+    ) -> str:
+        return await self._inner.remove_proxy(
+            wallet._inner,
+            delegate_ss58,
+            proxy_type,
+            delay=delay,
+            wait=wait,
+            mev=mev,
+            dry_run=dry_run,
+            finalization_timeout=finalization_timeout,
+            mortality_blocks=mortality_blocks,
+        )
+
+    async def create_pure_proxy(
+        self,
+        wallet: Wallet,
+        proxy_type: str,
+        *,
+        delay: int = 0,
+        index: int = 0,
+        wait: bool = True,
+        mev: bool = True,
+        dry_run: bool = False,
+        finalization_timeout: int | None = None,
+        mortality_blocks: int | None = None,
+    ) -> str:
+        return await self._inner.create_pure_proxy(
+            wallet._inner,
+            proxy_type,
+            delay=delay,
+            index=index,
+            wait=wait,
+            mev=mev,
+            dry_run=dry_run,
+            finalization_timeout=finalization_timeout,
+            mortality_blocks=mortality_blocks,
+        )
+
+    async def kill_pure_proxy(
+        self,
+        wallet: Wallet,
+        spawner_ss58: str,
+        proxy_type: str,
+        index: int,
+        height: int,
+        ext_index: int,
+        *,
+        wait: bool = True,
+        mev: bool = True,
+        dry_run: bool = False,
+        finalization_timeout: int | None = None,
+        mortality_blocks: int | None = None,
+    ) -> str:
+        return await self._inner.kill_pure_proxy(
+            wallet._inner,
+            spawner_ss58,
+            proxy_type,
+            index,
+            height,
+            ext_index,
+            wait=wait,
+            mev=mev,
+            dry_run=dry_run,
+            finalization_timeout=finalization_timeout,
+            mortality_blocks=mortality_blocks,
+        )
+
+    async def try_associate_hotkey(
+        self,
+        wallet: Wallet,
+        hotkey_ss58: str | None = None,
+        *,
+        wait: bool = True,
+        mev: bool = True,
+        dry_run: bool = False,
+        finalization_timeout: int | None = None,
+        mortality_blocks: int | None = None,
+    ) -> str:
+        return await self._inner.try_associate_hotkey(
+            wallet._inner,
+            hotkey_ss58,
+            wait=wait,
+            mev=mev,
+            dry_run=dry_run,
+            finalization_timeout=finalization_timeout,
+            mortality_blocks=mortality_blocks,
+        )
+
+    async def schedule_swap_coldkey(
+        self,
+        wallet: Wallet,
+        new_coldkey_ss58: str,
+        *,
+        wait: bool = True,
+        mev: bool = True,
+        dry_run: bool = False,
+        finalization_timeout: int | None = None,
+        mortality_blocks: int | None = None,
+    ) -> str:
+        return await self._inner.schedule_swap_coldkey(
+            wallet._inner,
+            new_coldkey_ss58,
+            wait=wait,
+            mev=mev,
+            dry_run=dry_run,
+            finalization_timeout=finalization_timeout,
+            mortality_blocks=mortality_blocks,
+        )
+
+    async def swap_hotkey(
+        self,
+        wallet: Wallet,
+        old_hotkey_ss58: str,
+        new_hotkey_ss58: str,
+        *,
+        wait: bool = True,
+        mev: bool = True,
+        dry_run: bool = False,
+        finalization_timeout: int | None = None,
+        mortality_blocks: int | None = None,
+    ) -> str:
+        return await self._inner.swap_hotkey(
+            wallet._inner,
+            old_hotkey_ss58,
+            new_hotkey_ss58,
+            wait=wait,
+            mev=mev,
+            dry_run=dry_run,
+            finalization_timeout=finalization_timeout,
+            mortality_blocks=mortality_blocks,
+        )
+
+    async def set_subnet_identity(
+        self,
+        wallet: Wallet,
+        netuid: NetUid | int,
+        identity: SubnetIdentity | dict[str, Any],
+        *,
+        wait: bool = True,
+        mev: bool = True,
+        dry_run: bool = False,
+        finalization_timeout: int | None = None,
+        mortality_blocks: int | None = None,
+    ) -> str:
+        return await self._inner.set_subnet_identity(
+            wallet._inner,
+            netuid,
+            identity,
+            wait=wait,
+            mev=mev,
+            dry_run=dry_run,
+            finalization_timeout=finalization_timeout,
+            mortality_blocks=mortality_blocks,
+        )
 
     def __repr__(self) -> str:
         return f"AsyncClient(endpoint={self.endpoint!r})"

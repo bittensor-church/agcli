@@ -2,6 +2,7 @@ mod chain_data;
 mod client;
 mod config;
 mod errors;
+mod extrinsics;
 mod runtime;
 mod types;
 mod wallet;

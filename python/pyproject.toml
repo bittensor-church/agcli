@@ -29,4 +29,5 @@ asyncio_mode = "auto"
 testpaths = ["tests"]
 markers = [
     "network: tests that require live chain connectivity",
+    "localnet: tests that require a local subtensor node",
 ]

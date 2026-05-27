@@ -13,7 +13,7 @@ use crate::types::{
     PyBalance, PyNetwork,
 };
 
-type SharedClient = Arc<Mutex<Client>>;
+pub(crate) type SharedClient = Arc<Mutex<Client>>;
 
 #[pyclass(name = "Client", module = "agcli._agcli")]
 pub struct PyClient {
@@ -31,13 +31,22 @@ fn wrap_client(client: Client) -> PyClient {
     }
 }
 
+impl PyClient {
+    pub(crate) fn shared_client(&self) -> SharedClient {
+        Arc::clone(&self.inner)
+    }
+}
+
 fn wrap_client_sync(client: Client) -> PyClientSync {
     PyClientSync {
         inner: Arc::new(Mutex::new(client)),
     }
 }
 
-async fn block_hash_from_number(client: &mut Client, block_number: u64) -> anyhow::Result<agcli::Hash> {
+async fn block_hash_from_number(
+    client: &mut Client,
+    block_number: u64,
+) -> anyhow::Result<agcli::Hash> {
     let block_number = u32::try_from(block_number)
         .map_err(|_| anyhow::anyhow!("block number {block_number} exceeds u32 range"))?;
     client.get_block_hash(block_number).await
@@ -285,12 +294,19 @@ impl PyClient {
         })
     }
 
-    fn get_block_hash<'py>(&self, py: Python<'py>, block_number: u64) -> PyResult<Bound<'py, PyAny>> {
+    fn get_block_hash<'py>(
+        &self,
+        py: Python<'py>,
+        block_number: u64,
+    ) -> PyResult<Bound<'py, PyAny>> {
         let block_number = u64_to_u32(block_number)?;
         let client = Arc::clone(&self.inner);
         future_into_py(py, async move {
             let client = client.lock().await;
-            let hash = client.get_block_hash(block_number).await.map_err(map_error)?;
+            let hash = client
+                .get_block_hash(block_number)
+                .await
+                .map_err(map_error)?;
             Ok(hash_to_hex(hash))
         })
     }
@@ -307,10 +323,7 @@ impl PyClient {
         let client = Arc::clone(&self.inner);
         future_into_py(py, async move {
             let client = client.lock().await;
-            client
-                .get_finalized_block_number()
-                .await
-                .map_err(map_error)
+            client.get_finalized_block_number().await.map_err(map_error)
         })
     }
 
@@ -528,7 +541,10 @@ impl PyClient {
         let client = Arc::clone(&self.inner);
         future_into_py(py, async move {
             let client = client.lock().await;
-            client.get_block_number_at(block_hash).await.map_err(map_error)
+            client
+                .get_block_number_at(block_hash)
+                .await
+                .map_err(map_error)
         })
     }
 
@@ -693,11 +709,7 @@ impl PyClient {
         })
     }
 
-    fn get_delegate<'py>(
-        &self,
-        py: Python<'py>,
-        hotkey: String,
-    ) -> PyResult<Bound<'py, PyAny>> {
+    fn get_delegate<'py>(&self, py: Python<'py>, hotkey: String) -> PyResult<Bound<'py, PyAny>> {
         let client = Arc::clone(&self.inner);
         future_into_py(py, async move {
             let client = client.lock().await;
@@ -709,11 +721,7 @@ impl PyClient {
         })
     }
 
-    fn get_identity<'py>(
-        &self,
-        py: Python<'py>,
-        ss58: String,
-    ) -> PyResult<Bound<'py, PyAny>> {
+    fn get_identity<'py>(&self, py: Python<'py>, ss58: String) -> PyResult<Bound<'py, PyAny>> {
         let client = Arc::clone(&self.inner);
         future_into_py(py, async move {
             let client = client.lock().await;
@@ -1237,7 +1245,10 @@ impl PyClient {
         let client = Arc::clone(&self.inner);
         future_into_py(py, async move {
             let client = client.lock().await;
-            let delegated = client.get_delegated(&hotkey_ss58).await.map_err(map_error)?;
+            let delegated = client
+                .get_delegated(&hotkey_ss58)
+                .await
+                .map_err(map_error)?;
             to_pyobject_unbound(&delegated)
         })
     }
@@ -1377,7 +1388,10 @@ impl PyClient {
         let client = Arc::clone(&self.inner);
         future_into_py(py, async move {
             let client = client.lock().await;
-            let value = client.get_all_commitments(netuid).await.map_err(map_error)?;
+            let value = client
+                .get_all_commitments(netuid)
+                .await
+                .map_err(map_error)?;
             to_pyobject_unbound(&value)
         })
     }
@@ -1386,7 +1400,8 @@ impl PyClient {
         let client = Arc::clone(&self.inner);
         future_into_py(py, async move {
             let client = client.lock().await;
-            let (block_number, hash_bytes) = client.get_block_info_for_pow().await.map_err(map_error)?;
+            let (block_number, hash_bytes) =
+                client.get_block_info_for_pow().await.map_err(map_error)?;
             to_pyobject_unbound(&(block_number, format!("0x{}", hex::encode(hash_bytes))))
         })
     }

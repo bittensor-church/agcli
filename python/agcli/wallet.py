@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from contextlib import AbstractContextManager
 from dataclasses import dataclass
 
 from agcli import _agcli
@@ -12,6 +13,22 @@ class WalletCreateResult:
     wallet: Wallet
     coldkey_mnemonic: str
     hotkey_mnemonic: str
+
+
+class WalletSession(AbstractContextManager["Wallet"]):
+    def __init__(self, wallet: Wallet, password: str) -> None:
+        self._wallet = wallet
+        self._password = password
+
+    def __enter__(self) -> Wallet:
+        self._wallet.unlock_coldkey_with_password(self._password)
+        if not self._wallet.is_hotkey_loaded:
+            self._wallet.load_hotkey("default")
+        return self._wallet
+
+    def __exit__(self, exc_type, exc, tb) -> bool:
+        self._wallet.lock()
+        return False
 
 
 class Wallet:
@@ -68,8 +85,22 @@ class Wallet:
     def unlock_coldkey(self, password: str) -> None:
         self._inner.unlock_coldkey(password)
 
+    def unlock_coldkey_with_password(self, password: str) -> None:
+        self._inner.unlock_coldkey_with_password(password)
+
     def load_hotkey(self, hotkey_name: str) -> None:
         self._inner.load_hotkey(hotkey_name)
+
+    def lock(self) -> None:
+        self._inner.lock()
+
+    @property
+    def is_coldkey_unlocked(self) -> bool:
+        return self._inner.is_coldkey_unlocked
+
+    @property
+    def is_hotkey_loaded(self) -> bool:
+        return self._inner.is_hotkey_loaded
 
     @property
     def name(self) -> str:
@@ -96,6 +127,9 @@ class Wallet:
 
     def sign_message(self, role: str, message: bytes) -> bytes:
         return self._inner.sign_message(role, message)
+
+    def session(self, *, password: str) -> WalletSession:
+        return WalletSession(self, password)
 
     @staticmethod
     def verify_message(ss58: str, message: bytes, signature: bytes) -> bool:

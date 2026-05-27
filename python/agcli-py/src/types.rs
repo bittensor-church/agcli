@@ -141,7 +141,11 @@ impl PyBalance {
     }
 
     fn __repr__(&self) -> String {
-        format!("Balance(rao={}, tao={})", self.inner.rao(), self.inner.tao())
+        format!(
+            "Balance(rao={}, tao={})",
+            self.inner.rao(),
+            self.inner.tao()
+        )
     }
 
     fn __str__(&self) -> String {
@@ -152,6 +156,10 @@ impl PyBalance {
 impl PyBalance {
     pub fn new_inner(inner: agcli::Balance) -> Self {
         Self { inner }
+    }
+
+    pub(crate) fn inner(&self) -> agcli::Balance {
+        self.inner
     }
 }
 

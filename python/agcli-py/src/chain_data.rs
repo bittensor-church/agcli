@@ -65,8 +65,16 @@ serde_pyclass!(
     agcli::types::chain_data::NeuronInfoLite,
     "NeuronInfoLite"
 );
-serde_pyclass!(PyMetagraph, agcli::types::chain_data::Metagraph, "Metagraph");
-serde_pyclass!(PyStakeInfo, agcli::types::chain_data::StakeInfo, "StakeInfo");
+serde_pyclass!(
+    PyMetagraph,
+    agcli::types::chain_data::Metagraph,
+    "Metagraph"
+);
+serde_pyclass!(
+    PyStakeInfo,
+    agcli::types::chain_data::StakeInfo,
+    "StakeInfo"
+);
 serde_pyclass!(
     PyDelegateInfo,
     agcli::types::chain_data::DelegateInfo,
@@ -92,6 +100,12 @@ serde_pyclass!(
     agcli::types::chain_data::SubnetIdentity,
     "SubnetIdentity"
 );
+
+impl PySubnetIdentity {
+    pub(crate) fn inner_clone(&self) -> agcli::types::chain_data::SubnetIdentity {
+        self.inner.clone()
+    }
+}
 
 #[pyclass(name = "AlphaBalance", module = "agcli._agcli")]
 #[derive(Clone, Copy)]
