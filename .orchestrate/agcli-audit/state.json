@@ -535,15 +535,15 @@
       "branch": "orch/agcli-audit/audit-block",
       "startingRef": "cursor/agcli-subtensor-audit-e2e7",
       "dependsOn": [],
-      "agentId": null,
-      "runId": null,
-      "parentAgentId": null,
+      "agentId": "bc-7efacc27-b8d6-4f3a-af11-f18d275347e1",
+      "runId": "run-e5ec2b03-a622-4e60-8645-68b8a0fa5699",
+      "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
       "status": "running",
       "resultStatus": null,
       "handoffPath": null,
       "startedAt": "2026-05-27T11:16:59.893Z",
       "finishedAt": null,
-      "lastUpdate": "2026-05-27T11:16:59.893Z",
+      "lastUpdate": "2026-05-27T11:17:03.068Z",
       "note": null,
       "slackTs": null,
       "prNumber": null,
@@ -560,17 +560,18 @@
       "agentId": null,
       "runId": null,
       "parentAgentId": null,
-      "status": "pending",
+      "status": "running",
       "resultStatus": null,
       "handoffPath": null,
-      "startedAt": null,
+      "startedAt": "2026-05-27T11:17:03.070Z",
       "finishedAt": null,
-      "lastUpdate": null,
+      "lastUpdate": "2026-05-27T11:17:03.070Z",
       "note": null,
       "slackTs": null,
       "prNumber": null,
       "failureMode": null,
-      "verification": null
+      "verification": null,
+      "attempts": 1
     },
     {
       "name": "audit-config",
@@ -1479,6 +1480,14 @@
     {
       "at": "2026-05-27T11:17:01.032Z",
       "message": "audit-delegate: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status"
+    },
+    {
+      "at": "2026-05-27T11:17:02.009Z",
+      "message": "audit-delegate: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-delegate.md"
+    },
+    {
+      "at": "2026-05-27T11:17:02.010Z",
+      "message": "audit-delegate: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-delegate-failure.md"
     }
   ]
 }
