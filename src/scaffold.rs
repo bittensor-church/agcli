@@ -31,8 +31,8 @@ use std::time::Duration;
 // ───────────────────── Config types (TOML-deserializable) ─────────────────────
 
 /// Top-level scaffold configuration.
-#[derive(Debug, Clone, Deserialize)]
-#[serde(default)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
+#[serde(default, deny_unknown_fields)]
 pub struct ScaffoldConfig {
     /// Chain / Docker settings.
     pub chain: ChainConfig,
@@ -50,8 +50,8 @@ impl Default for ScaffoldConfig {
 }
 
 /// Chain / Docker configuration.
-#[derive(Debug, Clone, Deserialize)]
-#[serde(default)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
+#[serde(default, deny_unknown_fields)]
 pub struct ChainConfig {
     /// Docker image for the localnet.
     pub image: String,
@@ -78,8 +78,8 @@ impl Default for ChainConfig {
 }
 
 /// Per-subnet configuration.
-#[derive(Debug, Clone, Deserialize)]
-#[serde(default)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
+#[serde(default, deny_unknown_fields)]
 pub struct SubnetConfig {
     /// Blocks per epoch.
     pub tempo: Option<u16>,
@@ -137,7 +137,8 @@ impl Default for SubnetConfig {
 }
 
 /// Per-neuron configuration within a subnet.
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
 pub struct NeuronConfig {
     /// Human-readable name for this neuron.
     pub name: String,
@@ -197,12 +198,20 @@ pub struct NeuronResult {
 // ───────────────────── Orchestration ─────────────────────
 
 /// Load a scaffold config from a TOML file.
+///
+/// Unknown TOML keys produce a clear parse error (via `deny_unknown_fields`).
 pub fn load_config(path: &str) -> Result<ScaffoldConfig> {
     let content = std::fs::read_to_string(path)
         .with_context(|| format!("Failed to read scaffold config: {}", path))?;
-    let config: ScaffoldConfig =
-        toml::from_str(&content).with_context(|| format!("Failed to parse TOML: {}", path))?;
+    let config: ScaffoldConfig = toml::from_str(&content)
+        .with_context(|| format!("Failed to parse scaffold TOML '{}' (check for unknown keys or type mismatches)", path))?;
     Ok(config)
+}
+
+/// Serialize a scaffold config back to TOML (symmetric with `load_config`).
+pub fn serialize_config(config: &ScaffoldConfig) -> Result<String> {
+    toml::to_string_pretty(config)
+        .context("Failed to serialize scaffold config to TOML")
 }
 
 /// Run the full scaffold: start chain → create wallets → fund → register
@@ -814,5 +823,146 @@ mod tests {
         let new_netuids: Vec<u16> = after.difference(&before).copied().collect();
         let netuid = *new_netuids.iter().min().unwrap();
         assert_eq!(netuid, 7, "Should deterministically pick lowest new netuid");
+    }
+
+    // ──── TOML round-trip: deserialize → serialize → deserialize must be symmetric ────
+
+    #[test]
+    fn scaffold_config_toml_round_trip_defaults() {
+        let original = ScaffoldConfig::default();
+        let toml_str = serialize_config(&original).expect("serialize_config should not fail");
+        let round_tripped: ScaffoldConfig =
+            toml::from_str(&toml_str).expect("round-tripped TOML should parse cleanly");
+
+        assert_eq!(round_tripped.chain.port, original.chain.port);
+        assert_eq!(round_tripped.chain.timeout, original.chain.timeout);
+        assert_eq!(round_tripped.chain.image, original.chain.image);
+        assert_eq!(round_tripped.chain.start, original.chain.start);
+        assert_eq!(round_tripped.subnet.len(), original.subnet.len());
+        assert_eq!(round_tripped.subnet[0].tempo, original.subnet[0].tempo);
+        assert_eq!(
+            round_tripped.subnet[0].max_allowed_validators,
+            original.subnet[0].max_allowed_validators
+        );
+        assert_eq!(
+            round_tripped.subnet[0].weights_rate_limit,
+            original.subnet[0].weights_rate_limit
+        );
+        assert_eq!(
+            round_tripped.subnet[0].neuron.len(),
+            original.subnet[0].neuron.len()
+        );
+    }
+
+    #[test]
+    fn scaffold_config_toml_round_trip_with_explicit_config() {
+        let toml_input = r#"
+[chain]
+image = "ghcr.io/opentensor/subtensor-localnet:devnet-ready"
+container = "test_localnet"
+port = 9955
+start = true
+timeout = 60
+
+[[subnet]]
+tempo = 50
+max_allowed_validators = 4
+min_allowed_weights = 2
+weights_rate_limit = 100
+commit_reveal = false
+
+[[subnet.neuron]]
+name = "validator1"
+fund_tao = 500.0
+register = true
+
+[[subnet.neuron]]
+name = "miner1"
+fund_tao = 50.0
+register = true
+"#;
+        let parsed: ScaffoldConfig =
+            toml::from_str(toml_input).expect("valid TOML should parse");
+        let serialized = serialize_config(&parsed).expect("serialization should succeed");
+        let round_tripped: ScaffoldConfig =
+            toml::from_str(&serialized).expect("serialized TOML should re-parse");
+
+        assert_eq!(round_tripped.chain.port, 9955);
+        assert_eq!(round_tripped.chain.timeout, 60);
+        assert_eq!(round_tripped.subnet[0].tempo, Some(50));
+        assert_eq!(round_tripped.subnet[0].neuron.len(), 2);
+        assert_eq!(round_tripped.subnet[0].neuron[0].name, "validator1");
+    }
+
+    // ──── Unknown TOML keys must be rejected with a clear error ────
+
+    #[test]
+    fn scaffold_config_rejects_unknown_chain_key() {
+        let bad_toml = r#"
+[chain]
+port = 9944
+unknown_key = "should fail"
+"#;
+        let result: Result<ScaffoldConfig, _> = toml::from_str(bad_toml);
+        assert!(
+            result.is_err(),
+            "Unknown keys in [chain] should be rejected"
+        );
+        let err = result.unwrap_err().to_string();
+        // toml crate reports "unknown field `unknown_key`" with deny_unknown_fields
+        assert!(
+            err.contains("unknown_key") || err.contains("unknown field"),
+            "Error message should name the unknown field: {err}"
+        );
+    }
+
+    #[test]
+    fn scaffold_config_rejects_unknown_subnet_key() {
+        let bad_toml = r#"
+[[subnet]]
+tempo = 100
+bogus_field = 42
+"#;
+        let result: Result<ScaffoldConfig, _> = toml::from_str(bad_toml);
+        assert!(
+            result.is_err(),
+            "Unknown keys in [[subnet]] should be rejected"
+        );
+        let err = result.unwrap_err().to_string();
+        assert!(
+            err.contains("bogus_field") || err.contains("unknown field"),
+            "Error message should name the unknown field: {err}"
+        );
+    }
+
+    #[test]
+    fn scaffold_config_rejects_unknown_neuron_key() {
+        let bad_toml = r#"
+[[subnet]]
+tempo = 100
+
+[[subnet.neuron]]
+name = "validator1"
+fund_tao = 1000.0
+register = true
+extra = "bad"
+"#;
+        let result: Result<ScaffoldConfig, _> = toml::from_str(bad_toml);
+        assert!(
+            result.is_err(),
+            "Unknown keys in [[subnet.neuron]] should be rejected"
+        );
+    }
+
+    #[test]
+    fn scaffold_config_rejects_unknown_top_level_key() {
+        let bad_toml = r#"
+totally_unexpected = true
+"#;
+        let result: Result<ScaffoldConfig, _> = toml::from_str(bad_toml);
+        assert!(
+            result.is_err(),
+            "Unknown top-level keys should be rejected"
+        );
     }
 }

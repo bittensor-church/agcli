@@ -31,8 +31,10 @@ Query running state, block height, and container metadata.
 
 ```bash
 agcli localnet status [--container NAME] [--port 9944]
-# JSON: {"running", "container_name", "container_id", "image", "endpoint", "block_height", "uptime"}
+# JSON: {"running", "container_name", "container_id", "image", "endpoint", "block_height", "started_at"}
 ```
+
+`started_at` is the ISO 8601 Docker `StartedAt` timestamp. `null` when the container is not running. Agents can compute wall-clock uptime by subtracting this from the current time.
 
 ### localnet reset
 Wipe state and restart the container fresh.
@@ -91,13 +93,15 @@ agcli localnet scaffold --no-start --port 9944
     "netuid": 1,
     "hyperparams": {"tempo": 100, "max_allowed_validators": 8, "min_allowed_weights": 1, "weights_rate_limit": 0, "commit_reveal": false},
     "neurons": [
-      {"name": "validator1", "ss58": "5G...", "seed": "//validator1_sn1", "uid": 0, "balance_tao": 1000.0},
-      {"name": "miner1", "ss58": "5F...", "seed": "//miner1_sn1", "uid": 1, "balance_tao": 100.0},
-      {"name": "miner2", "ss58": "5H...", "seed": "//miner2_sn1", "uid": 2, "balance_tao": 100.0}
+      {"name": "validator1", "ss58": "5G...", "uid": 0, "balance_tao": 1000.0},
+      {"name": "miner1", "ss58": "5F...", "uid": 1, "balance_tao": 100.0},
+      {"name": "miner2", "ss58": "5H...", "uid": 2, "balance_tao": 100.0}
     ]
   }]
 }
 ```
+
+Note: `seed` (the deterministic dev-key URI, e.g. `//validator1_sn1`) is intentionally omitted from JSON output (`#[serde(skip)]`) to prevent leaking secret URIs in logs and CI output. The seed formula is `//{name}_sn{netuid}` — reproducible from the config.
 
 **Scaffold config (TOML):**
 ```toml
