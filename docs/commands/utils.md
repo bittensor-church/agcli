@@ -1,6 +1,11 @@
 # utils — Utility Commands
 
-Miscellaneous tools: unit conversion, latency benchmarking, shell completions, self-update, diagnostics.
+Miscellaneous tools: unit conversion and latency benchmarking.
+
+> **Note:** `agcli doctor`, `agcli completions`, and `agcli update` are **not** subcommands
+> of `utils`.  See [doctor.md](doctor.md) and the top-level help for those.
+
+---
 
 ## Subcommands
 
@@ -172,7 +177,8 @@ Self-update `agcli` to the latest version from GitHub via `cargo install --git`.
 **Example**
 
 ```bash
-agcli update
+agcli utils convert --alpha 100.0 --netuid 18
+# 100.0000 Alpha (SN18) → 98.7432 TAO
 ```
 
 **Behavior**
@@ -203,7 +209,9 @@ Note: The exit code is always `1` (GENERIC) on failure — the error message is 
 
 ## Diagnostics (top-level)
 
-**`agcli doctor`** is not a `utils` subcommand — it is a **top-level** command. See **[doctor.md](doctor.md)** for connectivity, chain pings, disk cache, wallet row semantics, JSON shape, and exit behaviour (always **0** with per-row OK/FAIL).
+```json
+{ "netuid": 18, "alpha_in": 100.0, "tao_out": 98.7432 }
+```
 
 ## Source Code
 
