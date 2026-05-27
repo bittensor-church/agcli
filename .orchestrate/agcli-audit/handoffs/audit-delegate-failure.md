@@ -1,22 +1,22 @@
 <!-- orchestrate failure handoff
 task: audit-delegate
 branch: orch/agcli-audit/audit-delegate
-agentId: bc-3977d1ee-f668-4367-af25-7a570d7527a5
-runId: run-5185ee21-d4af-4415-8406-8b16d955c5dc
+agentId: bc-3ec513cd-a5b6-4cd4-91c3-3641a30005a9
+runId: run-633dbb5d-581e-412c-bf4e-d1c57aeb1977
 failureMode: unknown
-terminatedAt: 2026-05-27T11:17:01.033Z
+terminatedAt: 2026-05-27T11:34:46.742Z
 -->
 
 # audit-delegate failure handoff
 
 Status: error (cloud agent terminated without writing a handoff)
 Failure mode: unknown
-Cloud agent: bc-3977d1ee-f668-4367-af25-7a570d7527a5
-Started: 2026-05-27T11:16:00.462Z
-Terminated: 2026-05-27T11:17:01.033Z
-Duration: 60571ms
-Last activity: 2026-05-27T11:17:00.947Z
-Last tool call: grep_search
+Cloud agent: bc-3ec513cd-a5b6-4cd4-91c3-3641a30005a9
+Started: 2026-05-27T11:33:47.580Z
+Terminated: 2026-05-27T11:34:46.742Z
+Duration: 59162ms
+Last activity: 2026-05-27T11:34:46.603Z - respawned by self-planner (was error; attempts=1)
+Last tool call: read_file
 Branch: orch/agcli-audit/audit-delegate
 SDK error: (none recorded)
 
