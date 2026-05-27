@@ -130,7 +130,10 @@
       ],
       "verify": "Run on the worker branch: `cargo check --all-targets` (must succeed). Then `cargo test --no-run --test audit_balance_transfer` (must compile). The Findings section in the handoff is the substantive deliverable.",
       "model": "gpt-5.3-codex-high-fast",
-      "maxAttempts": 5
+      "maxAttempts": 5,
+      "dependsOn": [
+        "audit-wallet"
+      ]
     },
     {
       "name": "audit-stake",
@@ -176,7 +179,10 @@
       ],
       "verify": "Run on the worker branch: `cargo check --all-targets` (must succeed). Then `cargo test --no-run --test audit_stake` (must compile). The Findings section in the handoff is the substantive deliverable.",
       "model": "gpt-5.3-codex-high-fast",
-      "maxAttempts": 5
+      "maxAttempts": 5,
+      "dependsOn": [
+        "audit-balance-transfer"
+      ]
     },
     {
       "name": "audit-subnet",
@@ -268,7 +274,10 @@
       ],
       "verify": "Run on the worker branch: `cargo check --all-targets` (must succeed). Then `cargo test --no-run --test audit_weights` (must compile). The Findings section in the handoff is the substantive deliverable.",
       "model": "gpt-5.3-codex-high-fast",
-      "maxAttempts": 5
+      "maxAttempts": 5,
+      "dependsOn": [
+        "audit-stake"
+      ]
     },
     {
       "name": "audit-root",
@@ -314,7 +323,10 @@
       ],
       "verify": "Run on the worker branch: `cargo check --all-targets` (must succeed). Then `cargo test --no-run --test audit_root` (must compile). The Findings section in the handoff is the substantive deliverable.",
       "model": "gpt-5.3-codex-high-fast",
-      "maxAttempts": 5
+      "maxAttempts": 5,
+      "dependsOn": [
+        "audit-weights"
+      ]
     },
     {
       "name": "audit-delegate",
@@ -406,7 +418,10 @@
       ],
       "verify": "Run on the worker branch: `cargo check --all-targets` (must succeed). Then `cargo test --no-run --test audit_view` (must compile). The Findings section in the handoff is the substantive deliverable.",
       "model": "gpt-5.3-codex-high-fast",
-      "maxAttempts": 5
+      "maxAttempts": 5,
+      "dependsOn": [
+        "audit-delegate"
+      ]
     },
     {
       "name": "audit-identity",
@@ -452,7 +467,10 @@
       ],
       "verify": "Run on the worker branch: `cargo check --all-targets` (must succeed). Then `cargo test --no-run --test audit_identity` (must compile). The Findings section in the handoff is the substantive deliverable.",
       "model": "gpt-5.3-codex-high-fast",
-      "maxAttempts": 5
+      "maxAttempts": 5,
+      "dependsOn": [
+        "audit-view"
+      ]
     },
     {
       "name": "audit-serve",
@@ -498,7 +516,10 @@
       ],
       "verify": "Run on the worker branch: `cargo check --all-targets` (must succeed). Then `cargo test --no-run --test audit_serve` (must compile). The Findings section in the handoff is the substantive deliverable.",
       "model": "gpt-5.3-codex-high-fast",
-      "maxAttempts": 5
+      "maxAttempts": 5,
+      "dependsOn": [
+        "audit-identity"
+      ]
     },
     {
       "name": "audit-proxy",
@@ -590,7 +611,10 @@
       ],
       "verify": "Run on the worker branch: `cargo check --all-targets` (must succeed). Then `cargo test --no-run --test audit_swap_keys` (must compile). The Findings section in the handoff is the substantive deliverable.",
       "model": "gpt-5.3-codex-high-fast",
-      "maxAttempts": 5
+      "maxAttempts": 5,
+      "dependsOn": [
+        "audit-proxy"
+      ]
     },
     {
       "name": "audit-subscribe",
@@ -636,7 +660,10 @@
       ],
       "verify": "Run on the worker branch: `cargo check --all-targets` (must succeed). Then `cargo test --no-run --test audit_subscribe` (must compile). The Findings section in the handoff is the substantive deliverable.",
       "model": "gpt-5.3-codex-high-fast",
-      "maxAttempts": 5
+      "maxAttempts": 5,
+      "dependsOn": [
+        "audit-swap-keys"
+      ]
     },
     {
       "name": "audit-multisig",
@@ -682,7 +709,10 @@
       ],
       "verify": "Run on the worker branch: `cargo check --all-targets` (must succeed). Then `cargo test --no-run --test audit_multisig` (must compile). The Findings section in the handoff is the substantive deliverable.",
       "model": "gpt-5.3-codex-high-fast",
-      "maxAttempts": 5
+      "maxAttempts": 5,
+      "dependsOn": [
+        "audit-subscribe"
+      ]
     },
     {
       "name": "audit-scheduler",
@@ -912,7 +942,10 @@
       ],
       "verify": "Run on the worker branch: `cargo check --all-targets` (must succeed). Then `cargo test --no-run --test audit_safe_mode` (must compile). The Findings section in the handoff is the substantive deliverable.",
       "model": "gpt-5.3-codex-high-fast",
-      "maxAttempts": 5
+      "maxAttempts": 5,
+      "dependsOn": [
+        "audit-contracts"
+      ]
     },
     {
       "name": "audit-drand",
@@ -1142,7 +1175,10 @@
       ],
       "verify": "Run on the worker branch: `cargo check --all-targets` (must succeed). Then `cargo test --no-run --test audit_block` (must compile). The Findings section in the handoff is the substantive deliverable.",
       "model": "gpt-5.3-codex-high-fast",
-      "maxAttempts": 5
+      "maxAttempts": 5,
+      "dependsOn": [
+        "audit-safe-mode"
+      ]
     },
     {
       "name": "audit-diff",
@@ -1188,7 +1224,10 @@
       ],
       "verify": "Run on the worker branch: `cargo check --all-targets` (must succeed). Then `cargo test --no-run --test audit_diff` (must compile). The Findings section in the handoff is the substantive deliverable.",
       "model": "gpt-5.3-codex-high-fast",
-      "maxAttempts": 5
+      "maxAttempts": 5,
+      "dependsOn": [
+        "audit-block"
+      ]
     },
     {
       "name": "audit-config",
@@ -1372,7 +1411,10 @@
       ],
       "verify": "Run on the worker branch: `cargo check --all-targets` (must succeed). Then `cargo test --no-run --test audit_completions_update` (must compile). The Findings section in the handoff is the substantive deliverable.",
       "model": "gpt-5.3-codex-high-fast",
-      "maxAttempts": 5
+      "maxAttempts": 5,
+      "dependsOn": [
+        "audit-config"
+      ]
     },
     {
       "name": "audit-audit-cmd",
@@ -1464,7 +1506,10 @@
       ],
       "verify": "Run on the worker branch: `cargo check --all-targets` (must succeed). Then `cargo test --no-run --test audit_batch` (must compile). The Findings section in the handoff is the substantive deliverable.",
       "model": "gpt-5.3-codex-high-fast",
-      "maxAttempts": 5
+      "maxAttempts": 5,
+      "dependsOn": [
+        "audit-completions-update"
+      ]
     },
     {
       "name": "audit-utils-cli",
@@ -1510,7 +1555,10 @@
       ],
       "verify": "Run on the worker branch: `cargo check --all-targets` (must succeed). Then `cargo test --no-run --test audit_utils_cli` (must compile). The Findings section in the handoff is the substantive deliverable.",
       "model": "gpt-5.3-codex-high-fast",
-      "maxAttempts": 5
+      "maxAttempts": 5,
+      "dependsOn": [
+        "audit-batch"
+      ]
     },
     {
       "name": "audit-admin",
