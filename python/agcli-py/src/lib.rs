@@ -1,9 +1,14 @@
+mod admin;
 mod chain_data;
 mod client;
 mod config;
 mod errors;
+mod events;
 mod extrinsics;
+mod live;
+mod localnet;
 mod runtime;
+mod scaffold;
 mod types;
 mod wallet;
 
@@ -18,8 +23,25 @@ use config::PyConfig;
 use errors::{
     AgcliError, AuthError, ChainError, IOError, NetworkError, TimeoutError, ValidationError,
 };
+use events::PyEventStream;
+use localnet::{PyDevAccount, PyLocalnetConfig, PyLocalnetInfo, PyLocalnetStatus};
+use scaffold::{
+    PyChainConfig, PyNeuronConfig, PyNeuronResult, PyScaffoldConfig, PyScaffoldResult,
+    PySubnetConfig, PySubnetResult,
+};
 use types::{PyBalance, PyNetUid, PyNetwork};
 use wallet::PyWallet;
+
+fn register_submodule(
+    parent: &Bound<'_, PyModule>,
+    name: &str,
+    register_fn: impl FnOnce(&Bound<'_, PyModule>) -> PyResult<()>,
+) -> PyResult<()> {
+    let submod = PyModule::new(parent.py(), name)?;
+    register_fn(&submod)?;
+    parent.add(name, &submod)?;
+    Ok(())
+}
 
 /// Python bindings for the agcli Bittensor SDK.
 #[pymodule]
@@ -51,6 +73,22 @@ fn _agcli(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyClient>()?;
     m.add_class::<PyClientSync>()?;
     m.add_class::<PyWallet>()?;
+    m.add_class::<PyEventStream>()?;
+    m.add_class::<PyLocalnetConfig>()?;
+    m.add_class::<PyLocalnetInfo>()?;
+    m.add_class::<PyLocalnetStatus>()?;
+    m.add_class::<PyDevAccount>()?;
+    m.add_class::<PyChainConfig>()?;
+    m.add_class::<PyNeuronConfig>()?;
+    m.add_class::<PySubnetConfig>()?;
+    m.add_class::<PyScaffoldConfig>()?;
+    m.add_class::<PyNeuronResult>()?;
+    m.add_class::<PySubnetResult>()?;
+    m.add_class::<PyScaffoldResult>()?;
     m.add_function(wrap_pyfunction!(errors::raise_test_error, m)?)?;
+    register_submodule(m, "live", live::register)?;
+    register_submodule(m, "localnet", localnet::register)?;
+    register_submodule(m, "scaffold", scaffold::register)?;
+    register_submodule(m, "admin", admin::register)?;
     Ok(())
 }

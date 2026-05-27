@@ -238,6 +238,9 @@ class Client:
     async def schedule_swap_coldkey(self, wallet: Wallet, new_coldkey_ss58: str, *, wait: bool = True, mev: bool = True, dry_run: bool = False, finalization_timeout: int | None = None, mortality_blocks: int | None = None) -> str: ...
     async def swap_hotkey(self, wallet: Wallet, old_hotkey_ss58: str, new_hotkey_ss58: str, *, wait: bool = True, mev: bool = True, dry_run: bool = False, finalization_timeout: int | None = None, mortality_blocks: int | None = None) -> str: ...
     async def set_subnet_identity(self, wallet: Wallet, netuid: NetUid | int, identity: SubnetIdentity | dict[str, Any], *, wait: bool = True, mev: bool = True, dry_run: bool = False, finalization_timeout: int | None = None, mortality_blocks: int | None = None) -> str: ...
+    def subscribe_events(self, filter: Any = None) -> EventStream: ...
+    def subscribe_events_filtered(self, filter: Any) -> EventStream: ...
+    def subscribe_blocks(self) -> EventStream: ...
 
 class ClientSync:
     @staticmethod
@@ -313,3 +316,181 @@ class Wallet:
     def verify_message(ss58: str, message: bytes, signature: bytes) -> bool: ...
 
 def raise_test_error(message: str) -> None: ...
+
+class EventStream:
+    def __aiter__(self) -> EventStream: ...
+    async def __anext__(self) -> dict[str, Any]: ...
+    async def close(self) -> None: ...
+
+class LocalnetConfig:
+    image: str
+    container_name: str
+    port: int
+    wait: bool
+    wait_timeout: int
+    def __init__(
+        self,
+        image: str | None = None,
+        container_name: str | None = None,
+        port: int | None = None,
+        wait: bool | None = None,
+        wait_timeout: int | None = None,
+    ) -> None: ...
+    def to_dict(self) -> dict[str, Any]: ...
+
+class DevAccount:
+    name: str
+    uri: str
+    ss58: str
+    balance: str
+    def to_dict(self) -> dict[str, Any]: ...
+
+class LocalnetInfo:
+    container_name: str
+    container_id: str
+    image: str
+    endpoint: str
+    port: int
+    block_height: int
+    dev_accounts: list[DevAccount]
+    def to_dict(self) -> dict[str, Any]: ...
+
+class LocalnetStatus:
+    running: bool
+    container_name: str
+    container_id: str | None
+    image: str | None
+    endpoint: str | None
+    block_height: int | None
+    uptime: str | None
+    def to_dict(self) -> dict[str, Any]: ...
+
+class NeuronConfig:
+    name: str
+    fund_tao: float | None
+    register: bool
+    def __init__(
+        self, name: str, fund_tao: float | None = None, register: bool = True
+    ) -> None: ...
+    def to_dict(self) -> dict[str, Any]: ...
+
+class SubnetConfig:
+    tempo: int | None
+    max_allowed_validators: int | None
+    max_allowed_uids: int | None
+    min_allowed_weights: int | None
+    max_weight_limit: int | None
+    immunity_period: int | None
+    weights_rate_limit: int | None
+    commit_reveal: bool | None
+    activity_cutoff: int | None
+    neurons: list[NeuronConfig]
+    def __init__(
+        self,
+        tempo: int | None = None,
+        max_allowed_validators: int | None = None,
+        max_allowed_uids: int | None = None,
+        min_allowed_weights: int | None = None,
+        max_weight_limit: int | None = None,
+        immunity_period: int | None = None,
+        weights_rate_limit: int | None = None,
+        commit_reveal: bool | None = None,
+        activity_cutoff: int | None = None,
+        neurons: list[NeuronConfig] | None = None,
+    ) -> None: ...
+    def to_dict(self) -> dict[str, Any]: ...
+
+class ChainConfig:
+    image: str
+    container: str
+    port: int
+    start: bool
+    timeout: int
+    def __init__(
+        self,
+        image: str | None = None,
+        container: str | None = None,
+        port: int | None = None,
+        start: bool | None = None,
+        timeout: int | None = None,
+    ) -> None: ...
+    def to_dict(self) -> dict[str, Any]: ...
+
+class ScaffoldConfig:
+    chain: ChainConfig
+    subnets: list[SubnetConfig]
+    def __init__(
+        self,
+        chain: ChainConfig | None = None,
+        subnets: list[SubnetConfig] | None = None,
+    ) -> None: ...
+    def to_dict(self) -> dict[str, Any]: ...
+
+class NeuronResult:
+    name: str
+    ss58: str
+    seed: str
+    uid: int | None
+    balance_tao: float | None
+    def to_dict(self) -> dict[str, Any]: ...
+
+class SubnetResult:
+    netuid: int
+    hyperparams: dict[str, Any]
+    neurons: list[NeuronResult]
+    def to_dict(self) -> dict[str, Any]: ...
+
+class ScaffoldResult:
+    endpoint: str
+    container: str | None
+    block_height: int
+    subnets: list[SubnetResult]
+    def to_dict(self) -> dict[str, Any]: ...
+
+class _LiveModule:
+    @staticmethod
+    async def live_dynamic(client: Client, interval_secs: int = 5) -> None: ...
+    @staticmethod
+    async def live_metagraph(
+        client: Client, netuid: NetUid | int, interval_secs: int = 5
+    ) -> None: ...
+    @staticmethod
+    async def live_portfolio(
+        client: Client, coldkey_ss58: str, interval_secs: int = 5
+    ) -> None: ...
+
+class _LocalnetModule:
+    DEFAULT_IMAGE: str
+    DEFAULT_CONTAINER: str
+    DEFAULT_WS: str
+    @staticmethod
+    def dev_accounts() -> list[DevAccount]: ...
+    @staticmethod
+    async def start(config: LocalnetConfig | None = None) -> LocalnetInfo: ...
+    @staticmethod
+    def stop(container_name: str) -> None: ...
+    @staticmethod
+    async def status(
+        container_name: str | None = None, port: int = 9944
+    ) -> LocalnetStatus: ...
+    @staticmethod
+    async def reset(config: LocalnetConfig | None = None) -> LocalnetInfo: ...
+    @staticmethod
+    def logs(container_name: str, tail: int | None = None) -> str: ...
+
+class _ScaffoldModule:
+    @staticmethod
+    def load_config(path: str) -> ScaffoldConfig: ...
+    @staticmethod
+    async def run(config: ScaffoldConfig) -> ScaffoldResult: ...
+
+class _AdminModule:
+    @staticmethod
+    def known_params() -> list[tuple[str, str, list[str]]]: ...
+    @staticmethod
+    def __getattr__(name: str) -> Any: ...
+
+live: _LiveModule
+localnet: _LocalnetModule
+scaffold: _ScaffoldModule
+admin: _AdminModule

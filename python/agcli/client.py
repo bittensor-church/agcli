@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from agcli import _agcli
+from agcli.events import EventFilter, _wrap_stream
 from agcli.types import (
     Balance,
     ChainIdentity,
@@ -1126,6 +1127,27 @@ class AsyncClient:
             finalization_timeout=finalization_timeout,
             mortality_blocks=mortality_blocks,
         )
+
+    def subscribe_events(
+        self, filter: EventFilter | dict[str, Any] | str | None = None
+    ) -> Any:
+        """Return an async iterator of event dicts from finalized blocks.
+
+        Closing the iterator (drop or `await stream.close()`) cancels the
+        subscription. Each yielded dict carries `block_number`, `pallet`,
+        `variant`, `extrinsic_index`, and a `fields` payload.
+        """
+        return _wrap_stream(self._inner.subscribe_events(filter))
+
+    def subscribe_events_filtered(
+        self, filter: EventFilter | dict[str, Any] | str
+    ) -> Any:
+        """Like `subscribe_events` but requires an explicit filter."""
+        return _wrap_stream(self._inner.subscribe_events_filtered(filter))
+
+    def subscribe_blocks(self) -> Any:
+        """Return an async iterator of block dicts (block_number, hash, extrinsics)."""
+        return _wrap_stream(self._inner.subscribe_blocks())
 
     def __repr__(self) -> str:
         return f"AsyncClient(endpoint={self.endpoint!r})"
