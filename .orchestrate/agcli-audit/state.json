@@ -29,20 +29,20 @@
       "branch": "orch/agcli-audit/audit-wallet",
       "startingRef": "cursor/agcli-subtensor-audit-e2e7",
       "dependsOn": [],
-      "agentId": "bc-3c02dd3b-0841-4fe5-a2f0-3c7dfdc2764b",
-      "runId": "run-a23dfb60-cce6-4b5b-91a8-2104f3bbc16a",
+      "agentId": null,
+      "runId": null,
       "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
-      "status": "error",
-      "resultStatus": "error",
-      "handoffPath": "handoffs/audit-wallet.md",
-      "startedAt": "2026-05-27T11:15:41.798Z",
-      "finishedAt": "2026-05-27T11:16:41.532Z",
-      "lastUpdate": "2026-05-27T11:16:41.532Z",
-      "note": null,
+      "status": "pending",
+      "resultStatus": null,
+      "handoffPath": null,
+      "startedAt": null,
+      "finishedAt": null,
+      "lastUpdate": "2026-05-27T11:32:00.574Z",
+      "note": "respawned by self-planner (was error; attempts=1)",
       "attempts": 1,
       "slackTs": null,
       "prNumber": null,
-      "failureMode": "unknown",
+      "failureMode": null,
       "verification": null
     },
     {
@@ -1701,6 +1701,10 @@
     {
       "at": "2026-05-27T11:18:53.625Z",
       "message": "audit-admin: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-admin-failure.md"
+    },
+    {
+      "at": "2026-05-27T11:32:00.175Z",
+      "message": "bootstrap-env: respawned by self-planner (was error)"
     }
   ]
 }
