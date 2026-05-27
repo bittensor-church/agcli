@@ -1164,15 +1164,15 @@
         "audit-admin",
         "audit-localnet"
       ],
-      "agentId": null,
-      "runId": null,
+      "agentId": "bc-8522d10c-2005-42f9-af14-b0c799c5a134",
+      "runId": "run-6b618028-6528-4789-bc8a-6d040b261732",
       "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
       "status": "running",
       "resultStatus": null,
       "handoffPath": null,
       "startedAt": "2026-05-27T13:52:53.254Z",
       "finishedAt": null,
-      "lastUpdate": "2026-05-27T13:52:53.254Z",
+      "lastUpdate": "2026-05-27T13:52:56.681Z",
       "note": "respawned by self-planner (was error; attempts=1)",
       "attempts": 2,
       "slackTs": null,
@@ -1338,14 +1338,14 @@
       "agentId": null,
       "runId": null,
       "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
-      "status": "pending",
+      "status": "running",
       "resultStatus": null,
       "handoffPath": null,
-      "startedAt": null,
+      "startedAt": "2026-05-27T13:52:56.685Z",
       "finishedAt": null,
-      "lastUpdate": "2026-05-27T13:52:27.580Z",
+      "lastUpdate": "2026-05-27T13:52:56.685Z",
       "note": "respawned by self-planner (was error; attempts=1)",
-      "attempts": 1,
+      "attempts": 2,
       "slackTs": null,
       "prNumber": null,
       "failureMode": null,
@@ -2673,6 +2673,10 @@
     {
       "at": "2026-05-27T13:52:53.253Z",
       "message": "fix-llm-txt: model \"claude-sonnet-4-6\" not in MODEL_CATALOG (spawning anyway). Run `bun cli.ts models` to see known slugs."
+    },
+    {
+      "at": "2026-05-27T13:52:56.684Z",
+      "message": "fix-scaffold-localnet: model \"claude-sonnet-4-6\" not in MODEL_CATALOG (spawning anyway). Run `bun cli.ts models` to see known slugs."
     }
   ]
 }
