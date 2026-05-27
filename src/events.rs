@@ -62,12 +62,12 @@ const STAKING_VARIANTS: &[&str] = &[
     "StakeRemoved",
     "StakeMoved",
     "StakeSwapped",
-    "AllStakeRemoved",
     "StakeTransferred",
     "AlphaRecycled",
     "AlphaBurned",
     "RootClaimed",
     "AutoStakeAdded",
+    "AddStakeBurn",
     "AutoStakeDestinationSet",
 ];
 
@@ -123,26 +123,31 @@ const DELEGATION_VARIANTS: &[&str] = &[
     "ChildKeyTakeSet",
     "SetChildren",
     "SetChildrenScheduled",
+    "AutoParentDelegationEnabledSet",
 ];
 
 /// Known key lifecycle event variant names.
 const KEY_VARIANTS: &[&str] = &[
     "HotkeySwapped",
     "HotkeySwappedOnSubnet",
+    "ColdkeySwapAnnounced",
+    "ColdkeySwapReset",
     "ColdkeySwapped",
-    "ColdkeySwapScheduled",
+    "ColdkeySwapDisputed",
+    "ColdkeySwapCleared",
+    "AllBalanceUnstakedAndTransferredToNewColdkey",
+    "ArbitrationPeriodExtended",
     "EvmKeyAssociated",
     "ChainIdentitySet",
 ];
 
 /// Known Swap/DEX pallet event variant names.
 const SWAP_VARIANTS: &[&str] = &[
-    "SwapExecuted",
+    "FeeRateSet",
+    "UserLiquidityToggled",
     "LiquidityAdded",
     "LiquidityRemoved",
-    "PositionCreated",
-    "PositionClosed",
-    "FeesCollected",
+    "LiquidityModified",
 ];
 
 /// Known governance-related event variant names (across pallets).
@@ -176,8 +181,140 @@ const CROWDLOAN_VARIANTS: &[&str] = &[
     "Withdrew",
     "PartiallyRefunded",
     "AllRefunded",
+    "Finalized",
     "Dissolved",
-    "Edited",
+    "MinContributionUpdated",
+    "EndUpdated",
+    "CapUpdated",
+];
+
+/// Every event variant currently emitted by subtensor's `SubtensorModule`.
+const SUBTENSOR_VARIANTS: &[&str] = &[
+    "NetworkAdded",
+    "NetworkRemoved",
+    "StakeAdded",
+    "StakeRemoved",
+    "StakeMoved",
+    "WeightsSet",
+    "NeuronRegistered",
+    "BulkNeuronsRegistered",
+    "BulkBalancesSet",
+    "MaxAllowedUidsSet",
+    "MaxWeightLimitSet",
+    "DifficultySet",
+    "AdjustmentIntervalSet",
+    "RegistrationPerIntervalSet",
+    "MaxRegistrationsPerBlockSet",
+    "ActivityCutoffSet",
+    "RhoSet",
+    "AlphaSigmoidSteepnessSet",
+    "KappaSet",
+    "MinAllowedWeightSet",
+    "ValidatorPruneLenSet",
+    "ScalingLawPowerSet",
+    "WeightsSetRateLimitSet",
+    "ImmunityPeriodSet",
+    "BondsMovingAverageSet",
+    "BondsPenaltySet",
+    "BondsResetOnSet",
+    "MaxAllowedValidatorsSet",
+    "AxonServed",
+    "PrometheusServed",
+    "DelegateAdded",
+    "DefaultTakeSet",
+    "WeightsVersionKeySet",
+    "MinDifficultySet",
+    "MaxDifficultySet",
+    "ServingRateLimitSet",
+    "BurnSet",
+    "MaxBurnSet",
+    "MinBurnSet",
+    "TxRateLimitSet",
+    "TxDelegateTakeRateLimitSet",
+    "TxChildKeyTakeRateLimitSet",
+    "AdminFreezeWindowSet",
+    "OwnerHyperparamRateLimitSet",
+    "MinChildKeyTakeSet",
+    "MaxChildKeyTakeSet",
+    "ChildKeyTakeSet",
+    "Sudid",
+    "RegistrationAllowed",
+    "PowRegistrationAllowed",
+    "TempoSet",
+    "RAORecycledForRegistrationSet",
+    "StakeThresholdSet",
+    "AdjustmentAlphaSet",
+    "Faucet",
+    "SubnetOwnerCutSet",
+    "NetworkRateLimitSet",
+    "NetworkImmunityPeriodSet",
+    "StartCallDelaySet",
+    "NetworkMinLockCostSet",
+    "SubnetLimitSet",
+    "NetworkLockCostReductionIntervalSet",
+    "TakeDecreased",
+    "TakeIncreased",
+    "HotkeySwapped",
+    "MaxDelegateTakeSet",
+    "MinDelegateTakeSet",
+    "ColdkeySwapAnnounced",
+    "ColdkeySwapReset",
+    "ColdkeySwapped",
+    "ColdkeySwapDisputed",
+    "AllBalanceUnstakedAndTransferredToNewColdkey",
+    "ArbitrationPeriodExtended",
+    "SetChildrenScheduled",
+    "SetChildren",
+    "ChainIdentitySet",
+    "SubnetIdentitySet",
+    "SubnetIdentityRemoved",
+    "DissolveNetworkScheduled",
+    "ColdkeySwapAnnouncementDelaySet",
+    "ColdkeySwapReannouncementDelaySet",
+    "DissolveNetworkScheduleDurationSet",
+    "CRV3WeightsCommitted",
+    "WeightsCommitted",
+    "WeightsRevealed",
+    "WeightsBatchRevealed",
+    "BatchWeightsCompleted",
+    "BatchCompletedWithErrors",
+    "BatchWeightItemFailed",
+    "StakeTransferred",
+    "StakeSwapped",
+    "TransferToggle",
+    "SubnetOwnerHotkeySet",
+    "FirstEmissionBlockNumberSet",
+    "AlphaRecycled",
+    "AlphaBurned",
+    "EvmKeyAssociated",
+    "CRV3WeightsRevealed",
+    "CommitRevealPeriodsSet",
+    "CommitRevealEnabled",
+    "HotkeySwappedOnSubnet",
+    "SubnetLeaseCreated",
+    "SubnetLeaseTerminated",
+    "SymbolUpdated",
+    "CommitRevealVersionSet",
+    "TimelockedWeightsCommitted",
+    "TimelockedWeightsRevealed",
+    "AutoStakeAdded",
+    "IncentiveAlphaEmittedToMiners",
+    "MinAllowedUidsSet",
+    "AutoStakeDestinationSet",
+    "MinNonImmuneUidsSet",
+    "RootClaimed",
+    "RootClaimTypeSet",
+    "VotingPowerTrackingEnabled",
+    "VotingPowerTrackingDisableScheduled",
+    "VotingPowerTrackingDisabled",
+    "VotingPowerEmaAlphaSet",
+    "SubnetLeaseDividendsDistributed",
+    "AddStakeBurn",
+    "ColdkeySwapCleared",
+    "TransactionFeePaidWithAlpha",
+    "BurnHalfLifeSet",
+    "BurnIncreaseMultSet",
+    "AutoParentDelegationEnabledSet",
 ];
 
 impl EventFilter {
@@ -224,26 +361,123 @@ impl std::fmt::Display for ChainEvent {
     }
 }
 
-/// Extract a u16 netuid value from a Composite field (named or unnamed).
-///
-/// Handles both `Named([("netuid", U128(n)), ...])` and `Unnamed([U128(n), ...])`
-/// by checking named fields first, then looking for u16-range values in unnamed composites.
-fn extract_netuid<T: Clone>(composite: &Composite<T>) -> Option<u16> {
+fn prettify_variant_name(variant: &str) -> String {
+    let mut out = String::with_capacity(variant.len() + 8);
+    for (idx, ch) in variant.chars().enumerate() {
+        if idx > 0 && ch.is_ascii_uppercase() {
+            out.push(' ');
+        }
+        out.push(ch);
+    }
+    out
+}
+
+fn pretty_subtensor_variant_name(variant: &str) -> Option<String> {
+    if SUBTENSOR_VARIANTS.contains(&variant) {
+        Some(prettify_variant_name(variant))
+    } else {
+        None
+    }
+}
+
+fn pretty_variant_name(pallet: &str, variant: &str) -> String {
+    if pallet == "SubtensorModule" {
+        if let Some(name) = pretty_subtensor_variant_name(variant) {
+            return name;
+        }
+    }
+    prettify_variant_name(variant)
+}
+
+fn netuid_positions_for_unnamed(pallet: &str, variant: &str) -> &'static [usize] {
+    match (pallet, variant) {
+        ("SubtensorModule", "NetworkAdded") => &[0],
+        ("SubtensorModule", "NetworkRemoved") => &[0],
+        ("SubtensorModule", "StakeAdded") => &[4],
+        ("SubtensorModule", "StakeRemoved") => &[4],
+        ("SubtensorModule", "StakeMoved") => &[2, 4],
+        ("SubtensorModule", "WeightsSet") => &[0],
+        ("SubtensorModule", "NeuronRegistered") => &[0],
+        ("SubtensorModule", "MaxAllowedUidsSet") => &[0],
+        ("SubtensorModule", "MaxWeightLimitSet") => &[0],
+        ("SubtensorModule", "DifficultySet") => &[0],
+        ("SubtensorModule", "AdjustmentIntervalSet") => &[0],
+        ("SubtensorModule", "RegistrationPerIntervalSet") => &[0],
+        ("SubtensorModule", "MaxRegistrationsPerBlockSet") => &[0],
+        ("SubtensorModule", "ActivityCutoffSet") => &[0],
+        ("SubtensorModule", "RhoSet") => &[0],
+        ("SubtensorModule", "AlphaSigmoidSteepnessSet") => &[0],
+        ("SubtensorModule", "KappaSet") => &[0],
+        ("SubtensorModule", "MinAllowedWeightSet") => &[0],
+        ("SubtensorModule", "ValidatorPruneLenSet") => &[0],
+        ("SubtensorModule", "ScalingLawPowerSet") => &[0],
+        ("SubtensorModule", "WeightsSetRateLimitSet") => &[0],
+        ("SubtensorModule", "ImmunityPeriodSet") => &[0],
+        ("SubtensorModule", "BondsMovingAverageSet") => &[0],
+        ("SubtensorModule", "BondsPenaltySet") => &[0],
+        ("SubtensorModule", "BondsResetOnSet") => &[0],
+        ("SubtensorModule", "MaxAllowedValidatorsSet") => &[0],
+        ("SubtensorModule", "AxonServed") => &[0],
+        ("SubtensorModule", "PrometheusServed") => &[0],
+        ("SubtensorModule", "WeightsVersionKeySet") => &[0],
+        ("SubtensorModule", "MinDifficultySet") => &[0],
+        ("SubtensorModule", "MaxDifficultySet") => &[0],
+        ("SubtensorModule", "ServingRateLimitSet") => &[0],
+        ("SubtensorModule", "BurnSet") => &[0],
+        ("SubtensorModule", "MaxBurnSet") => &[0],
+        ("SubtensorModule", "MinBurnSet") => &[0],
+        ("SubtensorModule", "RegistrationAllowed") => &[0],
+        ("SubtensorModule", "PowRegistrationAllowed") => &[0],
+        ("SubtensorModule", "TempoSet") => &[0],
+        ("SubtensorModule", "RAORecycledForRegistrationSet") => &[0],
+        ("SubtensorModule", "AdjustmentAlphaSet") => &[0],
+        ("SubtensorModule", "CRV3WeightsCommitted") => &[1],
+        ("SubtensorModule", "WeightsCommitted") => &[1],
+        ("SubtensorModule", "WeightsRevealed") => &[1],
+        ("SubtensorModule", "WeightsBatchRevealed") => &[1],
+        ("SubtensorModule", "StakeTransferred") => &[3, 4],
+        ("SubtensorModule", "StakeSwapped") => &[2, 3],
+        ("SubtensorModule", "TransferToggle") => &[0],
+        ("SubtensorModule", "SubnetOwnerHotkeySet") => &[0],
+        ("SubtensorModule", "FirstEmissionBlockNumberSet") => &[0],
+        ("SubtensorModule", "AlphaRecycled") => &[3],
+        ("SubtensorModule", "AlphaBurned") => &[3],
+        ("SubtensorModule", "CRV3WeightsRevealed") => &[0],
+        ("SubtensorModule", "CommitRevealPeriodsSet") => &[0],
+        ("SubtensorModule", "CommitRevealEnabled") => &[0],
+        ("SubtensorModule", "TimelockedWeightsCommitted") => &[1],
+        ("SubtensorModule", "TimelockedWeightsRevealed") => &[0],
+        ("SubtensorModule", "MinAllowedUidsSet") => &[0],
+        ("SubtensorModule", "MinNonImmuneUidsSet") => &[0],
+        _ => &[],
+    }
+}
+
+fn extract_u16_from_value<T: Clone>(value: &subxt::ext::scale_value::Value<T>) -> Option<u16> {
+    match &value.value {
+        ValueDef::Primitive(Primitive::U128(n)) if *n <= u16::MAX as u128 => Some(*n as u16),
+        _ => None,
+    }
+}
+
+/// Extract u16 netuid values from a Composite field (named or unnamed).
+fn extract_netuids<T: Clone>(pallet: &str, variant: &str, composite: &Composite<T>) -> Vec<u16> {
     match composite {
         Composite::Named(fields) => {
+            let mut found = Vec::new();
             for (name, val) in fields {
                 if name == "netuid" {
-                    if let ValueDef::Primitive(Primitive::U128(n)) = &val.value {
-                        if *n <= u16::MAX as u128 {
-                            return Some(*n as u16);
-                        }
-                        return None; // out of u16 range — not a valid netuid
+                    if let Some(netuid) = extract_u16_from_value(val) {
+                        found.push(netuid);
                     }
                 }
             }
-            None
+            found
         }
-        Composite::Unnamed(_) => None,
+        Composite::Unnamed(fields) => netuid_positions_for_unnamed(pallet, variant)
+            .iter()
+            .filter_map(|idx| fields.get(*idx).and_then(extract_u16_from_value))
+            .collect(),
     }
 }
 
@@ -365,20 +599,8 @@ fn value_to_json<T: Clone>(val: &subxt::ext::scale_value::Value<T>) -> serde_jso
         ValueDef::Primitive(p) => match p {
             Primitive::Bool(b) => serde_json::Value::Bool(*b),
             Primitive::Char(c) => serde_json::Value::String(c.to_string()),
-            Primitive::U128(n) => {
-                if *n <= u64::MAX as u128 {
-                    serde_json::json!(*n as u64)
-                } else {
-                    serde_json::Value::String(n.to_string())
-                }
-            }
-            Primitive::I128(n) => {
-                if *n >= i64::MIN as i128 && *n <= i64::MAX as i128 {
-                    serde_json::json!(*n as i64)
-                } else {
-                    serde_json::Value::String(n.to_string())
-                }
-            }
+            Primitive::U128(n) => serde_json::Value::String(n.to_string()),
+            Primitive::I128(n) => serde_json::Value::String(n.to_string()),
             Primitive::U256(n) => serde_json::Value::String(format!("{:?}", n)),
             Primitive::I256(n) => serde_json::Value::String(format!("{:?}", n)),
             Primitive::String(s) => serde_json::Value::String(s.clone()),
@@ -593,12 +815,11 @@ async fn subscribe_events_inner(
                     }
                 };
 
-                // Structured netuid filtering — extract netuid from composite fields only
+                // Structured netuid filtering.
                 if let Some(target_netuid) = netuid_filter {
-                    match extract_netuid(&field_values) {
-                        Some(found) if found == target_netuid => { /* match */ }
-                        Some(_) => continue, // different netuid
-                        None => continue,    // no netuid field — skip (not a netuid-bearing event)
+                    let found_netuids = extract_netuids(&pallet, &variant, &field_values);
+                    if found_netuids.is_empty() || !found_netuids.contains(&target_netuid) {
+                        continue;
                     }
                 }
 
@@ -612,18 +833,23 @@ async fn subscribe_events_inner(
 
                 if json_output {
                     let structured_fields = composite_to_json(&field_values);
+                    let pretty_variant = pretty_variant_name(&pallet, &variant);
                     println!(
                         "{}",
                         serde_json::json!({
                             "block": block_number,
                             "hash": block_hash,
                             "pallet": pallet,
+                            "variant": variant,
                             "event": variant,
+                            "pretty_variant": pretty_variant,
                             "fields": structured_fields,
                         })
                     );
                 } else {
-                    let fields_str = format!("{:?}", field_values);
+                    let pretty_variant = pretty_variant_name(&pallet, &variant);
+                    let fields_str =
+                        format!("{} {}", pretty_variant, composite_to_json(&field_values));
                     let ce = ChainEvent {
                         block_number,
                         block_hash: block_hash.clone(),
@@ -987,8 +1213,8 @@ mod tests {
     }
 
     #[test]
-    fn staking_matches_all_stake_removed() {
-        assert!(EventFilter::Staking.matches("SubtensorModule", "AllStakeRemoved"));
+    fn staking_matches_add_stake_burn() {
+        assert!(EventFilter::Staking.matches("SubtensorModule", "AddStakeBurn"));
     }
 
     #[test]
@@ -1290,23 +1516,40 @@ mod tests {
     #[test]
     fn extract_netuid_named_match() {
         let composite = make_named_with_netuid(42);
-        assert_eq!(extract_netuid(&composite), Some(42));
+        assert_eq!(
+            extract_netuids("SubtensorModule", "TempoSet", &composite),
+            vec![42]
+        );
     }
 
     #[test]
     fn extract_netuid_named_no_field() {
         let composite = make_named_no_netuid();
-        assert_eq!(extract_netuid(&composite), None);
+        assert!(
+            extract_netuids("SubtensorModule", "TempoSet", &composite).is_empty()
+        );
     }
 
     #[test]
-    fn extract_netuid_unnamed_returns_none() {
-        // Issue 719: Unnamed composites should NOT match by accident
-        let composite = Composite::Unnamed(vec![subxt::ext::scale_value::Value::u128(42)]);
+    fn extract_netuid_unnamed_uses_variant_position() {
+        let composite = Composite::Unnamed(vec![
+            subxt::ext::scale_value::Value::u128(1),
+            subxt::ext::scale_value::Value::u128(2),
+            subxt::ext::scale_value::Value::u128(42),
+            subxt::ext::scale_value::Value::u128(3),
+            subxt::ext::scale_value::Value::u128(43),
+        ]);
         assert_eq!(
-            extract_netuid(&composite),
-            None,
-            "Unnamed(42) must not match as netuid"
+            extract_netuids("SubtensorModule", "StakeMoved", &composite),
+            vec![42, 43]
+        );
+    }
+
+    #[test]
+    fn extract_netuid_unnamed_unknown_variant_returns_empty() {
+        let composite = Composite::Unnamed(vec![subxt::ext::scale_value::Value::u128(42)]);
+        assert!(
+            extract_netuids("SubtensorModule", "UnknownEvent", &composite).is_empty()
         );
     }
 
@@ -1442,7 +1685,10 @@ mod tests {
             "netuid".to_string(),
             subxt::ext::scale_value::Value::u128(42),
         )]);
-        assert_eq!(extract_netuid(&composite), Some(42));
+        assert_eq!(
+            extract_netuids("SubtensorModule", "TempoSet", &composite),
+            vec![42]
+        );
     }
 
     #[test]
@@ -1452,7 +1698,10 @@ mod tests {
             "netuid".to_string(),
             subxt::ext::scale_value::Value::u128(65535),
         )]);
-        assert_eq!(extract_netuid(&composite), Some(65535));
+        assert_eq!(
+            extract_netuids("SubtensorModule", "TempoSet", &composite),
+            vec![65535]
+        );
     }
 
     #[test]
@@ -1463,7 +1712,9 @@ mod tests {
             "netuid".to_string(),
             subxt::ext::scale_value::Value::u128(65536),
         )]);
-        assert_eq!(extract_netuid(&composite), None);
+        assert!(
+            extract_netuids("SubtensorModule", "TempoSet", &composite).is_empty()
+        );
     }
 
     #[test]
@@ -1474,7 +1725,9 @@ mod tests {
             "netuid".to_string(),
             subxt::ext::scale_value::Value::u128(0x0001_0001),
         )]);
-        assert_eq!(extract_netuid(&composite), None);
+        assert!(
+            extract_netuids("SubtensorModule", "TempoSet", &composite).is_empty()
+        );
     }
 
     // --- Issue 155: saturating arithmetic for gap display ---
@@ -1530,8 +1783,8 @@ mod tests {
     }
 
     #[test]
-    fn swap_matches_swap_executed() {
-        assert!(EventFilter::Swap.matches("Swap", "SwapExecuted"));
+    fn swap_matches_fee_rate_set() {
+        assert!(EventFilter::Swap.matches("Swap", "FeeRateSet"));
     }
 
     #[test]
@@ -1540,18 +1793,18 @@ mod tests {
     }
 
     #[test]
-    fn swap_matches_position_created() {
-        assert!(EventFilter::Swap.matches("Swap", "PositionCreated"));
+    fn swap_matches_user_liquidity_toggled() {
+        assert!(EventFilter::Swap.matches("Swap", "UserLiquidityToggled"));
     }
 
     #[test]
-    fn swap_matches_fees_collected() {
-        assert!(EventFilter::Swap.matches("Swap", "FeesCollected"));
+    fn swap_matches_liquidity_modified() {
+        assert!(EventFilter::Swap.matches("Swap", "LiquidityModified"));
     }
 
     #[test]
     fn swap_rejects_wrong_pallet() {
-        assert!(!EventFilter::Swap.matches("Balances", "SwapExecuted"));
+        assert!(!EventFilter::Swap.matches("Balances", "FeeRateSet"));
     }
 
     #[test]
@@ -1693,7 +1946,7 @@ mod tests {
 
     #[test]
     fn governance_does_not_match_swap() {
-        assert!(!EventFilter::Governance.matches("Swap", "SwapExecuted"));
+        assert!(!EventFilter::Governance.matches("Swap", "FeeRateSet"));
     }
 
     #[test]
@@ -1703,8 +1956,70 @@ mod tests {
 
     #[test]
     fn all_still_matches_new_pallets() {
-        assert!(EventFilter::All.matches("Swap", "SwapExecuted"));
+        assert!(EventFilter::All.matches("Swap", "FeeRateSet"));
         assert!(EventFilter::All.matches("SafeMode", "Entered"));
         assert!(EventFilter::All.matches("Crowdloan", "Created"));
+    }
+
+    #[test]
+    fn crowdloan_matches_finalized() {
+        assert!(EventFilter::Crowdloan.matches("Crowdloan", "Finalized"));
+    }
+
+    #[test]
+    fn pretty_subtensor_variants_are_exhaustive() {
+        let source_path = "subtensor/pallets/subtensor/src/macros/events.rs";
+        let source =
+            std::fs::read_to_string(source_path).expect("subtensor events source should exist");
+        let mut in_enum = false;
+        let mut variants = Vec::<String>::new();
+        for line in source.lines() {
+            let trimmed = line.trim_start();
+            if trimmed.starts_with("pub enum Event") {
+                in_enum = true;
+                continue;
+            }
+            if !in_enum {
+                continue;
+            }
+            if trimmed.starts_with('}') {
+                break;
+            }
+            if trimmed.is_empty() || trimmed.starts_with("#[") || trimmed.starts_with("///") {
+                continue;
+            }
+
+            let name: String = trimmed
+                .chars()
+                .take_while(|c| c.is_ascii_alphanumeric() || *c == '_')
+                .collect();
+            if name.is_empty() {
+                continue;
+            }
+            let rest = &trimmed[name.len()..];
+            if rest.trim_start().starts_with('(') || rest.trim_start().starts_with('{') {
+                variants.push(name);
+            }
+        }
+
+        let missing: Vec<&String> = variants
+            .iter()
+            .filter(|v| !SUBTENSOR_VARIANTS.contains(&v.as_str()))
+            .collect();
+        assert!(
+            missing.is_empty(),
+            "Missing subtensor variants in SUBTENSOR_VARIANTS: {:?}",
+            missing
+        );
+
+        let extras: Vec<&&str> = SUBTENSOR_VARIANTS
+            .iter()
+            .filter(|v| !variants.iter().any(|x| x == **v))
+            .collect();
+        assert!(
+            extras.is_empty(),
+            "Stale variants in SUBTENSOR_VARIANTS: {:?}",
+            extras
+        );
     }
 }
