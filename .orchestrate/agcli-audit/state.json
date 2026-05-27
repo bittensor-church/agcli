@@ -337,20 +337,20 @@
       "branch": "orch/agcli-audit/audit-scheduler",
       "startingRef": "cursor/agcli-subtensor-audit-e2e7",
       "dependsOn": [],
-      "agentId": "bc-a145e3f6-19c8-43df-9648-57bd5af584d8",
-      "runId": "run-b02086e3-6e61-4934-84d2-dca81520faba",
+      "agentId": null,
+      "runId": null,
       "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
-      "status": "error",
-      "resultStatus": "error",
-      "handoffPath": "handoffs/audit-scheduler.md",
-      "startedAt": "2026-05-27T11:16:24.462Z",
-      "finishedAt": "2026-05-27T11:17:16.678Z",
-      "lastUpdate": "2026-05-27T11:17:16.679Z",
-      "note": null,
+      "status": "pending",
+      "resultStatus": null,
+      "handoffPath": null,
+      "startedAt": null,
+      "finishedAt": null,
+      "lastUpdate": "2026-05-27T11:32:21.970Z",
+      "note": "respawned by self-planner (was error; attempts=1)",
       "attempts": 1,
       "slackTs": null,
       "prNumber": null,
-      "failureMode": "unknown",
+      "failureMode": null,
       "verification": null
     },
     {
@@ -1757,6 +1757,10 @@
     {
       "at": "2026-05-27T11:32:19.975Z",
       "message": "audit-subscribe: respawned by self-planner (was error)"
+    },
+    {
+      "at": "2026-05-27T11:32:21.581Z",
+      "message": "audit-multisig: respawned by self-planner (was error)"
     }
   ]
 }
