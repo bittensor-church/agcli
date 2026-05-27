@@ -24,3 +24,119 @@
 [2026-05-27T11:13:21.138Z] bootstrap-env: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/bootstrap-env.md
 [2026-05-27T11:13:21.139Z] bootstrap-env: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/bootstrap-env-failure.md
 [2026-05-27T11:15:11.589Z] bootstrap-env: respawned by self-planner (was error)
+[2026-05-27T11:16:25.773Z] bootstrap-env: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status
+[2026-05-27T11:16:26.754Z] bootstrap-env: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/bootstrap-env.md
+[2026-05-27T11:16:26.756Z] bootstrap-env: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/bootstrap-env-failure.md
+[2026-05-27T11:16:28.794Z] audit-weights: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status
+[2026-05-27T11:16:29.869Z] audit-weights: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-weights.md
+[2026-05-27T11:16:29.870Z] audit-weights: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-weights-failure.md
+[2026-05-27T11:16:29.962Z] audit-stake: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status
+[2026-05-27T11:16:30.925Z] audit-stake: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-stake.md
+[2026-05-27T11:16:30.926Z] audit-stake: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-stake-failure.md
+[2026-05-27T11:16:31.976Z] audit-identity: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status
+[2026-05-27T11:16:33.017Z] audit-identity: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-identity.md
+[2026-05-27T11:16:33.018Z] audit-identity: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-identity-failure.md
+[2026-05-27T11:16:33.089Z] audit-view: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status
+[2026-05-27T11:16:34.044Z] audit-view: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-view.md
+[2026-05-27T11:16:34.045Z] audit-view: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-view-failure.md
+[2026-05-27T11:16:41.531Z] audit-wallet: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status
+[2026-05-27T11:16:42.511Z] audit-wallet: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-wallet.md
+[2026-05-27T11:16:42.511Z] audit-wallet: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-wallet-failure.md
+[2026-05-27T11:16:44.031Z] audit-root: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status
+[2026-05-27T11:16:46.501Z] audit-root: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-root.md
+[2026-05-27T11:16:46.502Z] audit-root: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-root-failure.md
+[2026-05-27T11:16:49.558Z] audit-balance-transfer: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status
+[2026-05-27T11:16:52.287Z] audit-balance-transfer: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-balance-transfer.md
+[2026-05-27T11:16:52.288Z] audit-balance-transfer: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-balance-transfer-failure.md
+[2026-05-27T11:16:52.296Z] audit-subscribe: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status
+[2026-05-27T11:16:55.475Z] audit-subscribe: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-subscribe.md
+[2026-05-27T11:16:55.476Z] audit-subscribe: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-subscribe-failure.md
+[2026-05-27T11:16:56.769Z] audit-subnet: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status
+[2026-05-27T11:16:58.233Z] audit-subnet: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-subnet.md
+[2026-05-27T11:16:58.234Z] audit-subnet: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-subnet-failure.md
+[2026-05-27T11:16:58.836Z] audit-proxy: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status
+[2026-05-27T11:16:59.880Z] audit-proxy: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-proxy.md
+[2026-05-27T11:16:59.881Z] audit-proxy: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-proxy-failure.md
+[2026-05-27T11:17:01.032Z] audit-delegate: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status
+[2026-05-27T11:17:02.009Z] audit-delegate: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-delegate.md
+[2026-05-27T11:17:02.010Z] audit-delegate: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-delegate-failure.md
+[2026-05-27T11:17:04.291Z] audit-serve: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status
+[2026-05-27T11:17:05.202Z] audit-serve: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-serve.md
+[2026-05-27T11:17:05.203Z] audit-serve: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-serve-failure.md
+[2026-05-27T11:17:07.516Z] audit-contracts: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status
+[2026-05-27T11:17:08.503Z] audit-contracts: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-contracts.md
+[2026-05-27T11:17:08.504Z] audit-contracts: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-contracts-failure.md
+[2026-05-27T11:17:16.677Z] audit-scheduler: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status
+[2026-05-27T11:17:17.713Z] audit-scheduler: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-scheduler.md
+[2026-05-27T11:17:17.714Z] audit-scheduler: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-scheduler-failure.md
+[2026-05-27T11:17:17.844Z] audit-multisig: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status
+[2026-05-27T11:17:18.880Z] audit-multisig: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-multisig.md
+[2026-05-27T11:17:18.881Z] audit-multisig: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-multisig-failure.md
+[2026-05-27T11:17:20.595Z] audit-diff: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status
+[2026-05-27T11:17:23.302Z] audit-diff: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-diff.md
+[2026-05-27T11:17:23.303Z] audit-diff: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-diff-failure.md
+[2026-05-27T11:17:26.564Z] audit-drand: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status
+[2026-05-27T11:17:27.763Z] audit-drand: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-drand.md
+[2026-05-27T11:17:27.764Z] audit-drand: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-drand-failure.md
+[2026-05-27T11:17:27.770Z] audit-liquidity: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status
+[2026-05-27T11:17:29.851Z] audit-liquidity: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-liquidity.md
+[2026-05-27T11:17:29.852Z] audit-liquidity: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-liquidity-failure.md
+[2026-05-27T11:17:30.888Z] audit-config: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status
+[2026-05-27T11:17:32.125Z] audit-config: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-config.md
+[2026-05-27T11:17:32.126Z] audit-config: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-config-failure.md
+[2026-05-27T11:17:32.137Z] audit-swap-keys: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status
+[2026-05-27T11:17:34.038Z] audit-swap-keys: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-swap-keys.md
+[2026-05-27T11:17:34.039Z] audit-swap-keys: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-swap-keys-failure.md
+[2026-05-27T11:17:34.040Z] audit-crowdloan: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status
+[2026-05-27T11:17:35.313Z] audit-crowdloan: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-crowdloan.md
+[2026-05-27T11:17:35.314Z] audit-crowdloan: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-crowdloan-failure.md
+[2026-05-27T11:17:42.473Z] audit-completions-update: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status
+[2026-05-27T11:17:43.459Z] audit-completions-update: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-completions-update.md
+[2026-05-27T11:17:43.460Z] audit-completions-update: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-completions-update-failure.md
+[2026-05-27T11:18:06.980Z] audit-batch: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status
+[2026-05-27T11:18:08.096Z] audit-batch: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-batch.md
+[2026-05-27T11:18:08.098Z] audit-batch: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-batch-failure.md
+[2026-05-27T11:18:13.381Z] audit-audit-cmd: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status
+[2026-05-27T11:18:14.260Z] audit-audit-cmd: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-audit-cmd.md
+[2026-05-27T11:18:14.261Z] audit-audit-cmd: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-audit-cmd-failure.md
+[2026-05-27T11:18:17.232Z] audit-safe-mode: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status
+[2026-05-27T11:18:18.192Z] audit-safe-mode: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-safe-mode.md
+[2026-05-27T11:18:18.193Z] audit-safe-mode: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-safe-mode-failure.md
+[2026-05-27T11:18:20.007Z] audit-block: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status
+[2026-05-27T11:18:20.960Z] audit-block: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-block.md
+[2026-05-27T11:18:20.961Z] audit-block: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-block-failure.md
+[2026-05-27T11:18:38.222Z] audit-utils-cli: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status
+[2026-05-27T11:18:39.226Z] audit-utils-cli: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-utils-cli.md
+[2026-05-27T11:18:39.227Z] audit-utils-cli: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-utils-cli-failure.md
+[2026-05-27T11:18:52.658Z] audit-admin: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status
+[2026-05-27T11:18:53.623Z] audit-admin: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-admin.md
+[2026-05-27T11:18:53.625Z] audit-admin: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-admin-failure.md
+[2026-05-27T11:32:00.175Z] bootstrap-env: respawned by self-planner (was error)
+[2026-05-27T11:32:01.630Z] audit-wallet: respawned by self-planner (was error)
+[2026-05-27T11:32:03.028Z] audit-balance-transfer: respawned by self-planner (was error)
+[2026-05-27T11:32:04.537Z] audit-stake: respawned by self-planner (was error)
+[2026-05-27T11:32:05.970Z] audit-subnet: respawned by self-planner (was error)
+[2026-05-27T11:32:07.938Z] audit-weights: respawned by self-planner (was error)
+[2026-05-27T11:32:09.400Z] audit-root: respawned by self-planner (was error)
+[2026-05-27T11:32:10.988Z] audit-delegate: respawned by self-planner (was error)
+[2026-05-27T11:32:12.447Z] audit-view: respawned by self-planner (was error)
+[2026-05-27T11:32:13.964Z] audit-identity: respawned by self-planner (was error)
+[2026-05-27T11:32:15.525Z] audit-serve: respawned by self-planner (was error)
+[2026-05-27T11:32:16.989Z] audit-proxy: respawned by self-planner (was error)
+[2026-05-27T11:32:18.469Z] audit-swap-keys: respawned by self-planner (was error)
+[2026-05-27T11:32:19.975Z] audit-subscribe: respawned by self-planner (was error)
+[2026-05-27T11:32:21.581Z] audit-multisig: respawned by self-planner (was error)
+[2026-05-27T11:32:22.926Z] audit-scheduler: respawned by self-planner (was error)
+[2026-05-27T11:32:30.361Z] audit-contracts: respawned by self-planner (was error)
+[2026-05-27T11:32:32.025Z] audit-safe-mode: respawned by self-planner (was error)
+[2026-05-27T11:32:33.734Z] audit-drand: respawned by self-planner (was error)
+[2026-05-27T11:32:35.372Z] audit-crowdloan: respawned by self-planner (was error)
+[2026-05-27T11:32:37.170Z] audit-liquidity: respawned by self-planner (was error)
+[2026-05-27T11:32:38.727Z] audit-block: respawned by self-planner (was error)
+[2026-05-27T11:32:40.342Z] audit-diff: respawned by self-planner (was error)
+[2026-05-27T11:32:41.831Z] audit-config: respawned by self-planner (was error)
+[2026-05-27T11:32:43.258Z] audit-completions-update: respawned by self-planner (was error)
+[2026-05-27T11:32:44.692Z] audit-audit-cmd: respawned by self-planner (was error)
+[2026-05-27T11:32:46.021Z] audit-batch: respawned by self-planner (was error)
+[2026-05-27T11:32:47.455Z] audit-utils-cli: respawned by self-planner (was error)
+[2026-05-27T11:32:49.188Z] audit-admin: respawned by self-planner (was error)

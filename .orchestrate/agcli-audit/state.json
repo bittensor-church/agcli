@@ -1813,6 +1813,10 @@
     {
       "at": "2026-05-27T11:32:47.455Z",
       "message": "audit-utils-cli: respawned by self-planner (was error)"
+    },
+    {
+      "at": "2026-05-27T11:32:49.188Z",
+      "message": "audit-admin: respawned by self-planner (was error)"
     }
   ]
 }
