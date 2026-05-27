@@ -332,7 +332,9 @@
       "type": "worker",
       "branch": "orch/agcli-audit/audit-multisig",
       "startingRef": "cursor/agcli-subtensor-audit-e2e7",
-      "dependsOn": [],
+      "dependsOn": [
+        "audit-subscribe"
+      ],
       "agentId": null,
       "runId": null,
       "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
@@ -399,20 +401,20 @@
       "branch": "orch/agcli-audit/audit-contracts",
       "startingRef": "cursor/agcli-subtensor-audit-e2e7",
       "dependsOn": [],
-      "agentId": "bc-90359b80-dc83-460b-b669-c12e2abb64c1",
-      "runId": "run-114b8196-a496-461d-9e32-60461854be5b",
+      "agentId": null,
+      "runId": null,
       "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
-      "status": "error",
-      "resultStatus": "error",
-      "handoffPath": "handoffs/audit-contracts.md",
-      "startedAt": "2026-05-27T11:34:14.011Z",
-      "finishedAt": "2026-05-27T11:35:04.555Z",
-      "lastUpdate": "2026-05-27T11:35:04.555Z",
-      "note": "respawned by self-planner (was error; attempts=1)",
+      "status": "pending",
+      "resultStatus": null,
+      "handoffPath": null,
+      "startedAt": null,
+      "finishedAt": null,
+      "lastUpdate": "2026-05-27T12:08:38.198Z",
+      "note": "respawned by self-planner (was error; attempts=2)",
       "attempts": 2,
       "slackTs": null,
       "prNumber": null,
-      "failureMode": "unknown",
+      "failureMode": null,
       "verification": null
     },
     {
@@ -2204,6 +2206,14 @@
     {
       "at": "2026-05-27T12:08:36.346Z",
       "message": "audit-subscribe: respawned by self-planner (was error)"
+    },
+    {
+      "at": "2026-05-27T12:08:37.829Z",
+      "message": "git-sync failed (audit-multisig error -> pending): Command failed: git -C /workspace/.orchestrate/agcli-audit push\nremote: Internal Server Error        \nremote: Request ID AC2E:6C1C7:5DF03A9:7889A7D:6A16DEC5        \nremote: Time 2026-05-27T12:08:37Z\nT…"
+    },
+    {
+      "at": "2026-05-27T12:08:37.830Z",
+      "message": "audit-multisig: respawned by self-planner (was error)"
     }
   ]
 }
