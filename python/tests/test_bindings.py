@@ -59,6 +59,18 @@ def test_wallet_sign_and_verify(tmp_path) -> None:
     assert wallet.coldkey_public_ss58 == wallet.coldkey_ss58
 
 
+def test_pickle_is_blocked_for_wallet_and_async_client(tmp_path) -> None:
+    import pickle
+
+    wallet = Wallet.create_from_uri(str(tmp_path), "//Alice", "password123")
+    with pytest.raises(TypeError, match="cannot be pickled"):
+        pickle.dumps(wallet)
+
+    client = AsyncClient.__new__(AsyncClient)
+    with pytest.raises(TypeError, match="cannot be pickled"):
+        pickle.dumps(client)
+
+
 @pytest.mark.network
 @pytest.mark.asyncio
 async def test_connect_and_list_subnets() -> None:

@@ -1433,6 +1433,14 @@ impl PyClient {
             to_pyobject_unbound(&portfolio)
         })
     }
+
+    fn __getstate__(&self) -> PyResult<()> {
+        Err(crate::errors::pickle_blocked("Client"))
+    }
+
+    fn __reduce__(&self) -> PyResult<()> {
+        Err(crate::errors::pickle_blocked("Client"))
+    }
 }
 
 #[pymethods]
@@ -1634,6 +1642,14 @@ impl PyClientSync {
             })
             .map_err(map_error)?;
         to_pyobject_unbound(&value)
+    }
+
+    fn __getstate__(&self) -> PyResult<()> {
+        Err(crate::errors::pickle_blocked("ClientSync"))
+    }
+
+    fn __reduce__(&self) -> PyResult<()> {
+        Err(crate::errors::pickle_blocked("ClientSync"))
     }
 }
 

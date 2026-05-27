@@ -78,3 +78,9 @@ class SyncClient:
 
     def __getattr__(self, name: str):
         return getattr(self._inner, name)
+
+    def __getstate__(self) -> None:
+        raise TypeError("SyncClient objects cannot be pickled")
+
+    def __reduce__(self) -> None:
+        raise TypeError("SyncClient objects cannot be pickled")

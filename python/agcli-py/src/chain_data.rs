@@ -46,6 +46,14 @@ macro_rules! serde_pyclass {
             fn __getattr__(&self, field: &str) -> PyResult<PyObject> {
                 json_field_to_pyobject(&self.inner, field)
             }
+
+            fn __getstate__(&self) -> PyResult<()> {
+                Err(crate::errors::pickle_blocked($class_name))
+            }
+
+            fn __reduce__(&self) -> PyResult<()> {
+                Err(crate::errors::pickle_blocked($class_name))
+            }
         }
     };
 }
@@ -144,5 +152,13 @@ impl PyAlphaBalance {
 
     fn to_dict(&self) -> PyResult<PyObject> {
         to_pyobject_unbound(&self.inner)
+    }
+
+    fn __getstate__(&self) -> PyResult<()> {
+        Err(crate::errors::pickle_blocked("AlphaBalance"))
+    }
+
+    fn __reduce__(&self) -> PyResult<()> {
+        Err(crate::errors::pickle_blocked("AlphaBalance"))
     }
 }

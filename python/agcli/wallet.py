@@ -135,5 +135,11 @@ class Wallet:
     def verify_message(ss58: str, message: bytes, signature: bytes) -> bool:
         return _agcli.Wallet.verify_message(ss58, message, signature)
 
+    def __getstate__(self) -> None:
+        raise TypeError("Wallet objects cannot be pickled")
+
+    def __reduce__(self) -> None:
+        raise TypeError("Wallet objects cannot be pickled")
+
     def __repr__(self) -> str:
         return repr(self._inner)

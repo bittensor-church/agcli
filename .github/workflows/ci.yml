@@ -25,6 +25,11 @@ jobs:
         with:
           components: clippy, rustfmt
       - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: ci-target-cache
+          workspaces: |
+            . -> target
+            python/agcli-py -> target
       - name: Check formatting
         run: cargo fmt --all -- --check
       - name: Clippy
@@ -35,6 +40,40 @@ jobs:
           --test cli_test --test helpers_test
           -- -D warnings
 
+  python-clippy:
+    name: Python clippy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+      - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: ci-target-cache
+          workspaces: |
+            . -> target
+            python/agcli-py -> target
+      - name: Clippy agcli-py
+        run: cargo clippy -p agcli-py --no-deps --features pyo3/extension-module -- -D warnings
+
+  sdk-only:
+    name: SDK-only check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+      - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: ci-target-cache
+          workspaces: |
+            . -> target
+            python/agcli-py -> target
+      - name: Clippy sdk-only feature
+        run: cargo check -p agcli --lib --no-default-features --features sdk-only
+
   test:
     name: Test
     runs-on: ubuntu-latest
@@ -42,6 +81,11 @@ jobs:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: ci-target-cache
+          workspaces: |
+            . -> target
+            python/agcli-py -> target
       - uses: taiki-e/install-action@nextest
       - name: Run tests
         run: >-
@@ -64,6 +108,11 @@ jobs:
         with:
           components: llvm-tools-preview
       - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: ci-target-cache
+          workspaces: |
+            . -> target
+            python/agcli-py -> target
       - uses: taiki-e/install-action@cargo-llvm-cov
       - uses: taiki-e/install-action@nextest
       - name: Generate coverage
@@ -88,6 +137,11 @@ jobs:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: ci-target-cache
+          workspaces: |
+            . -> target
+            python/agcli-py -> target
       - name: Build release binary
         run: cargo build --release
       - name: Upload binary
@@ -103,6 +157,11 @@ jobs:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: ci-target-cache
+          workspaces: |
+            . -> target
+            python/agcli-py -> target
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -119,6 +178,39 @@ jobs:
           METADATA_CHAIN_ENDPOINT: wss://entrypoint-finney.opentensor.ai:443
       - name: Run Python tests
         working-directory: python
-        run: pytest -m "not network"
+        run: pytest -m "not network and not localnet"
         env:
           METADATA_CHAIN_ENDPOINT: wss://entrypoint-finney.opentensor.ai:443
+
+  wheels:
+    name: Wheels (${{ matrix.os }} / py${{ matrix.python-version }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        python-version: ["3.10", "3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: ci-target-cache
+          workspaces: |
+            . -> target
+            python/agcli-py -> target
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install maturin
+        run: pip install "maturin>=1.7,<2.0"
+      - name: Build wheels
+        working-directory: python
+        run: maturin build --release --strip --manifest-path agcli-py/Cargo.toml --out dist
+        env:
+          METADATA_CHAIN_ENDPOINT: wss://entrypoint-finney.opentensor.ai:443
+      - name: Upload wheel artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheels-${{ matrix.os }}-py${{ matrix.python-version }}
+          path: python/dist/*.whl

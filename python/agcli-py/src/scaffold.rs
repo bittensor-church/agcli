@@ -63,6 +63,14 @@ impl PyNeuronConfig {
         dict.set_item("register", self.inner.register)?;
         Ok(dict.into_any())
     }
+
+    fn __getstate__(&self) -> PyResult<()> {
+        Err(crate::errors::pickle_blocked("NeuronConfig"))
+    }
+
+    fn __reduce__(&self) -> PyResult<()> {
+        Err(crate::errors::pickle_blocked("NeuronConfig"))
+    }
 }
 
 #[pyclass(name = "SubnetConfig", module = "agcli._agcli")]
@@ -222,6 +230,14 @@ impl PySubnetConfig {
         dict.set_item("neurons", neurons)?;
         Ok(dict.into_any())
     }
+
+    fn __getstate__(&self) -> PyResult<()> {
+        Err(crate::errors::pickle_blocked("SubnetConfig"))
+    }
+
+    fn __reduce__(&self) -> PyResult<()> {
+        Err(crate::errors::pickle_blocked("SubnetConfig"))
+    }
 }
 
 #[pyclass(name = "ChainConfig", module = "agcli._agcli")]
@@ -316,6 +332,14 @@ impl PyChainConfig {
         dict.set_item("timeout", self.inner.timeout)?;
         Ok(dict.into_any())
     }
+
+    fn __getstate__(&self) -> PyResult<()> {
+        Err(crate::errors::pickle_blocked("ChainConfig"))
+    }
+
+    fn __reduce__(&self) -> PyResult<()> {
+        Err(crate::errors::pickle_blocked("ChainConfig"))
+    }
 }
 
 #[pyclass(name = "ScaffoldConfig", module = "agcli._agcli")]
@@ -381,6 +405,14 @@ impl PyScaffoldConfig {
         dict.set_item("subnets", subnets)?;
         Ok(dict.into_any())
     }
+
+    fn __getstate__(&self) -> PyResult<()> {
+        Err(crate::errors::pickle_blocked("ScaffoldConfig"))
+    }
+
+    fn __reduce__(&self) -> PyResult<()> {
+        Err(crate::errors::pickle_blocked("ScaffoldConfig"))
+    }
 }
 
 #[pyclass(name = "NeuronResult", module = "agcli._agcli")]
@@ -414,6 +446,14 @@ impl PyNeuronResult {
 
     fn to_dict(&self) -> PyResult<PyObject> {
         to_pyobject_unbound(&self.inner)
+    }
+
+    fn __getstate__(&self) -> PyResult<()> {
+        Err(crate::errors::pickle_blocked("NeuronResult"))
+    }
+
+    fn __reduce__(&self) -> PyResult<()> {
+        Err(crate::errors::pickle_blocked("NeuronResult"))
     }
 }
 
@@ -452,6 +492,14 @@ impl PySubnetResult {
     fn to_dict(&self) -> PyResult<PyObject> {
         to_pyobject_unbound(&self.inner)
     }
+
+    fn __getstate__(&self) -> PyResult<()> {
+        Err(crate::errors::pickle_blocked("SubnetResult"))
+    }
+
+    fn __reduce__(&self) -> PyResult<()> {
+        Err(crate::errors::pickle_blocked("SubnetResult"))
+    }
 }
 
 #[pyclass(name = "ScaffoldResult", module = "agcli._agcli")]
@@ -486,6 +534,14 @@ impl PyScaffoldResult {
 
     fn to_dict(&self) -> PyResult<PyObject> {
         to_pyobject_unbound(&self.inner)
+    }
+
+    fn __getstate__(&self) -> PyResult<()> {
+        Err(crate::errors::pickle_blocked("ScaffoldResult"))
+    }
+
+    fn __reduce__(&self) -> PyResult<()> {
+        Err(crate::errors::pickle_blocked("ScaffoldResult"))
     }
 }
 

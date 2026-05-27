@@ -1,3 +1,12 @@
+#![allow(
+    clippy::manual_contains,
+    clippy::map_clone,
+    clippy::too_many_arguments,
+    clippy::type_complexity,
+    clippy::unwrap_or_default,
+    clippy::wrong_self_convention
+)]
+
 mod admin;
 mod chain_data;
 mod client;

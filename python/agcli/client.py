@@ -1149,5 +1149,11 @@ class AsyncClient:
         """Return an async iterator of block dicts (block_number, hash, extrinsics)."""
         return _wrap_stream(self._inner.subscribe_blocks())
 
+    def __getstate__(self) -> None:
+        raise TypeError("AsyncClient objects cannot be pickled")
+
+    def __reduce__(self) -> None:
+        raise TypeError("AsyncClient objects cannot be pickled")
+
     def __repr__(self) -> str:
         return f"AsyncClient(endpoint={self.endpoint!r})"

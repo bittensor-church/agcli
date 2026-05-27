@@ -1,6 +1,7 @@
 """agcli — Python bindings for the Bittensor agcli SDK."""
 
 from agcli import admin, events, live, localnet, scaffold
+from agcli.__about__ import __version__
 from agcli.client import AsyncClient
 from agcli.config import Config
 from agcli.errors import (
@@ -66,6 +67,6 @@ __all__ = [
     "ValidationError",
     "Wallet",
     "WalletCreateResult",
+    "__version__",
 ]
 
-__version__ = "0.1.0"

@@ -143,4 +143,12 @@ impl PyConfig {
     fn default_path() -> String {
         Config::default_path().display().to_string()
     }
+
+    fn __getstate__(&self) -> PyResult<()> {
+        Err(crate::errors::pickle_blocked("Config"))
+    }
+
+    fn __reduce__(&self) -> PyResult<()> {
+        Err(crate::errors::pickle_blocked("Config"))
+    }
 }

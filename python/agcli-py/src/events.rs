@@ -503,6 +503,14 @@ impl PyEventStream {
             Ok(())
         })
     }
+
+    fn __getstate__(&self) -> PyResult<()> {
+        Err(crate::errors::pickle_blocked("EventStream"))
+    }
+
+    fn __reduce__(&self) -> PyResult<()> {
+        Err(crate::errors::pickle_blocked("EventStream"))
+    }
 }
 
 fn spawn_event_subscription(

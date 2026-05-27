@@ -33,6 +33,10 @@ pub fn map_error(err: anyhow::Error) -> PyErr {
     })
 }
 
+pub fn pickle_blocked(type_name: &str) -> PyErr {
+    pyo3::exceptions::PyTypeError::new_err(format!("{type_name} objects cannot be pickled"))
+}
+
 #[pyfunction]
 pub fn raise_test_error(message: String) -> PyResult<()> {
     Err(map_error(anyhow::anyhow!(message)))

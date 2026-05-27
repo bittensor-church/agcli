@@ -229,6 +229,14 @@ impl PyWallet {
         Ok(sr25519::Pair::verify(&sig, &message, &public))
     }
 
+    fn __getstate__(&self) -> PyResult<()> {
+        Err(crate::errors::pickle_blocked("Wallet"))
+    }
+
+    fn __reduce__(&self) -> PyResult<()> {
+        Err(crate::errors::pickle_blocked("Wallet"))
+    }
+
     fn __repr__(&self) -> String {
         let wallet = self.shared_wallet();
         match runtime().block_on(async move {

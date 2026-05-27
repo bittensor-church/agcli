@@ -151,6 +151,14 @@ impl PyBalance {
     fn __str__(&self) -> String {
         self.inner.display_tao()
     }
+
+    fn __getstate__(&self) -> PyResult<()> {
+        Err(crate::errors::pickle_blocked("Balance"))
+    }
+
+    fn __reduce__(&self) -> PyResult<()> {
+        Err(crate::errors::pickle_blocked("Balance"))
+    }
 }
 
 impl PyBalance {
@@ -189,6 +197,14 @@ impl PyNetUid {
 
     fn __int__(&self) -> u16 {
         self.inner.as_u16()
+    }
+
+    fn __getstate__(&self) -> PyResult<()> {
+        Err(crate::errors::pickle_blocked("NetUid"))
+    }
+
+    fn __reduce__(&self) -> PyResult<()> {
+        Err(crate::errors::pickle_blocked("NetUid"))
     }
 }
 
@@ -255,6 +271,14 @@ impl PyNetwork {
 
     fn __repr__(&self) -> String {
         self.inner.to_string()
+    }
+
+    fn __getstate__(&self) -> PyResult<()> {
+        Err(crate::errors::pickle_blocked("Network"))
+    }
+
+    fn __reduce__(&self) -> PyResult<()> {
+        Err(crate::errors::pickle_blocked("Network"))
     }
 }
 

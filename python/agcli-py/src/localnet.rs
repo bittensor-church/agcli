@@ -118,6 +118,14 @@ impl PyLocalnetConfig {
             self.inner.wait_timeout
         )
     }
+
+    fn __getstate__(&self) -> PyResult<()> {
+        Err(crate::errors::pickle_blocked("LocalnetConfig"))
+    }
+
+    fn __reduce__(&self) -> PyResult<()> {
+        Err(crate::errors::pickle_blocked("LocalnetConfig"))
+    }
 }
 
 #[pyclass(name = "DevAccount", module = "agcli._agcli")]
@@ -162,6 +170,14 @@ impl PyDevAccount {
             "DevAccount(name={:?}, uri={:?}, ss58={:?})",
             self.inner.name, self.inner.uri, self.inner.ss58
         )
+    }
+
+    fn __getstate__(&self) -> PyResult<()> {
+        Err(crate::errors::pickle_blocked("DevAccount"))
+    }
+
+    fn __reduce__(&self) -> PyResult<()> {
+        Err(crate::errors::pickle_blocked("DevAccount"))
     }
 }
 
@@ -223,6 +239,14 @@ impl PyLocalnetInfo {
             self.inner.container_name, self.inner.endpoint, self.inner.block_height
         )
     }
+
+    fn __getstate__(&self) -> PyResult<()> {
+        Err(crate::errors::pickle_blocked("LocalnetInfo"))
+    }
+
+    fn __reduce__(&self) -> PyResult<()> {
+        Err(crate::errors::pickle_blocked("LocalnetInfo"))
+    }
 }
 
 #[pyclass(name = "LocalnetStatus", module = "agcli._agcli")]
@@ -277,6 +301,14 @@ impl PyLocalnetStatus {
             "LocalnetStatus(running={}, container_name={:?}, endpoint={:?})",
             self.inner.running, self.inner.container_name, self.inner.endpoint
         )
+    }
+
+    fn __getstate__(&self) -> PyResult<()> {
+        Err(crate::errors::pickle_blocked("LocalnetStatus"))
+    }
+
+    fn __reduce__(&self) -> PyResult<()> {
+        Err(crate::errors::pickle_blocked("LocalnetStatus"))
     }
 }
 
