@@ -19,7 +19,7 @@ pub mod exit_code {
     /// Chain/runtime error (extrinsic rejected, insufficient balance, rate-limited).
     pub const CHAIN: i32 = 13;
     /// File I/O error (permission denied, missing file, disk full).
-    pub const IO: i32 = 14;
+    pub const IO: i32 = 16;
     /// Timeout (operation exceeded deadline).
     pub const TIMEOUT: i32 = 15;
 }

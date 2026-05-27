@@ -22,6 +22,7 @@ manifest-path = "agcli-py/Cargo.toml"
 python-source = "."
 module-name = "agcli._agcli"
 features = ["pyo3/extension-module"]
+include = ["agcli/py.typed"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

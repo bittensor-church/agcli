@@ -215,6 +215,7 @@ pub struct Client {
     cache: QueryCache,
     dry_run: bool,
     url: String,
+    network: crate::types::Network,
     /// Timeout for waiting for transaction finalization (seconds).
     finalization_timeout: u64,
     /// Extrinsic mortality in blocks (0 = use default).
@@ -225,6 +226,11 @@ impl Client {
     /// WebSocket endpoint URL used for this connection.
     pub fn url(&self) -> &str {
         &self.url
+    }
+
+    /// Network used for this connection.
+    pub fn network(&self) -> &crate::types::Network {
+        &self.network
     }
 
     /// Access the runtime metadata from the connected chain.
@@ -256,6 +262,7 @@ impl Client {
             cache: QueryCache::new_with_network(&net_prefix),
             dry_run: false,
             url: url.to_string(),
+            network: crate::types::Network::Custom(url.to_string()),
             finalization_timeout: 30,
             mortality_blocks: 0,
         })
@@ -264,10 +271,12 @@ impl Client {
     /// Reconnect to the same endpoint. Creates a fresh RPC connection while preserving settings.
     /// Useful when the subxt background task dies (e.g. on fast-block devnets).
     pub async fn reconnect(&mut self) -> Result<()> {
+        let network = self.network.clone();
         let fresh = Self::connect_once(&self.url).await?;
         self.inner = fresh.inner;
         self.rpc = fresh.rpc;
         self.cache = QueryCache::new_with_network(&url_to_cache_prefix(&self.url));
+        self.network = network;
         Ok(())
     }
 
@@ -416,7 +425,9 @@ impl Client {
     /// Connect to a well-known network with automatic fallback endpoints.
     pub async fn connect_network(network: &crate::types::Network) -> Result<Self> {
         let urls = network.ws_urls();
-        Self::connect_with_retry(&urls).await
+        let mut client = Self::connect_with_retry(&urls).await?;
+        client.network = network.clone();
+        Ok(client)
     }
 
     /// Get a reference to the underlying subxt client.

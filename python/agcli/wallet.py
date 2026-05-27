@@ -58,6 +58,10 @@ class Wallet:
         )
 
     @classmethod
+    def create_from_uri(cls, wallet_dir: str, uri: str, password: str) -> Wallet:
+        return cls(_agcli.Wallet.create_from_uri(wallet_dir, uri, password))
+
+    @classmethod
     def list_wallets(cls, wallet_dir: str) -> list[str]:
         return _agcli.Wallet.list_wallets(wallet_dir)
 
@@ -80,11 +84,22 @@ class Wallet:
         return self._inner.coldkey_ss58
 
     @property
+    def coldkey_public_ss58(self) -> str | None:
+        return self._inner.coldkey_public_ss58
+
+    @property
     def hotkey_ss58(self) -> str | None:
         return self._inner.hotkey_ss58
 
     def list_hotkeys(self) -> list[str]:
         return self._inner.list_hotkeys()
+
+    def sign_message(self, role: str, message: bytes) -> bytes:
+        return self._inner.sign_message(role, message)
+
+    @staticmethod
+    def verify_message(ss58: str, message: bytes, signature: bytes) -> bool:
+        return _agcli.Wallet.verify_message(ss58, message, signature)
 
     def __repr__(self) -> str:
         return repr(self._inner)

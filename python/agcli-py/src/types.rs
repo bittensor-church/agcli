@@ -14,6 +14,53 @@ pub fn to_pyobject_unbound<T: serde::Serialize>(value: &T) -> PyResult<PyObject>
     Python::with_gil(|py| to_pyobject(py, value).map(|obj| obj.unbind()))
 }
 
+pub fn hash_to_hex(hash: agcli::Hash) -> String {
+    format!("0x{}", hex::encode(hash.as_ref()))
+}
+
+pub fn parse_hash(value: &Bound<'_, PyAny>) -> PyResult<agcli::Hash> {
+    if let Ok(bytes) = value.extract::<Vec<u8>>() {
+        if bytes.len() != 32 {
+            return Err(map_error(anyhow::anyhow!(
+                "expected 32-byte hash, got {} bytes",
+                bytes.len()
+            )));
+        }
+        let mut arr = [0u8; 32];
+        arr.copy_from_slice(&bytes);
+        return Ok(arr.into());
+    }
+
+    if let Ok(hex_str) = value.extract::<String>() {
+        let trimmed = hex_str.trim();
+        let raw = trimmed.strip_prefix("0x").unwrap_or(trimmed);
+        let bytes = hex::decode(raw).map_err(|e| map_error(anyhow::anyhow!("{e}")))?;
+        if bytes.len() != 32 {
+            return Err(map_error(anyhow::anyhow!(
+                "expected 32-byte hash hex string, got {} bytes",
+                bytes.len()
+            )));
+        }
+        let mut arr = [0u8; 32];
+        arr.copy_from_slice(&bytes);
+        return Ok(arr.into());
+    }
+
+    Err(map_error(anyhow::anyhow!(
+        "expected block hash as bytes or hex string, got {}",
+        value.get_type().name()?
+    )))
+}
+
+pub fn u64_to_u32(block_number: u64) -> PyResult<u32> {
+    if block_number > u32::MAX as u64 {
+        return Err(map_error(anyhow::anyhow!(
+            "block number {block_number} exceeds max u32 value"
+        )));
+    }
+    Ok(block_number as u32)
+}
+
 pub fn netuid_from_py(value: &Bound<'_, PyAny>) -> PyResult<agcli::types::network::NetUid> {
     if let Ok(uid) = value.extract::<u16>() {
         return Ok(agcli::types::network::NetUid(uid));

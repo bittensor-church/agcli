@@ -50,6 +50,15 @@ def test_invalid_wallet_name_raises(tmp_path) -> None:
     assert exc.value.code != 0
 
 
+def test_wallet_sign_and_verify(tmp_path) -> None:
+    wallet = Wallet.create_from_uri(str(tmp_path), "//Alice", "password123")
+    message = b"agcli python bindings"
+    signature = wallet.sign_message("coldkey", message)
+    assert wallet.coldkey_ss58
+    assert Wallet.verify_message(wallet.coldkey_ss58, message, signature)
+    assert wallet.coldkey_public_ss58 == wallet.coldkey_ss58
+
+
 @pytest.mark.network
 @pytest.mark.asyncio
 async def test_connect_and_list_subnets() -> None:

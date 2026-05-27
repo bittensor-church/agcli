@@ -54,3 +54,16 @@ pub use chain::Client;
 pub use config::Config;
 pub use types::balance::Balance;
 pub use wallet::Wallet;
+
+pub mod sdk {
+    pub use crate::{
+        error,
+        types::chain_data,
+        types::network::NetUid,
+        types::Network,
+        Balance,
+        Client,
+        Config,
+        Wallet,
+    };
+}
