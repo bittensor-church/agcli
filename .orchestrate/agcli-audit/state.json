@@ -201,13 +201,13 @@
       "handoffPath": "handoffs/audit-view.md",
       "startedAt": "2026-05-27T12:42:33.541Z",
       "finishedAt": "2026-05-27T12:59:04.215Z",
-      "lastUpdate": "2026-05-27T12:59:05.333Z",
+      "lastUpdate": "2026-05-27T13:41:36.517Z",
       "note": "respawned by self-planner (was error; attempts=3)",
       "attempts": 4,
       "slackTs": null,
       "prNumber": null,
       "failureMode": null,
-      "verification": "unit-test-verified"
+      "verification": "verifier-failed"
     },
     {
       "name": "audit-identity",
@@ -2621,6 +2621,10 @@
     {
       "at": "2026-05-27T13:36:55.999Z",
       "message": "audit-root: model \"claude-sonnet-4-6\" not in MODEL_CATALOG (spawning anyway). Run `bun cli.ts models` to see known slugs."
+    },
+    {
+      "at": "2026-05-27T13:41:36.518Z",
+      "message": "audit-view: verification recorded (verifier-failed) by verifier verify-readonly-batch"
     }
   ]
 }
