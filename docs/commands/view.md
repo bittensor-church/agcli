@@ -176,3 +176,105 @@ Requires an archive node for blocks beyond ~256 block pruning window.
 - `agcli stake list` — Stake positions only
 - `agcli subnet metagraph` — Full metagraph data
 - `agcli explain --topic amm` — How Dynamic TAO AMM works
+
+---
+
+## audit (top-level command) — security audit of a coldkey account
+
+`audit` is a top-level command (`Commands::Audit`) dispatched from `src/cli/commands.rs` into `view_cmds::handle_audit`.
+It is not a `view` subcommand, but the handler and output format live in `src/cli/view_cmds.rs`.
+
+### Clap surface (flags + types)
+
+```bash
+agcli audit [--address <SS58>]
+```
+
+| Flag | Type | Required | Notes |
+|---|---|---:|---|
+| `--address` | `String` (SS58) | no | If omitted, resolves wallet coldkey via `resolve_and_validate_coldkey_address`. |
+| `--output` (global) | `table \| json \| csv` (`OutputFormat`) | no | JSON output is documented below. |
+| `--network`, `--endpoint`, `--timeout`, etc. (global) | global CLI flags | no | Standard global connection/runtime controls apply. |
+
+### Handler and chain read path
+
+`handle_audit(client, address, output)` performs read-only state inspection and local risk scoring:
+
+1. `pin_latest_block()` (pins one block hash for consistency).
+2. In parallel at pinned hash:
+   - `get_balance_at_hash(address, pin)` → `System::Account`.
+   - `get_stake_for_coldkey_pinned(address, pin)` → `StakeInfoRuntimeApi::get_stake_info_for_coldkey`.
+   - `get_identity_pinned(address, pin)` → `Registry::IdentityOf`.
+   - `list_proxies_pinned(address, pin)` → `Proxy::Proxies`.
+   - `get_delegate_pinned(address, pin)` → `DelegateInfoRuntimeApi::get_delegate`.
+   - `get_coldkey_swap_scheduled_pinned(address, pin)` → `SubtensorModule::ColdkeySwapAnnouncements`.
+3. Non-fatal supplemental latest-state query:
+   - `get_all_dynamic_info()` → `SubnetInfoRuntimeApi::get_all_dynamic_info`.
+4. For each staked hotkey/netuid pair at pinned hash:
+   - `get_child_keys_pinned(hotkey, netuid, pin)` → `SubtensorModule::ChildKeys`.
+   - `get_pending_child_keys_pinned(hotkey, netuid, pin)` → `SubtensorModule::PendingChildKeys`.
+
+### Subxt pallet/runtime API mapping and SCALE key/arg encoding
+
+| agcli call | Subxt target | Chain reference | SCALE key/arg shape |
+|---|---|---|---|
+| `get_balance_at_hash` | `api::storage().system().account(&account_id)` | FRAME `System::Account` | key: `AccountId32` decoded from SS58 |
+| `get_stake_for_coldkey_pinned` | `api::apis().stake_info_runtime_api().get_stake_info_for_coldkey(account_id)` | `subtensor/pallets/subtensor/runtime-api/src/lib.rs` (`StakeInfoRuntimeApi`) | arg: `AccountId32` |
+| `get_identity_pinned` | `api::storage().registry().identity_of(&account_id)` | `subtensor/pallets/registry/src/lib.rs` (`IdentityOf`) | key: `AccountId32` |
+| `list_proxies_pinned` | `api::storage().proxy().proxies(&account_id)` | `subtensor/pallets/proxy/src/lib.rs` (`Proxies`) | key: `AccountId32` |
+| `get_delegate_pinned` | `api::apis().delegate_info_runtime_api().get_delegate(account_id)` | `subtensor/pallets/subtensor/runtime-api/src/lib.rs` (`DelegateInfoRuntimeApi`) | arg: `AccountId32` |
+| `get_coldkey_swap_scheduled_pinned` | `api::storage().subtensor_module().coldkey_swap_announcements(&account_id)` | `subtensor/pallets/subtensor/src/lib.rs` (`ColdkeySwapAnnouncements`) | key: `AccountId32` |
+| `get_child_keys_pinned` | `api::storage().subtensor_module().child_keys(&account_id, netuid)` | `subtensor/pallets/subtensor/src/lib.rs` (`ChildKeys`) | key1: `AccountId32`, key2: `NetUid` (`u16`) |
+| `get_pending_child_keys_pinned` | `api::storage().subtensor_module().pending_child_keys(netuid, &account_id)` | `subtensor/pallets/subtensor/src/lib.rs` (`PendingChildKeys`) | key1: `NetUid` (`u16`), key2: `AccountId32` |
+| `get_all_dynamic_info` | `api::apis().subnet_info_runtime_api().get_all_dynamic_info()` | `subtensor/pallets/subtensor/runtime-api/src/lib.rs` (`SubnetInfoRuntimeApi`) | no args |
+
+Dispatchables submitted by `agcli audit`: **none** (query-only command).
+
+### JSON output schema (`--output json`)
+
+Top-level object fields:
+
+| Field | Type |
+|---|---|
+| `address` | `string` |
+| `balance_tao` | `number` |
+| `total_staked_tao` | `number` |
+| `total_value_tao` | `number` |
+| `num_stakes` | `number` |
+| `num_proxies` | `number` |
+| `is_delegate` | `boolean` |
+| `has_identity` | `boolean` |
+| `coldkey_swap_scheduled` | `object \| null` (`execution_block: number`, `new_coldkey_hash: string`) |
+| `childkey_delegations` | `array<object>` |
+| `proxies` | `array<object>` (`delegate`, `proxy_type`, `delay`) |
+| `stakes` | `array<object>` (`netuid`, `hotkey`, `stake_tao`, `subnet_name`, `price`, `tao_in_pool`) |
+| `findings` | `array<object>` (`category`, `severity`, `message`) |
+
+`childkey_delegations[*]` shape:
+- `hotkey: string`
+- `netuid: number`
+- `children: array<{ proportion_raw: number, proportion_pct: number, child: string }>`
+- optional `pending: { children: [...], cooldown_block: number }`
+
+### Exit codes (from `src/error.rs`)
+
+| Code | Meaning | Typical `agcli audit` triggers |
+|---:|---|---|
+| `0` | success | Query completed (including empty proxies/findings). |
+| `1` | generic | Uncategorized errors. |
+| `2` | clap parse | Invalid CLI syntax. |
+| `10` | network | Endpoint unavailable / RPC connectivity failures. |
+| `12` | validation | Invalid `--address` SS58 (or unresolved wallet coldkey). |
+| `13` | chain | Runtime/storage read failures classified as chain errors. |
+| `14` | I/O | Wallet file/path permission issues while resolving default coldkey. |
+| `15` | timeout | Timeout from RPC/request path. |
+
+### On-chain events
+
+- **Events emitted by `agcli audit` itself:** none (no extrinsic submission).
+- **Related events for the state this command inspects:**
+  - Proxy state: `ProxyAdded`, `ProxyRemoved`, `Announced`, `ProxyExecuted` (`subtensor/pallets/proxy/src/lib.rs`).
+  - Delegate state: `DelegateAdded`, `TakeIncreased`, `TakeDecreased` (`subtensor/pallets/subtensor/src/macros/events.rs`).
+  - Child-key state: `SetChildrenScheduled`, `SetChildren`, `ChildKeyTakeSet` (`subtensor` events).
+  - Coldkey swap state: `ColdkeySwapAnnounced`, `ColdkeySwapDisputed`, `ColdkeySwapReset`, `ColdkeySwapped`, `ColdkeySwapCleared`.
+  - Identity state: `IdentitySet`, `IdentityDissolved` (`subtensor/pallets/registry/src/lib.rs`).
