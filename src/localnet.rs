@@ -65,7 +65,10 @@ pub struct LocalnetStatus {
     pub image: Option<String>,
     pub endpoint: Option<String>,
     pub block_height: Option<u64>,
-    pub uptime: Option<String>,
+    /// ISO 8601 timestamp when the container was started (from Docker inspect `StartedAt`).
+    /// Named `started_at` rather than `uptime` to reflect the raw Docker value; callers
+    /// can compute wall-clock uptime by subtracting this from the current time.
+    pub started_at: Option<String>,
 }
 
 /// Result returned after successfully starting a local chain.
@@ -266,7 +269,7 @@ pub async fn status(container_name: &str, port: u16) -> Result<LocalnetStatus> {
                 image,
                 endpoint: if running { Some(endpoint) } else { None },
                 block_height,
-                uptime: started_at,
+                started_at,
             })
         }
         _ => Ok(LocalnetStatus {
@@ -276,7 +279,7 @@ pub async fn status(container_name: &str, port: u16) -> Result<LocalnetStatus> {
             image: None,
             endpoint: None,
             block_height: None,
-            uptime: None,
+            started_at: None,
         }),
     }
 }
