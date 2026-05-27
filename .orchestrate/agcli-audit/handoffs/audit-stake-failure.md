@@ -1,22 +1,22 @@
 <!-- orchestrate failure handoff
 task: audit-stake
 branch: orch/agcli-audit/audit-stake
-agentId: bc-30e345f5-d3d5-4760-9de5-1c35bc012abb
-runId: run-254b5e4f-e4cd-4707-b154-a619f2c833e7
+agentId: bc-4ab7013e-6ea5-4286-8c23-79ad601d611c
+runId: run-17cb88b7-14c0-45e0-88e9-0bfa43531dcc
 failureMode: unknown
-terminatedAt: 2026-05-27T11:16:29.962Z
+terminatedAt: 2026-05-27T11:34:06.992Z
 -->
 
 # audit-stake failure handoff
 
 Status: error (cloud agent terminated without writing a handoff)
 Failure mode: unknown
-Cloud agent: bc-30e345f5-d3d5-4760-9de5-1c35bc012abb
-Started: 2026-05-27T11:15:48.406Z
-Terminated: 2026-05-27T11:16:29.962Z
-Duration: 41556ms
-Last activity: 2026-05-27T11:16:29.874Z
-Last tool call: grep_search
+Cloud agent: bc-4ab7013e-6ea5-4286-8c23-79ad601d611c
+Started: 2026-05-27T11:33:36.283Z
+Terminated: 2026-05-27T11:34:06.992Z
+Duration: 30709ms
+Last activity: 2026-05-27T11:34:06.910Z - respawned by self-planner (was error; attempts=1)
+Last tool call: read_file
 Branch: orch/agcli-audit/audit-stake
 SDK error: (none recorded)
 
