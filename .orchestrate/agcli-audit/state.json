@@ -126,12 +126,12 @@
       "agentId": "bc-9c79c56b-5a27-43da-be75-5398af15189c",
       "runId": "run-bf29cb0f-d0da-4ea8-8d32-0e0bc8f195aa",
       "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
-      "status": "running",
-      "resultStatus": null,
-      "handoffPath": null,
+      "status": "handed-off",
+      "resultStatus": "finished",
+      "handoffPath": "handoffs/audit-weights.md",
       "startedAt": "2026-05-27T13:20:42.492Z",
-      "finishedAt": null,
-      "lastUpdate": "2026-05-27T13:20:46.347Z",
+      "finishedAt": "2026-05-27T13:36:48.659Z",
+      "lastUpdate": "2026-05-27T13:36:48.660Z",
       "note": "respawned by self-planner (was error; attempts=2)",
       "attempts": 3,
       "slackTs": null,
@@ -855,11 +855,11 @@
       "finishedAt": null,
       "lastUpdate": "2026-05-27T13:32:45.032Z",
       "note": null,
+      "attempts": 1,
       "slackTs": null,
       "prNumber": null,
       "failureMode": null,
-      "verification": null,
-      "attempts": 1
+      "verification": null
     },
     {
       "name": "verify-governance-batch",
@@ -945,11 +945,11 @@
       "finishedAt": null,
       "lastUpdate": "2026-05-27T13:32:01.993Z",
       "note": null,
+      "attempts": 1,
       "slackTs": null,
       "prNumber": null,
       "failureMode": null,
-      "verification": null,
-      "attempts": 1
+      "verification": null
     },
     {
       "name": "fix-error-mapping",
