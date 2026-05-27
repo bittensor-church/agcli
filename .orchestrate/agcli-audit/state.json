@@ -362,12 +362,12 @@
       "agentId": "bc-3001f981-16b2-401c-9f30-d0c097788355",
       "runId": "run-d972e1d1-ab20-4ae5-9148-e71812ec7aeb",
       "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
-      "status": "running",
-      "resultStatus": null,
-      "handoffPath": null,
+      "status": "handed-off",
+      "resultStatus": "finished",
+      "handoffPath": "handoffs/audit-preimage.md",
       "startedAt": "2026-05-27T11:16:27.298Z",
-      "finishedAt": null,
-      "lastUpdate": "2026-05-27T11:16:30.932Z",
+      "finishedAt": "2026-05-27T11:33:29.069Z",
+      "lastUpdate": "2026-05-27T11:33:29.069Z",
       "note": null,
       "attempts": 1,
       "slackTs": null,
@@ -411,13 +411,13 @@
       "handoffPath": "handoffs/audit-evm.md",
       "startedAt": "2026-05-27T11:16:34.052Z",
       "finishedAt": "2026-05-27T11:33:28.039Z",
-      "lastUpdate": "2026-05-27T11:33:28.039Z",
+      "lastUpdate": "2026-05-27T11:33:29.048Z",
       "note": null,
       "attempts": 1,
       "slackTs": null,
       "prNumber": null,
       "failureMode": null,
-      "verification": null
+      "verification": "unit-test-verified"
     },
     {
       "name": "audit-safe-mode",
@@ -1821,6 +1821,10 @@
     {
       "at": "2026-05-27T11:33:28.031Z",
       "message": "audit-doctor: verification self-reported (unit-test-verified)"
+    },
+    {
+      "at": "2026-05-27T11:33:29.048Z",
+      "message": "audit-evm: verification self-reported (unit-test-verified)"
     }
   ]
 }
