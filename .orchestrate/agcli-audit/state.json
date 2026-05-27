@@ -806,7 +806,7 @@
     {
       "name": "verify-write-batch",
       "type": "verifier",
-      "branch": "orch/agcli-audit/verify-write-batch",
+      "branch": "orch/agcli-audit/audit-wallet",
       "startingRef": "orch/agcli-audit/audit-wallet",
       "dependsOn": [
         "audit-wallet",
@@ -820,12 +820,12 @@
       "agentId": "bc-7c47ddbe-9a89-4c75-9576-33fcf42ef94e",
       "runId": "run-69718f2f-5516-48a7-aa0c-84f7aadae103",
       "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
-      "status": "running",
-      "resultStatus": null,
-      "handoffPath": null,
+      "status": "handed-off",
+      "resultStatus": "finished",
+      "handoffPath": "handoffs/verify-write-batch.md",
       "startedAt": "2026-05-27T13:49:19.905Z",
-      "finishedAt": null,
-      "lastUpdate": "2026-05-27T13:49:23.927Z",
+      "finishedAt": "2026-05-27T13:59:17.019Z",
+      "lastUpdate": "2026-05-27T13:59:17.019Z",
       "note": null,
       "attempts": 1,
       "slackTs": null,
@@ -1115,13 +1115,13 @@
       "handoffPath": "handoffs/fix-explain-topics.md",
       "startedAt": "2026-05-27T13:49:31.065Z",
       "finishedAt": "2026-05-27T13:56:50.659Z",
-      "lastUpdate": "2026-05-27T13:56:50.660Z",
+      "lastUpdate": "2026-05-27T13:56:52.020Z",
       "note": null,
       "attempts": 1,
       "slackTs": null,
       "prNumber": null,
       "failureMode": null,
-      "verification": null
+      "verification": "type-check-only"
     },
     {
       "name": "fix-llm-txt",
@@ -2677,6 +2677,10 @@
     {
       "at": "2026-05-27T13:52:56.684Z",
       "message": "fix-scaffold-localnet: model \"claude-sonnet-4-6\" not in MODEL_CATALOG (spawning anyway). Run `bun cli.ts models` to see known slugs."
+    },
+    {
+      "at": "2026-05-27T13:56:52.022Z",
+      "message": "fix-explain-topics: verification self-reported (type-check-only)"
     }
   ]
 }
