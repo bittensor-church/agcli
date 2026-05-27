@@ -56,14 +56,14 @@
       "agentId": null,
       "runId": null,
       "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
-      "status": "pending",
+      "status": "running",
       "resultStatus": null,
       "handoffPath": null,
-      "startedAt": null,
+      "startedAt": "2026-05-27T12:47:18.583Z",
       "finishedAt": null,
-      "lastUpdate": "2026-05-27T11:59:03.279Z",
+      "lastUpdate": "2026-05-27T12:47:18.583Z",
       "note": "respawned by self-planner (was error; attempts=2)",
-      "attempts": 2,
+      "attempts": 3,
       "slackTs": null,
       "prNumber": null,
       "failureMode": null,
@@ -673,15 +673,15 @@
       "dependsOn": [
         "audit-config"
       ],
-      "agentId": null,
-      "runId": null,
+      "agentId": "bc-5a6bb3c1-3a19-4fe5-9b52-06d622ade613",
+      "runId": "run-cdd99ec7-5593-443b-aa87-fbefcd423a09",
       "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
       "status": "running",
       "resultStatus": null,
       "handoffPath": null,
       "startedAt": "2026-05-27T12:45:44.091Z",
       "finishedAt": null,
-      "lastUpdate": "2026-05-27T12:45:44.091Z",
+      "lastUpdate": "2026-05-27T12:47:08.575Z",
       "note": "respawned by self-planner (was error; attempts=3)",
       "attempts": 4,
       "slackTs": null,
@@ -2542,6 +2542,10 @@
     {
       "at": "2026-05-27T12:45:44.090Z",
       "message": "audit-completions-update: model \"claude-sonnet-4-6\" not in MODEL_CATALOG (spawning anyway). Run `bun cli.ts models` to see known slugs."
+    },
+    {
+      "at": "2026-05-27T12:47:18.581Z",
+      "message": "audit-balance-transfer: model \"claude-sonnet-4-6\" not in MODEL_CATALOG (spawning anyway). Run `bun cli.ts models` to see known slugs."
     }
   ]
 }
