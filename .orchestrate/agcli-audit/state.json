@@ -150,12 +150,12 @@
       "agentId": "bc-c25fbb51-73a3-48ea-bc37-05c9b4bb4342",
       "runId": "run-131602e4-b607-42d9-9ec0-fe78f8a5e2fd",
       "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
-      "status": "running",
-      "resultStatus": null,
-      "handoffPath": null,
+      "status": "handed-off",
+      "resultStatus": "finished",
+      "handoffPath": "handoffs/audit-root.md",
       "startedAt": "2026-05-27T13:36:56.000Z",
-      "finishedAt": null,
-      "lastUpdate": "2026-05-27T13:36:59.033Z",
+      "finishedAt": "2026-05-27T13:49:10.423Z",
+      "lastUpdate": "2026-05-27T13:49:10.423Z",
       "note": "respawned by self-planner (was error; attempts=2)",
       "attempts": 3,
       "slackTs": null,
@@ -225,13 +225,13 @@
       "handoffPath": "handoffs/audit-identity.md",
       "startedAt": "2026-05-27T12:59:11.403Z",
       "finishedAt": "2026-05-27T13:12:15.157Z",
-      "lastUpdate": "2026-05-27T13:12:16.213Z",
+      "lastUpdate": "2026-05-27T13:43:38.424Z",
       "note": "respawned by self-planner (was error; attempts=2)",
       "attempts": 3,
       "slackTs": null,
       "prNumber": null,
       "failureMode": null,
-      "verification": "unit-test-verified"
+      "verification": "verifier-failed"
     },
     {
       "name": "audit-serve",
@@ -2625,6 +2625,10 @@
     {
       "at": "2026-05-27T13:41:36.518Z",
       "message": "audit-view: verification recorded (verifier-failed) by verifier verify-readonly-batch"
+    },
+    {
+      "at": "2026-05-27T13:43:38.426Z",
+      "message": "audit-identity: verification recorded (verifier-failed) by verifier verify-network-batch"
     }
   ]
 }
