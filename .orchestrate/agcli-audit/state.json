@@ -1693,6 +1693,14 @@
     {
       "at": "2026-05-27T11:18:52.658Z",
       "message": "audit-admin: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status"
+    },
+    {
+      "at": "2026-05-27T11:18:53.623Z",
+      "message": "audit-admin: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-admin.md"
+    },
+    {
+      "at": "2026-05-27T11:18:53.625Z",
+      "message": "audit-admin: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-admin-failure.md"
     }
   ]
 }
