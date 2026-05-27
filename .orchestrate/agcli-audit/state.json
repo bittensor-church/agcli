@@ -1167,16 +1167,16 @@
       "agentId": "bc-55148429-d890-4923-9782-c16cc0b38bad",
       "runId": "run-73065524-3143-48af-a9fc-d74343604ff1",
       "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
-      "status": "running",
-      "resultStatus": null,
-      "handoffPath": null,
+      "status": "error",
+      "resultStatus": "error",
+      "handoffPath": "handoffs/fix-llm-txt.md",
       "startedAt": "2026-05-27T13:49:34.336Z",
-      "finishedAt": null,
-      "lastUpdate": "2026-05-27T13:49:37.784Z",
+      "finishedAt": "2026-05-27T13:50:33.512Z",
+      "lastUpdate": "2026-05-27T13:50:33.512Z",
       "note": null,
       "slackTs": null,
       "prNumber": null,
-      "failureMode": null,
+      "failureMode": "unknown",
       "verification": null,
       "attempts": 1
     },
@@ -1335,15 +1335,15 @@
         "audit-admin",
         "audit-localnet"
       ],
-      "agentId": null,
-      "runId": null,
-      "parentAgentId": null,
+      "agentId": "bc-72f0a8cb-80cd-4ac4-946a-7e4e9a071b84",
+      "runId": "run-3292c4ea-6697-4b17-90bb-ad165e41a382",
+      "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
       "status": "running",
       "resultStatus": null,
       "handoffPath": null,
       "startedAt": "2026-05-27T13:49:44.268Z",
       "finishedAt": null,
-      "lastUpdate": "2026-05-27T13:49:44.268Z",
+      "lastUpdate": "2026-05-27T13:49:47.931Z",
       "note": null,
       "slackTs": null,
       "prNumber": null,
@@ -2637,6 +2637,10 @@
     {
       "at": "2026-05-27T13:43:38.426Z",
       "message": "audit-identity: verification recorded (verifier-failed) by verifier verify-network-batch"
+    },
+    {
+      "at": "2026-05-27T13:50:33.510Z",
+      "message": "fix-llm-txt: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status"
     }
   ]
 }
