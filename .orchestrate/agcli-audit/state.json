@@ -1058,13 +1058,13 @@
       "handoffPath": "handoffs/fix-events-pretty.md",
       "startedAt": "2026-05-27T13:49:27.248Z",
       "finishedAt": "2026-05-27T13:59:42.631Z",
-      "lastUpdate": "2026-05-27T13:59:42.631Z",
+      "lastUpdate": "2026-05-27T13:59:43.762Z",
       "note": null,
       "attempts": 1,
       "slackTs": null,
       "prNumber": null,
       "failureMode": null,
-      "verification": null
+      "verification": "type-check-only"
     },
     {
       "name": "fix-explain-topics",
@@ -2685,6 +2685,10 @@
     {
       "at": "2026-05-27T13:59:18.245Z",
       "message": "audit-wallet: verification recorded (verifier-failed) by verifier verify-write-batch"
+    },
+    {
+      "at": "2026-05-27T13:59:43.764Z",
+      "message": "fix-events-pretty: verification self-reported (type-check-only)"
     }
   ]
 }
