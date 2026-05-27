@@ -24,6 +24,76 @@ pub mod exit_code {
     pub const TIMEOUT: i32 = 15;
 }
 
+const SURFACED_DISPATCH_PALLETS: &[&str] = &[
+    "subtensormodule",
+    "adminutils",
+    "commitments",
+    "crowdloan",
+    "proxy",
+    "swap",
+    "drand",
+    "utility",
+    "registry",
+    "shield",
+];
+
+fn normalize_pallet_name(name: &str) -> String {
+    name.chars()
+        .filter(|c| c.is_ascii_alphanumeric())
+        .collect::<String>()
+        .to_lowercase()
+}
+
+fn is_surfaced_dispatch_pallet(name: &str) -> bool {
+    let normalized = normalize_pallet_name(name);
+    SURFACED_DISPATCH_PALLETS.contains(&normalized.as_str())
+}
+
+/// Extract `runtime pallet `<Pallet>` returned error `<Variant>` from metadata-decoded dispatch errors.
+fn parse_runtime_pallet_error(msg: &str) -> Option<(&str, &str)> {
+    let (_, rest) = msg.split_once("runtime pallet `")?;
+    let (pallet, rest) = rest.split_once('`')?;
+    let (_, rest) = rest.split_once("returned error `")?;
+    let (variant, _) = rest.split_once('`')?;
+    Some((pallet, variant))
+}
+
+/// Last `Pallet::Variant` token in a message.
+fn last_qualified_pallet_variant(msg: &str) -> Option<(&str, &str)> {
+    let bytes = msg.as_bytes();
+    let mut best: Option<(usize, usize, usize, usize)> = None;
+    let mut i = 0;
+    while i + 1 < bytes.len() {
+        if bytes[i] == b':' && bytes[i + 1] == b':' {
+            let left_end = i;
+            let mut left_start = left_end;
+            while left_start > 0 {
+                let c = bytes[left_start - 1];
+                if c.is_ascii_alphanumeric() || c == b'_' {
+                    left_start -= 1;
+                } else {
+                    break;
+                }
+            }
+            let variant_start = i + 2;
+            let mut variant_end = variant_start;
+            while variant_end < bytes.len() {
+                let c = bytes[variant_end];
+                if c.is_ascii_alphanumeric() || c == b'_' {
+                    variant_end += 1;
+                } else {
+                    break;
+                }
+            }
+            if left_end > left_start && variant_end > variant_start {
+                best = Some((left_start, left_end, variant_start, variant_end));
+            }
+        }
+        i += 1;
+    }
+    best.map(|(ls, le, vs, ve)| (&msg[ls..le], &msg[vs..ve]))
+}
+
 /// Classify an anyhow error chain into an exit code.
 pub fn classify(err: &anyhow::Error) -> i32 {
     let msg = format!("{:#}", err).to_lowercase();
@@ -71,22 +141,34 @@ pub fn classify(err: &anyhow::Error) -> i32 {
         || msg.contains("not a valid")
         || msg.contains("must be ")
         || msg.contains("expected format")
+        // Clap argument parsing failures should align with VALIDATION.
+        || msg.contains("required arguments were not provided")
+        || msg.contains("unexpected argument")
+        || msg.contains("unrecognized subcommand")
         // `agcli subscribe events --filter …` typo / unknown category (`validate_event_filter`)
         || msg.contains("invalid event filter")
         // `agcli explain --topic …` typo / unknown built-in topic
         || msg.contains("unknown topic")
         // Query path: unknown / inactive netuid (e.g. `subnet show`)
         || (msg.contains("subnet") && msg.contains("not found"))
+        // Query path: unknown block number (`block info` / `block range`)
+        || (msg.contains("block") && msg.contains("not found"))
         // `agcli balance --threshold` (`validate_threshold` in helpers.rs)
         || msg.contains("balance --threshold")
         // `agcli transfer` / `transfer-keep-alive` — `validate_amount(..., "transfer amount")`
         || msg.contains("transfer amount")
         // `validate_ss58(..., "destination")` on `--dest`
         || msg.contains("invalid destination")
+        // `validate_ss58(..., "proxy address")` on `config set --key proxy`
+        || msg.contains("proxy address")
         // `validate_ss58(..., "stake list --address")` on `stake list --address`
         || msg.contains("stake list --address")
         // `validate_ss58(..., "portfolio --address")` on `view portfolio --address`
         || msg.contains("portfolio --address")
+        // `validate_ss58(..., "audit --address")` on `agcli audit --address`
+        || msg.contains("audit --address")
+        // `diff portfolio` with no `--address` and no wallet
+        || msg.contains("no address provided and no wallet found")
         // `validate_ss58(..., "hotkey-address")` when `--hotkey-address` is set (e.g. `stake unstake-all`)
         || msg.contains("invalid hotkey-address")
         // `validate_amount(..., "stake amount")` on `stake add` / related stake writes
@@ -99,10 +181,60 @@ pub fn classify(err: &anyhow::Error) -> i32 {
         || msg.contains("swap amount")
         // `validate_netuid` — root / invalid user netuid before stake commands
         || msg.contains("invalid netuid")
+        // `utils convert --tao/--alpha` requires `--netuid`.
+        || msg.contains("--netuid is required")
+        // Missing-mode validation in `view swap-sim` / `view axon`.
+        || msg.contains("specify either --tao or --alpha")
+        || msg.contains("provide either --uid or --hotkey-address")
         // `check_spending_limit` in helpers.rs (local config guard)
         || msg.contains("spending limit exceeded")
+        // Client-side slippage guard in `stake add/remove` preflight.
+        || (msg.contains("slippage") && msg.contains("maximum allowed"))
+        // Batch JSON structure validation.
+        || (msg.contains("batch file")
+            && (msg.contains("is empty")
+                || msg.contains("too many calls")
+                || msg.contains("must contain a json array")
+                || msg.contains("missing \"pallet\" field")
+                || msg.contains("missing \"call\" field")
+                || msg.contains("missing \"args\" field")
+                || msg.contains("\"pallet\" must be a string")
+                || msg.contains("\"call\" must be a string")
+                || msg.contains("\"args\" must be an array")
+                || msg.contains("is not an object")))
+        || (msg.contains("call #")
+            && (msg.contains("missing \"pallet\" field")
+                || msg.contains("missing \"call\" field")
+                || msg.contains("missing \"args\" array")))
+        // Weight-vector shape and bounds are user-input validation failures.
+        || msg.contains("weightvecnotequalsize")
+        || msg.contains("inputlengthsunequal")
+        || msg.contains("weightveclengthislow")
+        || msg.contains("uidslengthexceeduidsinsubnet")
+        || msg.contains("uidveccontaininvalidone")
+        || msg.contains("duplicateuids")
     {
         return exit_code::VALIDATION;
+    }
+
+    // DispatchError mapping:
+    // - surfaced pallets -> CHAIN
+    // - unrecognized pallets -> GENERIC (message already contains pallet + variant)
+    let dispatch_context =
+        msg.contains("transaction failed")
+            || msg.contains("dispatch error")
+            || msg.contains("dispatch")
+            || msg.contains("pallet error")
+            || msg.contains("runtime pallet `");
+    if dispatch_context {
+        if let Some((pallet, _variant)) = parse_runtime_pallet_error(&msg)
+            .or_else(|| last_qualified_pallet_variant(&msg))
+        {
+            if is_surfaced_dispatch_pallet(pallet) {
+                return exit_code::CHAIN;
+            }
+            return exit_code::GENERIC;
+        }
     }
 
     // Chain errors checked BEFORE network — "insufficient" or "extrinsic" in a
@@ -121,8 +253,6 @@ pub fn classify(err: &anyhow::Error) -> i32 {
         || msg.contains("hotkeynotregistered")
         || msg.contains("slippagetoo")
         || msg.contains("slippage too")
-        // Client-side `check_slippage` in stake_cmds.rs ("Slippage X% exceeds maximum allowed …")
-        || (msg.contains("slippage") && msg.contains("maximum allowed"))
         || msg.contains("subnet not exist")
         || msg.contains("subnetnotexist")
         || msg.contains("not subnet owner")
@@ -226,13 +356,24 @@ pub fn classify(err: &anyhow::Error) -> i32 {
         || msg.contains("badenckeylen")
         // Must be before generic `unreachable` → NETWORK heuristic
         || msg.contains("shield::unreachable")
-        // Any other `Pallet::Variant` from metadata (e.g. frame pallets not listed above)
-        || (msg.contains("::") && !msg.contains("://"))
+        // Preimage and scheduler pallet-specific named errors (runtime helpers / frame pallets).
+        || msg.contains("alreadynoted")
+        || msg.contains("notnoted")
+        || msg.contains("notauthorized")
+        || msg.contains("notrequested")
+        || msg.contains("requested")
+        || msg.contains("toobig")
+        || msg.contains("scheduler::notfound")
+        || msg.contains("targetblocknumberinpast")
+        || msg.contains("scheduler::named")
     {
         return exit_code::CHAIN;
     }
 
-    if msg.contains("timeout") || msg.contains("timed out") {
+    if msg.contains("timeout")
+        || msg.contains("timed out")
+        || msg.contains("did not become ready after")
+    {
         return exit_code::TIMEOUT;
     }
 
@@ -247,11 +388,16 @@ pub fn classify(err: &anyhow::Error) -> i32 {
         return exit_code::NETWORK;
     }
 
+    if msg.contains("chain connection required") {
+        return exit_code::VALIDATION;
+    }
+
     if msg.contains("permission denied")
         || msg.contains("no such file")
         || msg.contains("cannot read")
         || msg.contains("cannot write")
         || msg.contains("cannot create")
+        || msg.contains("failed to run cargo install")
     {
         return exit_code::IO;
     }
@@ -295,6 +441,8 @@ pub fn hint(code: i32, msg: &str) -> Option<&'static str> {
                 Some("Tip: Set on-chain identity first (`agcli network identity set`) or use an SS58 that already has one")
             } else if lower.contains("insufficient") {
                 Some("Tip: Check your balance with `agcli balance`. Transaction fees require a small reserve")
+            } else if lower.contains("delegatetxratelimitexceeded") {
+                Some("Tip: Delegate take changes are rate-limited. Wait ~300 blocks, then retry `agcli delegate increase-take`")
             } else if lower.contains("rate limit") {
                 Some("Tip: Wait a few blocks before retrying. Use `agcli block latest` to check block progress")
             } else if lower.contains("nonce") {
@@ -385,6 +533,24 @@ pub fn hint(code: i32, msg: &str) -> Option<&'static str> {
                 Some("Tip: Crowdloan cap or contribution math overflowed — check amounts and on-chain crowdloan state")
             } else if lower.contains("drand::nonevalue") || lower.contains("drand::storageoverflow") {
                 Some("Tip: Drand beacon state issue on-chain — operators should verify drand config, OCW, and node logs")
+            } else if lower.contains("alreadynoted") {
+                Some("Tip: This preimage hash is already noted on-chain. Use `agcli preimage unnote` first if you need to replace it")
+            } else if lower.contains("notnoted") {
+                Some("Tip: The preimage hash is not currently noted. Check the hash before running `agcli preimage unnote`")
+            } else if lower.contains("notauthorized") {
+                Some("Tip: Only the account that noted/requested this preimage can perform this action")
+            } else if lower.contains("notrequested") {
+                Some("Tip: This preimage was not requested. Request it first or use the correct hash")
+            } else if lower.contains("requested") {
+                Some("Tip: This preimage is currently requested on-chain. Unrequest it before unnoting")
+            } else if lower.contains("toobig") {
+                Some("Tip: The preimage payload exceeds chain limits. Reduce call size or split operations")
+            } else if lower.contains("scheduler::notfound") {
+                Some("Tip: No scheduled task was found for this id/timepoint. Verify the task id and retry")
+            } else if lower.contains("targetblocknumberinpast") {
+                Some("Tip: Scheduler target block is in the past. Use a future block number")
+            } else if lower.contains("scheduler::named") {
+                Some("Tip: Scheduler named-task operation failed. Ensure the id is 32-byte compatible and signed with required origin")
             } else if lower.contains("shield::unreachable") {
                 Some("Tip: Shield pallet internal error — try another RPC node, update software, and report with full error text if it persists")
             } else if lower.contains("runtime pallet `") && lower.contains("returned error `") {
@@ -403,18 +569,30 @@ pub fn hint(code: i32, msg: &str) -> Option<&'static str> {
                 Some("Tip: Run `agcli subscribe events --help` and `docs/commands/subscribe.md` for `--filter` values; start with `--filter all`")
             } else if lower.contains("subnet") && lower.contains("not found") {
                 Some("Tip: List subnets with `agcli subnet list`, then `agcli subnet show --netuid <N>` (alias: `subnet info`), `agcli subnet hyperparams --netuid <N>`, `agcli subnet metagraph --netuid <N>`, `agcli diff subnet --netuid <N>`, `agcli diff metagraph --netuid <N>`, `agcli subnet cost --netuid <N>`, `agcli subnet emissions --netuid <N>`, `agcli subnet health --netuid <N>`, `agcli subnet probe --netuid <N>`, `agcli subnet commits --netuid <N>`, `agcli subnet watch --netuid <N>`, `agcli subnet monitor --netuid <N>`, `agcli subnet liquidity --netuid <N>`, `agcli subnet cache-load --netuid <N>`, `agcli subnet cache-list --netuid <N>`, `agcli subnet cache-diff --netuid <N>`, `agcli subnet cache-prune --netuid <N>`, `agcli subnet emission-split --netuid <N>`, `agcli subnet mechanism-count --netuid <N>`, `agcli subnet set-mechanism-count --netuid <N>`, `agcli subnet set-emission-split --netuid <N>`, `agcli subnet check-start --netuid <N>`, `agcli subnet start --netuid <N>`, `agcli subnet snipe --netuid <N>`, `agcli subnet set-param --netuid <N>`, `agcli subnet set-symbol --netuid <N>`, `agcli subnet trim --netuid <N>`, `agcli subnet register-neuron --netuid <N>`, `agcli subnet pow --netuid <N>`, `agcli subnet dissolve --netuid <N>`, `agcli subnet root-dissolve --netuid <N>`, `agcli subnet terminate-lease --netuid <N>`, `agcli weights set --netuid <N>`, `agcli weights commit --netuid <N>`, `agcli weights reveal --netuid <N>`, `agcli weights commit-reveal --netuid <N>`, `agcli weights status --netuid <N>`, `agcli weights commit-timelocked --netuid <N>`, `agcli weights set-mechanism --netuid <N>`, `agcli weights commit-mechanism --netuid <N>`, `agcli weights reveal-mechanism --netuid <N>`, or `agcli weights show --netuid <N>`")
+            } else if lower.contains("block") && lower.contains("not found") {
+                Some("Tip: The requested block is unavailable on this node. Try a lower block number or use an archive endpoint")
             } else if lower.contains("balance --threshold") {
                 Some("Tip: Use a non-negative finite TAO amount, e.g. `agcli balance --watch --threshold 1.0` (see `docs/commands/balance.md`)")
             } else if lower.contains("transfer amount") {
                 Some("Tip: Use `--amount` with a positive finite TAO value (see `docs/commands/transfer.md` and `agcli transfer --help`)")
             } else if lower.contains("invalid destination") {
                 Some("Tip: Use `--dest` with a valid SS58 coldkey address (see `docs/commands/transfer.md` and `agcli wallet show`)")
+            } else if lower.contains("proxy address") {
+                Some("Tip: Use a valid SS58 for `agcli config set --key proxy --value <SS58>`")
             } else if lower.contains("stake list --address") {
                 Some("Tip: Use `--address` with a valid SS58 coldkey (see `docs/commands/stake.md` and `agcli stake list --help`)")
             } else if lower.contains("portfolio --address") {
                 Some("Tip: Use `--address` with a valid SS58 coldkey (see `docs/commands/view.md` and `agcli view portfolio --help`)")
+            } else if lower.contains("audit --address") {
+                Some("Tip: Use `--address` with a valid SS58 coldkey for `agcli audit --address`")
+            } else if lower.contains("no address provided and no wallet found") {
+                Some("Tip: Pass `--address <SS58>` or create/open a wallet first (`agcli wallet list`, `agcli wallet create`)")
             } else if lower.contains("invalid hotkey-address") {
                 Some("Tip: Use `--hotkey-address` with a valid SS58 hotkey, or omit it for the wallet default hotkey (see `docs/commands/stake.md` and `agcli stake unstake-all --help`)")
+            } else if lower.contains("specify either --tao or --alpha") {
+                Some("Tip: For swap simulation pass exactly one side, e.g. `agcli view swap-sim --netuid 1 --tao 1.0`")
+            } else if lower.contains("provide either --uid or --hotkey-address") {
+                Some("Tip: For `agcli view axon`, pass one locator: either `--uid` or `--hotkey-address`")
             } else if lower.contains("unstake amount") {
                 // Must be before `stake amount` — "unstake amount" contains the substring "stake amount".
                 Some("Tip: Use `--amount` with a positive finite TAO value (see `docs/commands/stake.md` and `agcli stake remove --help`)")
@@ -426,6 +604,30 @@ pub fn hint(code: i32, msg: &str) -> Option<&'static str> {
                 Some("Tip: Use `--amount` with a positive finite TAO value (see `docs/commands/stake.md` and `agcli stake add --help`)")
             } else if lower.contains("invalid netuid") {
                 Some("Tip: Use `--netuid` ≥ 1 (root SN0 is not a stake target). List subnets with `agcli subnet list`")
+            } else if lower.contains("--netuid is required") {
+                Some("Tip: Pass `--netuid <N>` when converting TAO↔Alpha (`agcli utils convert --tao ... --netuid N`)")
+            } else if lower.contains("chain connection required") {
+                Some("Tip: This conversion needs a live chain RPC. Pass `--endpoint <wss://...>` or a named `--network`")
+            } else if lower.contains("maximum allowed") && lower.contains("slippage") {
+                Some("Tip: Lower trade size or raise `--max-slippage` to a value you can tolerate")
+            } else if lower.contains("batch file") && lower.contains("too many calls") {
+                Some("Tip: Split the file into batches of at most 1000 calls")
+            } else if lower.contains("batch file") && lower.contains("is empty") {
+                Some("Tip: Add at least one call object: [{\"pallet\":\"...\",\"call\":\"...\",\"args\":[]}]")
+            } else if lower.contains("missing \"pallet\" field")
+                || lower.contains("missing \"call\" field")
+                || lower.contains("missing \"args\" field")
+                || lower.contains("missing \"args\" array")
+            {
+                Some("Tip: Each batch call must include `pallet`, `call`, and `args` fields")
+            } else if lower.contains("weightvecnotequalsize")
+                || lower.contains("inputlengthsunequal")
+                || lower.contains("weightveclengthislow")
+                || lower.contains("uidveccontaininvalidone")
+                || lower.contains("uidslengthexceeduidsinsubnet")
+                || lower.contains("duplicateuids")
+            {
+                Some("Tip: Ensure weight input has unique UIDs, equal uid/weight lengths, and only valid subnet UIDs")
             } else if lower.contains("spending limit exceeded") {
                 Some("Tip: Adjust limits with `agcli config set spending_limit.<N>` or `spending_limit.*` (see `docs/commands/config.md`)")
             } else {
@@ -576,18 +778,74 @@ mod tests {
     }
 
     #[test]
-    fn classify_stake_slippage_guard_chain() {
+    fn classify_stake_slippage_guard_validation() {
         let err = anyhow::anyhow!(
             "Slippage 9.00% exceeds maximum allowed 2.00% on SN1.\n  Reduce trade size or use a limit order: agcli stake add-limit / remove-limit"
         );
-        assert_eq!(classify(&err), exit_code::CHAIN);
+        assert_eq!(classify(&err), exit_code::VALIDATION);
         let msg = format!("{err:#}");
-        assert!(hint(exit_code::CHAIN, &msg).is_some_and(|s| s.contains("slippage")));
+        assert!(
+            hint(exit_code::VALIDATION, &msg).is_some_and(|s| s.contains("--max-slippage"))
+        );
+    }
+
+    #[test]
+    fn classify_batch_shape_validation_errors() {
+        let err = anyhow::anyhow!("Batch file '/tmp/x.json' is empty (no calls to submit).");
+        assert_eq!(classify(&err), exit_code::VALIDATION);
+        let err2 = anyhow::anyhow!("Batch call #0: missing \"pallet\" field.");
+        assert_eq!(classify(&err2), exit_code::VALIDATION);
+    }
+
+    #[test]
+    fn classify_proxy_address_validation() {
+        let err = anyhow::anyhow!("Invalid proxy address: bad ss58 checksum");
+        assert_eq!(classify(&err), exit_code::VALIDATION);
+        let msg = format!("{err:#}");
+        assert!(hint(exit_code::VALIDATION, &msg).is_some_and(|s| s.contains("--key proxy")));
+    }
+
+    #[test]
+    fn classify_diff_no_address_validation() {
+        let err = anyhow::anyhow!("No address provided and no wallet found. Use --address <SS58>.");
+        assert_eq!(classify(&err), exit_code::VALIDATION);
+    }
+
+    #[test]
+    fn classify_block_not_found_validation() {
+        let err = anyhow::anyhow!("Block 99999999 not found");
+        assert_eq!(classify(&err), exit_code::VALIDATION);
+    }
+
+    #[test]
+    fn classify_utils_convert_netuid_required_validation() {
+        let err = anyhow::anyhow!("--netuid is required for TAO↔Alpha conversion");
+        assert_eq!(classify(&err), exit_code::VALIDATION);
+    }
+
+    #[test]
+    fn classify_chain_connection_required_validation() {
+        let err = anyhow::anyhow!("Chain connection required");
+        assert_eq!(classify(&err), exit_code::VALIDATION);
+    }
+
+    #[test]
+    fn classify_view_missing_mode_validation() {
+        let err = anyhow::anyhow!("Specify either --tao or --alpha for swap simulation.");
+        assert_eq!(classify(&err), exit_code::VALIDATION);
+        let err2 = anyhow::anyhow!("Provide either --uid or --hotkey-address");
+        assert_eq!(classify(&err2), exit_code::VALIDATION);
     }
 
     #[test]
     fn classify_timeout() {
         let err = anyhow::anyhow!("Operation timed out after 30s");
+        assert_eq!(classify(&err), exit_code::TIMEOUT);
+    }
+
+    #[test]
+    fn classify_localnet_readiness_timeout() {
+        let err = anyhow::anyhow!("Chain at ws://127.0.0.1:9944 did not become ready after 60 seconds");
         assert_eq!(classify(&err), exit_code::TIMEOUT);
     }
 
@@ -871,9 +1129,25 @@ mod tests {
     }
 
     #[test]
-    fn classify_qualified_pallet_variant_chain() {
+    fn classify_qualified_unsurfaced_pallet_variant_generic() {
         let err = anyhow::anyhow!("Dispatch failed: Treasury::InsufficientBalance");
+        assert_eq!(classify(&err), exit_code::GENERIC);
+    }
+
+    #[test]
+    fn classify_runtime_pallet_surfaced_unknown_variant_chain() {
+        let err = anyhow::anyhow!(
+            "Transaction failed: Runtime pallet `SubtensorModule` returned error `FutureVariant`"
+        );
         assert_eq!(classify(&err), exit_code::CHAIN);
+    }
+
+    #[test]
+    fn classify_runtime_pallet_unsurfaced_variant_generic() {
+        let err = anyhow::anyhow!(
+            "Transaction failed: Runtime pallet `Treasury` returned error `InsufficientBalance`"
+        );
+        assert_eq!(classify(&err), exit_code::GENERIC);
     }
 
     #[test]
@@ -894,6 +1168,12 @@ mod tests {
         let h = hint(exit_code::CHAIN, "Rate limit exceeded");
         assert!(h.is_some());
         assert!(h.unwrap().contains("Wait"));
+    }
+
+    #[test]
+    fn hint_chain_delegate_tx_rate_limit() {
+        let h = hint(exit_code::CHAIN, "DelegateTxRateLimitExceeded");
+        assert!(h.is_some_and(|s| s.contains("300")));
     }
 
     #[test]
@@ -1337,6 +1617,18 @@ mod tests {
     fn hint_chain_drand_storage_overflow() {
         let h = hint(exit_code::CHAIN, "Drand::StorageOverflow");
         assert!(h.is_some_and(|s| s.contains("drand") || s.contains("Drand")));
+    }
+
+    #[test]
+    fn hint_chain_preimage_not_noted() {
+        let h = hint(exit_code::CHAIN, "NotNoted");
+        assert!(h.is_some_and(|s| s.contains("preimage")));
+    }
+
+    #[test]
+    fn hint_chain_scheduler_target_block_in_past() {
+        let h = hint(exit_code::CHAIN, "TargetBlockNumberInPast");
+        assert!(h.is_some_and(|s| s.contains("future block")));
     }
 
     #[test]
