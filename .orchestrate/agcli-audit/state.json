@@ -582,16 +582,16 @@
       "agentId": "bc-6b4a53b5-5bcf-407f-9309-980c04db9268",
       "runId": "run-bf4acd57-a122-4b7b-bd0f-cc14288e2563",
       "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
-      "status": "running",
-      "resultStatus": null,
-      "handoffPath": null,
+      "status": "error",
+      "resultStatus": "error",
+      "handoffPath": "handoffs/audit-config.md",
       "startedAt": "2026-05-27T11:17:05.986Z",
-      "finishedAt": null,
-      "lastUpdate": "2026-05-27T11:17:09.728Z",
+      "finishedAt": "2026-05-27T11:17:30.889Z",
+      "lastUpdate": "2026-05-27T11:17:30.889Z",
       "note": null,
       "slackTs": null,
       "prNumber": null,
-      "failureMode": null,
+      "failureMode": "unknown",
       "verification": null,
       "attempts": 1
     },
@@ -1579,6 +1579,10 @@
     {
       "at": "2026-05-27T11:17:29.852Z",
       "message": "audit-liquidity: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-liquidity-failure.md"
+    },
+    {
+      "at": "2026-05-27T11:17:30.888Z",
+      "message": "audit-config: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status"
     }
   ]
 }
