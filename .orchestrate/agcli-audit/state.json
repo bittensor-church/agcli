@@ -586,12 +586,12 @@
       "agentId": "bc-cc755e6a-33a4-4e61-ad8d-820f3ab85bac",
       "runId": "run-a612de87-4e6c-4147-9f81-ac21537c4a69",
       "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
-      "status": "running",
-      "resultStatus": null,
-      "handoffPath": null,
+      "status": "handed-off",
+      "resultStatus": "finished",
+      "handoffPath": "handoffs/audit-diff.md",
       "startedAt": "2026-05-27T13:18:36.383Z",
-      "finishedAt": null,
-      "lastUpdate": "2026-05-27T13:18:39.616Z",
+      "finishedAt": "2026-05-27T13:31:53.719Z",
+      "lastUpdate": "2026-05-27T13:31:53.720Z",
       "note": "respawned by self-planner (was error; attempts=2)",
       "attempts": 3,
       "slackTs": null,
@@ -751,13 +751,13 @@
       "handoffPath": "handoffs/audit-utils-cli.md",
       "startedAt": "2026-05-27T13:16:06.590Z",
       "finishedAt": "2026-05-27T13:28:09.952Z",
-      "lastUpdate": "2026-05-27T13:28:09.953Z",
+      "lastUpdate": "2026-05-27T13:28:11.135Z",
       "note": "respawned by self-planner (was error; attempts=2)",
       "attempts": 3,
       "slackTs": null,
       "prNumber": null,
       "failureMode": null,
-      "verification": null
+      "verification": "unit-test-verified"
     },
     {
       "name": "audit-admin",
@@ -2611,6 +2611,10 @@
     {
       "at": "2026-05-27T13:26:43.800Z",
       "message": "audit-serve: verification self-reported (unit-test-verified)"
+    },
+    {
+      "at": "2026-05-27T13:28:11.137Z",
+      "message": "audit-utils-cli: verification self-reported (unit-test-verified)"
     }
   ]
 }
