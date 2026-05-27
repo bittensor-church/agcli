@@ -15,13 +15,13 @@
       "handoffPath": "handoffs/bootstrap-env.md",
       "startedAt": "2026-05-27T12:22:46.543Z",
       "finishedAt": "2026-05-27T12:27:41.234Z",
-      "lastUpdate": "2026-05-27T12:27:41.235Z",
+      "lastUpdate": "2026-05-27T12:27:42.407Z",
       "note": "respawned by self-planner (was error; attempts=4)",
       "attempts": 5,
       "slackTs": null,
       "prNumber": null,
       "failureMode": null,
-      "verification": null
+      "verification": "type-check-only"
     },
     {
       "name": "audit-wallet",
@@ -2446,6 +2446,10 @@
     {
       "at": "2026-05-27T12:23:31.009Z",
       "message": "audit-config: model \"claude-sonnet-4-6\" not in MODEL_CATALOG (spawning anyway). Run `bun cli.ts models` to see known slugs."
+    },
+    {
+      "at": "2026-05-27T12:27:42.408Z",
+      "message": "bootstrap-env: verification self-reported (type-check-only)"
     }
   ]
 }
