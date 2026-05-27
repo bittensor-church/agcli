@@ -648,16 +648,16 @@
       "agentId": "bc-00778682-6d93-4cd5-808e-aca17b0934b2",
       "runId": "run-fdb55d13-0b31-401b-974e-663cc9abee93",
       "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
-      "status": "running",
-      "resultStatus": null,
-      "handoffPath": null,
+      "status": "error",
+      "resultStatus": "error",
+      "handoffPath": "handoffs/audit-completions-update.md",
       "startedAt": "2026-05-27T11:17:15.699Z",
-      "finishedAt": null,
-      "lastUpdate": "2026-05-27T11:17:18.884Z",
+      "finishedAt": "2026-05-27T11:17:42.475Z",
+      "lastUpdate": "2026-05-27T11:17:42.475Z",
       "note": null,
       "slackTs": null,
       "prNumber": null,
-      "failureMode": null,
+      "failureMode": "unknown",
       "verification": null,
       "attempts": 1
     },
@@ -755,15 +755,15 @@
       "branch": "orch/agcli-audit/audit-localnet",
       "startingRef": "cursor/agcli-subtensor-audit-e2e7",
       "dependsOn": [],
-      "agentId": null,
-      "runId": null,
-      "parentAgentId": null,
+      "agentId": "bc-eb9c21ad-602a-403e-b77b-26602e770c11",
+      "runId": "run-ccd55fe4-b199-471f-aac4-c9cb8b49caff",
+      "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
       "status": "running",
       "resultStatus": null,
       "handoffPath": null,
       "startedAt": "2026-05-27T11:17:38.730Z",
       "finishedAt": null,
-      "lastUpdate": "2026-05-27T11:17:38.730Z",
+      "lastUpdate": "2026-05-27T11:17:41.503Z",
       "note": null,
       "slackTs": null,
       "prNumber": null,
@@ -1617,6 +1617,10 @@
     {
       "at": "2026-05-27T11:17:35.314Z",
       "message": "audit-crowdloan: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-crowdloan-failure.md"
+    },
+    {
+      "at": "2026-05-27T11:17:42.473Z",
+      "message": "audit-completions-update: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status"
     }
   ]
 }
