@@ -117,20 +117,20 @@
       "branch": "orch/agcli-audit/audit-weights",
       "startingRef": "cursor/agcli-subtensor-audit-e2e7",
       "dependsOn": [],
-      "agentId": "bc-0ce96513-898e-4062-999a-5e1f4245c353",
-      "runId": "run-4430ee73-1d49-44b1-bb97-8d28d679f99d",
+      "agentId": null,
+      "runId": null,
       "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
-      "status": "error",
-      "resultStatus": "error",
-      "handoffPath": "handoffs/audit-weights.md",
-      "startedAt": "2026-05-27T11:15:54.263Z",
-      "finishedAt": "2026-05-27T11:16:28.795Z",
-      "lastUpdate": "2026-05-27T11:16:28.795Z",
-      "note": null,
+      "status": "pending",
+      "resultStatus": null,
+      "handoffPath": null,
+      "startedAt": null,
+      "finishedAt": null,
+      "lastUpdate": "2026-05-27T11:32:06.893Z",
+      "note": "respawned by self-planner (was error; attempts=1)",
       "attempts": 1,
       "slackTs": null,
       "prNumber": null,
-      "failureMode": "unknown",
+      "failureMode": null,
       "verification": null
     },
     {
@@ -1717,6 +1717,10 @@
     {
       "at": "2026-05-27T11:32:04.537Z",
       "message": "audit-stake: respawned by self-planner (was error)"
+    },
+    {
+      "at": "2026-05-27T11:32:05.970Z",
+      "message": "audit-subnet: respawned by self-planner (was error)"
     }
   ]
 }
