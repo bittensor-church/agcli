@@ -344,3 +344,15 @@ T…
 [2026-05-27T13:50:49.184Z] fix-scaffold-localnet: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status
 [2026-05-27T13:50:50.254Z] fix-scaffold-localnet: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/fix-scaffold-localnet.md
 [2026-05-27T13:50:50.257Z] fix-scaffold-localnet: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/fix-scaffold-localnet-failure.md
+[2026-05-27T13:52:27.186Z] fix-llm-txt: respawned by self-planner (was error)
+[2026-05-27T13:52:28.762Z] fix-scaffold-localnet: respawned by self-planner (was error)
+[2026-05-27T13:52:53.253Z] fix-llm-txt: model "claude-sonnet-4-6" not in MODEL_CATALOG (spawning anyway). Run `bun cli.ts models` to see known slugs.
+[2026-05-27T13:52:56.684Z] fix-scaffold-localnet: model "claude-sonnet-4-6" not in MODEL_CATALOG (spawning anyway). Run `bun cli.ts models` to see known slugs.
+[2026-05-27T13:56:52.022Z] fix-explain-topics: verification self-reported (type-check-only)
+[2026-05-27T13:59:18.245Z] audit-wallet: verification recorded (verifier-failed) by verifier verify-write-batch
+[2026-05-27T13:59:43.764Z] fix-events-pretty: verification self-reported (type-check-only)
+[2026-05-27T14:02:22.229Z] fix-error-mapping: verification self-reported (unit-test-verified)
+[2026-05-27T14:02:59.011Z] fix-chain-extrinsics: verification self-reported (type-check-only)
+[2026-05-27T14:03:22.460Z] fix-chain-queries: verification self-reported (type-check-only)
+[2026-05-27T14:09:08.223Z] fix-llm-txt: verification self-reported (type-check-only)
+[2026-05-27T14:19:31.455Z] fix-error-mapping: verification recorded (verifier-failed) by verifier verify-xcut-batch

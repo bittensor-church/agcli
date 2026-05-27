@@ -1001,13 +1001,13 @@
       "handoffPath": "handoffs/fix-error-mapping.md",
       "startedAt": "2026-05-27T13:49:23.931Z",
       "finishedAt": "2026-05-27T14:02:20.982Z",
-      "lastUpdate": "2026-05-27T14:02:22.228Z",
+      "lastUpdate": "2026-05-27T14:19:31.453Z",
       "note": null,
       "attempts": 1,
       "slackTs": null,
       "prNumber": null,
       "failureMode": null,
-      "verification": "unit-test-verified"
+      "verification": "verifier-failed"
     },
     {
       "name": "fix-events-pretty",
@@ -2706,6 +2706,10 @@
     {
       "at": "2026-05-27T14:09:08.223Z",
       "message": "fix-llm-txt: verification self-reported (type-check-only)"
+    },
+    {
+      "at": "2026-05-27T14:19:31.455Z",
+      "message": "fix-error-mapping: verification recorded (verifier-failed) by verifier verify-xcut-batch"
     }
   ]
 }
