@@ -1,0 +1,120 @@
+{
+  "rootSlug": "agcli-py",
+  "tasks": [
+    {
+      "name": "phase1-polish",
+      "type": "worker",
+      "branch": "orch/agcli-py/phase1-polish",
+      "startingRef": "main",
+      "dependsOn": [],
+      "agentId": null,
+      "runId": null,
+      "parentAgentId": null,
+      "status": "running",
+      "resultStatus": null,
+      "handoffPath": null,
+      "startedAt": "2026-05-27T14:35:57.981Z",
+      "finishedAt": null,
+      "lastUpdate": "2026-05-27T14:35:57.981Z",
+      "note": null,
+      "slackTs": null,
+      "prNumber": null,
+      "failureMode": null,
+      "verification": null,
+      "attempts": 1
+    },
+    {
+      "name": "phase2-extrinsics",
+      "type": "worker",
+      "branch": "orch/agcli-py/phase2-extrinsics",
+      "startingRef": "orch/agcli-py/phase1-polish",
+      "dependsOn": [
+        "phase1-polish"
+      ],
+      "agentId": null,
+      "runId": null,
+      "parentAgentId": null,
+      "status": "pending",
+      "resultStatus": null,
+      "handoffPath": null,
+      "startedAt": null,
+      "finishedAt": null,
+      "lastUpdate": null,
+      "note": null,
+      "slackTs": null,
+      "prNumber": null,
+      "failureMode": null,
+      "verification": null
+    },
+    {
+      "name": "phase3-features",
+      "type": "worker",
+      "branch": "orch/agcli-py/phase3-features",
+      "startingRef": "orch/agcli-py/phase2-extrinsics",
+      "dependsOn": [
+        "phase2-extrinsics"
+      ],
+      "agentId": null,
+      "runId": null,
+      "parentAgentId": null,
+      "status": "pending",
+      "resultStatus": null,
+      "handoffPath": null,
+      "startedAt": null,
+      "finishedAt": null,
+      "lastUpdate": null,
+      "note": null,
+      "slackTs": null,
+      "prNumber": null,
+      "failureMode": null,
+      "verification": null
+    },
+    {
+      "name": "dx-release",
+      "type": "worker",
+      "branch": "orch/agcli-py/dx-release",
+      "startingRef": "orch/agcli-py/phase3-features",
+      "dependsOn": [
+        "phase3-features"
+      ],
+      "agentId": null,
+      "runId": null,
+      "parentAgentId": null,
+      "status": "pending",
+      "resultStatus": null,
+      "handoffPath": null,
+      "startedAt": null,
+      "finishedAt": null,
+      "lastUpdate": null,
+      "note": null,
+      "slackTs": null,
+      "prNumber": null,
+      "failureMode": null,
+      "verification": null
+    },
+    {
+      "name": "verify-release",
+      "type": "verifier",
+      "branch": "orch/agcli-py/verify-release",
+      "startingRef": "orch/agcli-py/dx-release",
+      "dependsOn": [
+        "dx-release"
+      ],
+      "agentId": null,
+      "runId": null,
+      "parentAgentId": null,
+      "status": "pending",
+      "resultStatus": null,
+      "handoffPath": null,
+      "startedAt": null,
+      "finishedAt": null,
+      "lastUpdate": null,
+      "note": null,
+      "slackTs": null,
+      "prNumber": null,
+      "failureMode": null,
+      "verification": null
+    }
+  ],
+  "attention": []
+}
