@@ -1,0 +1,2715 @@
+{
+  "rootSlug": "agcli-audit",
+  "tasks": [
+    {
+      "name": "bootstrap-env",
+      "type": "worker",
+      "branch": "orch/agcli-audit/bootstrap-env",
+      "startingRef": "cursor/agcli-subtensor-audit-e2e7",
+      "dependsOn": [],
+      "agentId": "bc-6016096d-46cc-48dd-baae-33641dfbc3ee",
+      "runId": "run-0f833086-c865-40db-982f-68b72c93517f",
+      "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
+      "status": "handed-off",
+      "resultStatus": "finished",
+      "handoffPath": "handoffs/bootstrap-env.md",
+      "startedAt": "2026-05-27T12:22:46.543Z",
+      "finishedAt": "2026-05-27T12:27:41.234Z",
+      "lastUpdate": "2026-05-27T12:27:42.407Z",
+      "note": "respawned by self-planner (was error; attempts=4)",
+      "attempts": 5,
+      "slackTs": null,
+      "prNumber": null,
+      "failureMode": null,
+      "verification": "type-check-only"
+    },
+    {
+      "name": "audit-wallet",
+      "type": "worker",
+      "branch": "orch/agcli-audit/audit-wallet",
+      "startingRef": "cursor/agcli-subtensor-audit-e2e7",
+      "dependsOn": [],
+      "agentId": "bc-83564caa-480d-4d9b-b7ed-3a1ccbce1c24",
+      "runId": "run-51ee8377-bae1-4a2c-9f6b-57aa91638a64",
+      "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
+      "status": "handed-off",
+      "resultStatus": "finished",
+      "handoffPath": "handoffs/audit-wallet.md",
+      "startedAt": "2026-05-27T12:23:00.308Z",
+      "finishedAt": "2026-05-27T12:43:04.353Z",
+      "lastUpdate": "2026-05-27T13:59:18.244Z",
+      "note": "respawned by self-planner (was error; attempts=3)",
+      "attempts": 4,
+      "slackTs": null,
+      "prNumber": null,
+      "failureMode": null,
+      "verification": "verifier-failed"
+    },
+    {
+      "name": "audit-balance-transfer",
+      "type": "worker",
+      "branch": "orch/agcli-audit/audit-balance-transfer",
+      "startingRef": "cursor/agcli-subtensor-audit-e2e7",
+      "dependsOn": [
+        "audit-wallet"
+      ],
+      "agentId": "bc-44b9a09a-4e78-4bbe-96cb-53fe5a292721",
+      "runId": "run-8731caf1-f8fb-41fc-8a2b-3b1c075cbaac",
+      "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
+      "status": "handed-off",
+      "resultStatus": "finished",
+      "handoffPath": "handoffs/audit-balance-transfer.md",
+      "startedAt": "2026-05-27T12:47:18.583Z",
+      "finishedAt": "2026-05-27T13:06:33.546Z",
+      "lastUpdate": "2026-05-27T13:06:33.547Z",
+      "note": "respawned by self-planner (was error; attempts=2)",
+      "attempts": 3,
+      "slackTs": null,
+      "prNumber": null,
+      "failureMode": null,
+      "verification": null
+    },
+    {
+      "name": "audit-stake",
+      "type": "worker",
+      "branch": "orch/agcli-audit/audit-stake",
+      "startingRef": "cursor/agcli-subtensor-audit-e2e7",
+      "dependsOn": [
+        "audit-balance-transfer"
+      ],
+      "agentId": "bc-2745adca-48e4-4ac6-9c64-e3f5df1b9f51",
+      "runId": "run-334b18fb-c3e9-4b91-a584-7b426ba5463a",
+      "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
+      "status": "handed-off",
+      "resultStatus": "finished",
+      "handoffPath": "handoffs/audit-stake.md",
+      "startedAt": "2026-05-27T13:06:38.714Z",
+      "finishedAt": "2026-05-27T13:20:40.104Z",
+      "lastUpdate": "2026-05-27T13:20:40.104Z",
+      "note": "respawned by self-planner (was error; attempts=2)",
+      "attempts": 3,
+      "slackTs": null,
+      "prNumber": null,
+      "failureMode": null,
+      "verification": null
+    },
+    {
+      "name": "audit-subnet",
+      "type": "worker",
+      "branch": "orch/agcli-audit/audit-subnet",
+      "startingRef": "cursor/agcli-subtensor-audit-e2e7",
+      "dependsOn": [],
+      "agentId": "bc-89380b0b-11ed-4793-a90f-ea0fe0c8d2b8",
+      "runId": "run-a9e4922f-7d74-4a9a-93a2-aa9ce5949c0c",
+      "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
+      "status": "handed-off",
+      "resultStatus": "finished",
+      "handoffPath": "handoffs/audit-subnet.md",
+      "startedAt": "2026-05-27T11:33:39.155Z",
+      "finishedAt": "2026-05-27T11:48:16.079Z",
+      "lastUpdate": "2026-05-27T11:49:15.591Z",
+      "note": "respawned by self-planner (was error; attempts=1)",
+      "attempts": 2,
+      "slackTs": null,
+      "prNumber": null,
+      "failureMode": null,
+      "verification": "unit-test-verified"
+    },
+    {
+      "name": "audit-weights",
+      "type": "worker",
+      "branch": "orch/agcli-audit/audit-weights",
+      "startingRef": "cursor/agcli-subtensor-audit-e2e7",
+      "dependsOn": [
+        "audit-stake"
+      ],
+      "agentId": "bc-9c79c56b-5a27-43da-be75-5398af15189c",
+      "runId": "run-bf29cb0f-d0da-4ea8-8d32-0e0bc8f195aa",
+      "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
+      "status": "handed-off",
+      "resultStatus": "finished",
+      "handoffPath": "handoffs/audit-weights.md",
+      "startedAt": "2026-05-27T13:20:42.492Z",
+      "finishedAt": "2026-05-27T13:36:48.659Z",
+      "lastUpdate": "2026-05-27T13:36:48.660Z",
+      "note": "respawned by self-planner (was error; attempts=2)",
+      "attempts": 3,
+      "slackTs": null,
+      "prNumber": null,
+      "failureMode": null,
+      "verification": null
+    },
+    {
+      "name": "audit-root",
+      "type": "worker",
+      "branch": "orch/agcli-audit/audit-root",
+      "startingRef": "cursor/agcli-subtensor-audit-e2e7",
+      "dependsOn": [
+        "audit-weights"
+      ],
+      "agentId": "bc-c25fbb51-73a3-48ea-bc37-05c9b4bb4342",
+      "runId": "run-131602e4-b607-42d9-9ec0-fe78f8a5e2fd",
+      "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
+      "status": "handed-off",
+      "resultStatus": "finished",
+      "handoffPath": "handoffs/audit-root.md",
+      "startedAt": "2026-05-27T13:36:56.000Z",
+      "finishedAt": "2026-05-27T13:49:10.423Z",
+      "lastUpdate": "2026-05-27T13:49:10.423Z",
+      "note": "respawned by self-planner (was error; attempts=2)",
+      "attempts": 3,
+      "slackTs": null,
+      "prNumber": null,
+      "failureMode": null,
+      "verification": null
+    },
+    {
+      "name": "audit-delegate",
+      "type": "worker",
+      "branch": "orch/agcli-audit/audit-delegate",
+      "startingRef": "cursor/agcli-subtensor-audit-e2e7",
+      "dependsOn": [],
+      "agentId": "bc-84699bd8-e9be-4d06-8a56-86318f88abb7",
+      "runId": "run-c470d436-d743-4445-90bd-ecba7dd8b75e",
+      "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
+      "status": "handed-off",
+      "resultStatus": "finished",
+      "handoffPath": "handoffs/audit-delegate.md",
+      "startedAt": "2026-05-27T12:23:07.872Z",
+      "finishedAt": "2026-05-27T12:34:36.635Z",
+      "lastUpdate": "2026-05-27T12:34:38.058Z",
+      "note": "respawned by self-planner (was error; attempts=3)",
+      "attempts": 4,
+      "slackTs": null,
+      "prNumber": null,
+      "failureMode": null,
+      "verification": "unit-test-verified"
+    },
+    {
+      "name": "audit-view",
+      "type": "worker",
+      "branch": "orch/agcli-audit/audit-view",
+      "startingRef": "cursor/agcli-subtensor-audit-e2e7",
+      "dependsOn": [
+        "audit-delegate"
+      ],
+      "agentId": "bc-7ba18182-3587-4680-a9aa-e5be0a33010c",
+      "runId": "run-a9ae4339-0aee-4391-91fe-2167d6edb86a",
+      "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
+      "status": "handed-off",
+      "resultStatus": "finished",
+      "handoffPath": "handoffs/audit-view.md",
+      "startedAt": "2026-05-27T12:42:33.541Z",
+      "finishedAt": "2026-05-27T12:59:04.215Z",
+      "lastUpdate": "2026-05-27T13:41:36.517Z",
+      "note": "respawned by self-planner (was error; attempts=3)",
+      "attempts": 4,
+      "slackTs": null,
+      "prNumber": null,
+      "failureMode": null,
+      "verification": "verifier-failed"
+    },
+    {
+      "name": "audit-identity",
+      "type": "worker",
+      "branch": "orch/agcli-audit/audit-identity",
+      "startingRef": "cursor/agcli-subtensor-audit-e2e7",
+      "dependsOn": [
+        "audit-view"
+      ],
+      "agentId": "bc-14b494d8-3763-42b7-b630-46f5d74b1653",
+      "runId": "run-36a39b86-6d27-4da9-9e4c-749a826fc20b",
+      "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
+      "status": "handed-off",
+      "resultStatus": "finished",
+      "handoffPath": "handoffs/audit-identity.md",
+      "startedAt": "2026-05-27T12:59:11.403Z",
+      "finishedAt": "2026-05-27T13:12:15.157Z",
+      "lastUpdate": "2026-05-27T13:43:38.424Z",
+      "note": "respawned by self-planner (was error; attempts=2)",
+      "attempts": 3,
+      "slackTs": null,
+      "prNumber": null,
+      "failureMode": null,
+      "verification": "verifier-failed"
+    },
+    {
+      "name": "audit-serve",
+      "type": "worker",
+      "branch": "orch/agcli-audit/audit-serve",
+      "startingRef": "cursor/agcli-subtensor-audit-e2e7",
+      "dependsOn": [
+        "audit-identity"
+      ],
+      "agentId": "bc-76a0b611-305d-468b-ac5a-67061a3557f2",
+      "runId": "run-5b6d93b3-bbd7-4fc2-baa0-1c8a37e61d23",
+      "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
+      "status": "handed-off",
+      "resultStatus": "finished",
+      "handoffPath": "handoffs/audit-serve.md",
+      "startedAt": "2026-05-27T13:12:22.871Z",
+      "finishedAt": "2026-05-27T13:26:42.248Z",
+      "lastUpdate": "2026-05-27T13:26:43.798Z",
+      "note": "respawned by self-planner (was error; attempts=2)",
+      "attempts": 3,
+      "slackTs": null,
+      "prNumber": null,
+      "failureMode": null,
+      "verification": "unit-test-verified"
+    },
+    {
+      "name": "audit-proxy",
+      "type": "worker",
+      "branch": "orch/agcli-audit/audit-proxy",
+      "startingRef": "cursor/agcli-subtensor-audit-e2e7",
+      "dependsOn": [],
+      "agentId": "bc-f4e2ec58-a1bf-4f3b-9f33-66e43dca0d4c",
+      "runId": "run-3e980345-6fc6-444f-8191-bc99ab2f38f9",
+      "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
+      "status": "handed-off",
+      "resultStatus": "finished",
+      "handoffPath": "handoffs/audit-proxy.md",
+      "startedAt": "2026-05-27T12:23:14.741Z",
+      "finishedAt": "2026-05-27T12:37:19.338Z",
+      "lastUpdate": "2026-05-27T12:37:19.338Z",
+      "note": "respawned by self-planner (was error; attempts=3)",
+      "attempts": 4,
+      "slackTs": null,
+      "prNumber": null,
+      "failureMode": null,
+      "verification": null
+    },
+    {
+      "name": "audit-swap-keys",
+      "type": "worker",
+      "branch": "orch/agcli-audit/audit-swap-keys",
+      "startingRef": "cursor/agcli-subtensor-audit-e2e7",
+      "dependsOn": [
+        "audit-proxy"
+      ],
+      "agentId": "bc-2028ef5c-481e-4895-a3d6-5d4ac5d9ff0c",
+      "runId": "run-e0e880de-4279-487f-b3d5-e667de3ea594",
+      "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
+      "status": "handed-off",
+      "resultStatus": "finished",
+      "handoffPath": "handoffs/audit-swap-keys.md",
+      "startedAt": "2026-05-27T12:43:17.835Z",
+      "finishedAt": "2026-05-27T13:03:20.129Z",
+      "lastUpdate": "2026-05-27T13:03:20.130Z",
+      "note": "respawned by self-planner (was error; attempts=3)",
+      "attempts": 4,
+      "slackTs": null,
+      "prNumber": null,
+      "failureMode": null,
+      "verification": null
+    },
+    {
+      "name": "audit-subscribe",
+      "type": "worker",
+      "branch": "orch/agcli-audit/audit-subscribe",
+      "startingRef": "cursor/agcli-subtensor-audit-e2e7",
+      "dependsOn": [
+        "audit-swap-keys"
+      ],
+      "agentId": "bc-1577760e-8218-4d2e-b475-6cc7ef81de60",
+      "runId": "run-ea9fade0-71cd-4ba8-b12d-f1c39d67f080",
+      "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
+      "status": "handed-off",
+      "resultStatus": "finished",
+      "handoffPath": "handoffs/audit-subscribe.md",
+      "startedAt": "2026-05-27T13:03:25.197Z",
+      "finishedAt": "2026-05-27T13:19:15.875Z",
+      "lastUpdate": "2026-05-27T13:19:15.875Z",
+      "note": "respawned by self-planner (was error; attempts=2)",
+      "attempts": 3,
+      "slackTs": null,
+      "prNumber": null,
+      "failureMode": null,
+      "verification": null
+    },
+    {
+      "name": "audit-multisig",
+      "type": "worker",
+      "branch": "orch/agcli-audit/audit-multisig",
+      "startingRef": "cursor/agcli-subtensor-audit-e2e7",
+      "dependsOn": [
+        "audit-subscribe"
+      ],
+      "agentId": "bc-565b9883-d39b-4afc-aa70-b1e212b3ae3f",
+      "runId": "run-3df6bba3-5a6e-4446-9823-91baf0d5c089",
+      "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
+      "status": "handed-off",
+      "resultStatus": "finished",
+      "handoffPath": "handoffs/audit-multisig.md",
+      "startedAt": "2026-05-27T13:19:19.627Z",
+      "finishedAt": "2026-05-27T13:32:35.887Z",
+      "lastUpdate": "2026-05-27T13:32:35.887Z",
+      "note": "respawned by self-planner (was error; attempts=2)",
+      "attempts": 3,
+      "slackTs": null,
+      "prNumber": null,
+      "failureMode": null,
+      "verification": null
+    },
+    {
+      "name": "audit-scheduler",
+      "type": "worker",
+      "branch": "orch/agcli-audit/audit-scheduler",
+      "startingRef": "cursor/agcli-subtensor-audit-e2e7",
+      "dependsOn": [],
+      "agentId": "bc-9ef1dd41-e414-4fe7-bde5-12dfd77910d2",
+      "runId": "run-be17fce9-bd8d-4ff5-8263-d5a8e94c8f12",
+      "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
+      "status": "handed-off",
+      "resultStatus": "finished",
+      "handoffPath": "handoffs/audit-scheduler.md",
+      "startedAt": "2026-05-27T11:34:11.028Z",
+      "finishedAt": "2026-05-27T11:45:11.101Z",
+      "lastUpdate": "2026-05-27T13:15:12.199Z",
+      "note": "respawned by self-planner (was error; attempts=1)",
+      "attempts": 2,
+      "slackTs": null,
+      "prNumber": null,
+      "failureMode": null,
+      "verification": "verifier-failed"
+    },
+    {
+      "name": "audit-preimage",
+      "type": "worker",
+      "branch": "orch/agcli-audit/audit-preimage",
+      "startingRef": "cursor/agcli-subtensor-audit-e2e7",
+      "dependsOn": [],
+      "agentId": "bc-3001f981-16b2-401c-9f30-d0c097788355",
+      "runId": "run-d972e1d1-ab20-4ae5-9148-e71812ec7aeb",
+      "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
+      "status": "handed-off",
+      "resultStatus": "finished",
+      "handoffPath": "handoffs/audit-preimage.md",
+      "startedAt": "2026-05-27T11:16:27.298Z",
+      "finishedAt": "2026-05-27T11:33:29.069Z",
+      "lastUpdate": "2026-05-27T11:33:30.129Z",
+      "note": null,
+      "attempts": 1,
+      "slackTs": null,
+      "prNumber": null,
+      "failureMode": null,
+      "verification": "type-check-only"
+    },
+    {
+      "name": "audit-contracts",
+      "type": "worker",
+      "branch": "orch/agcli-audit/audit-contracts",
+      "startingRef": "cursor/agcli-subtensor-audit-e2e7",
+      "dependsOn": [],
+      "agentId": "bc-b69f55c7-9431-423e-b7c6-3ecd9cec82e9",
+      "runId": "run-6e74f2b6-8204-4ac6-b932-fd32eb57256e",
+      "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
+      "status": "handed-off",
+      "resultStatus": "finished",
+      "handoffPath": "handoffs/audit-contracts.md",
+      "startedAt": "2026-05-27T12:23:22.082Z",
+      "finishedAt": "2026-05-27T12:35:09.609Z",
+      "lastUpdate": "2026-05-27T12:35:09.609Z",
+      "note": "respawned by self-planner (was error; attempts=3)",
+      "attempts": 4,
+      "slackTs": null,
+      "prNumber": null,
+      "failureMode": null,
+      "verification": null
+    },
+    {
+      "name": "audit-evm",
+      "type": "worker",
+      "branch": "orch/agcli-audit/audit-evm",
+      "startingRef": "cursor/agcli-subtensor-audit-e2e7",
+      "dependsOn": [],
+      "agentId": "bc-7c929b1a-c547-4d01-aef6-c3c84cd0d81b",
+      "runId": "run-30ef5b1e-2016-485e-b1b9-5429f072f065",
+      "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
+      "status": "handed-off",
+      "resultStatus": "finished",
+      "handoffPath": "handoffs/audit-evm.md",
+      "startedAt": "2026-05-27T11:16:34.052Z",
+      "finishedAt": "2026-05-27T11:33:28.039Z",
+      "lastUpdate": "2026-05-27T11:33:29.048Z",
+      "note": null,
+      "attempts": 1,
+      "slackTs": null,
+      "prNumber": null,
+      "failureMode": null,
+      "verification": "unit-test-verified"
+    },
+    {
+      "name": "audit-safe-mode",
+      "type": "worker",
+      "branch": "orch/agcli-audit/audit-safe-mode",
+      "startingRef": "cursor/agcli-subtensor-audit-e2e7",
+      "dependsOn": [
+        "audit-contracts"
+      ],
+      "agentId": "bc-de68145c-3a27-4db6-a80f-9897d229e8dc",
+      "runId": "run-c3e2cced-3b6e-40d6-8bb7-d3c38fed66e1",
+      "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
+      "status": "handed-off",
+      "resultStatus": "finished",
+      "handoffPath": "handoffs/audit-safe-mode.md",
+      "startedAt": "2026-05-27T12:44:28.850Z",
+      "finishedAt": "2026-05-27T13:07:01.760Z",
+      "lastUpdate": "2026-05-27T13:07:01.761Z",
+      "note": "respawned by self-planner (was error; attempts=3)",
+      "attempts": 4,
+      "slackTs": null,
+      "prNumber": null,
+      "failureMode": null,
+      "verification": null
+    },
+    {
+      "name": "audit-drand",
+      "type": "worker",
+      "branch": "orch/agcli-audit/audit-drand",
+      "startingRef": "cursor/agcli-subtensor-audit-e2e7",
+      "dependsOn": [],
+      "agentId": "bc-d7006929-3a1a-4881-93f4-cdc349b09aa7",
+      "runId": "run-1cf49e06-84d2-4f41-93dc-3fc64942a6cd",
+      "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
+      "status": "handed-off",
+      "resultStatus": "finished",
+      "handoffPath": "handoffs/audit-drand.md",
+      "startedAt": "2026-05-27T11:34:20.233Z",
+      "finishedAt": "2026-05-27T11:44:37.271Z",
+      "lastUpdate": "2026-05-27T11:45:11.077Z",
+      "note": "respawned by self-planner (was error; attempts=1)",
+      "attempts": 2,
+      "slackTs": null,
+      "prNumber": null,
+      "failureMode": null,
+      "verification": "unit-test-verified"
+    },
+    {
+      "name": "audit-crowdloan",
+      "type": "worker",
+      "branch": "orch/agcli-audit/audit-crowdloan",
+      "startingRef": "cursor/agcli-subtensor-audit-e2e7",
+      "dependsOn": [],
+      "agentId": "bc-7a5ff33b-cc4a-4a7a-bc23-604514a9ef46",
+      "runId": "run-a1b8c5ef-603b-4294-834d-30d418aa117c",
+      "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
+      "status": "handed-off",
+      "resultStatus": "finished",
+      "handoffPath": "handoffs/audit-crowdloan.md",
+      "startedAt": "2026-05-27T11:34:23.080Z",
+      "finishedAt": "2026-05-27T11:46:25.485Z",
+      "lastUpdate": "2026-05-27T12:10:58.321Z",
+      "note": "respawned by self-planner (was error; attempts=1)",
+      "attempts": 2,
+      "slackTs": null,
+      "prNumber": null,
+      "failureMode": null,
+      "verification": "verifier-failed"
+    },
+    {
+      "name": "audit-liquidity",
+      "type": "worker",
+      "branch": "orch/agcli-audit/audit-liquidity",
+      "startingRef": "cursor/agcli-subtensor-audit-e2e7",
+      "dependsOn": [],
+      "agentId": "bc-06828c32-6eda-4a37-9dfd-68c1e804b4d1",
+      "runId": "run-94bc4014-daa4-42c7-925c-f1fec42fb7ca",
+      "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
+      "status": "handed-off",
+      "resultStatus": "finished",
+      "handoffPath": "handoffs/audit-liquidity.md",
+      "startedAt": "2026-05-27T11:34:26.249Z",
+      "finishedAt": "2026-05-27T11:45:56.828Z",
+      "lastUpdate": "2026-05-27T11:46:25.481Z",
+      "note": "respawned by self-planner (was error; attempts=1)",
+      "attempts": 2,
+      "slackTs": null,
+      "prNumber": null,
+      "failureMode": null,
+      "verification": "unit-test-verified"
+    },
+    {
+      "name": "audit-commitment",
+      "type": "worker",
+      "branch": "orch/agcli-audit/audit-commitment",
+      "startingRef": "cursor/agcli-subtensor-audit-e2e7",
+      "dependsOn": [],
+      "agentId": "bc-93f861ab-b9a6-4053-a45a-f1fab6020a42",
+      "runId": "run-d38de302-19bf-46f4-99f2-a49af7e8309d",
+      "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
+      "status": "handed-off",
+      "resultStatus": "finished",
+      "handoffPath": "handoffs/audit-commitment.md",
+      "startedAt": "2026-05-27T11:16:55.479Z",
+      "finishedAt": "2026-05-27T11:33:30.143Z",
+      "lastUpdate": "2026-05-27T11:33:31.066Z",
+      "note": null,
+      "attempts": 1,
+      "slackTs": null,
+      "prNumber": null,
+      "failureMode": null,
+      "verification": "unit-test-verified"
+    },
+    {
+      "name": "audit-block",
+      "type": "worker",
+      "branch": "orch/agcli-audit/audit-block",
+      "startingRef": "cursor/agcli-subtensor-audit-e2e7",
+      "dependsOn": [
+        "audit-safe-mode"
+      ],
+      "agentId": "bc-a3e5ec9c-89e6-406d-83f5-7c2842099444",
+      "runId": "run-6bb18a8d-b2be-4e93-a4d7-785146e2e050",
+      "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
+      "status": "handed-off",
+      "resultStatus": "finished",
+      "handoffPath": "handoffs/audit-block.md",
+      "startedAt": "2026-05-27T13:07:03.013Z",
+      "finishedAt": "2026-05-27T13:18:29.657Z",
+      "lastUpdate": "2026-05-27T13:18:29.658Z",
+      "note": "respawned by self-planner (was error; attempts=2)",
+      "attempts": 3,
+      "slackTs": null,
+      "prNumber": null,
+      "failureMode": null,
+      "verification": null
+    },
+    {
+      "name": "audit-diff",
+      "type": "worker",
+      "branch": "orch/agcli-audit/audit-diff",
+      "startingRef": "cursor/agcli-subtensor-audit-e2e7",
+      "dependsOn": [
+        "audit-block"
+      ],
+      "agentId": "bc-cc755e6a-33a4-4e61-ad8d-820f3ab85bac",
+      "runId": "run-a612de87-4e6c-4147-9f81-ac21537c4a69",
+      "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
+      "status": "handed-off",
+      "resultStatus": "finished",
+      "handoffPath": "handoffs/audit-diff.md",
+      "startedAt": "2026-05-27T13:18:36.383Z",
+      "finishedAt": "2026-05-27T13:31:53.719Z",
+      "lastUpdate": "2026-05-27T13:31:53.720Z",
+      "note": "respawned by self-planner (was error; attempts=2)",
+      "attempts": 3,
+      "slackTs": null,
+      "prNumber": null,
+      "failureMode": null,
+      "verification": null
+    },
+    {
+      "name": "audit-config",
+      "type": "worker",
+      "branch": "orch/agcli-audit/audit-config",
+      "startingRef": "cursor/agcli-subtensor-audit-e2e7",
+      "dependsOn": [],
+      "agentId": "bc-940890ac-6805-465a-b274-99916e8a6232",
+      "runId": "run-273e55d1-f273-459b-b9e1-f682aa89baa3",
+      "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
+      "status": "handed-off",
+      "resultStatus": "finished",
+      "handoffPath": "handoffs/audit-config.md",
+      "startedAt": "2026-05-27T12:23:31.010Z",
+      "finishedAt": "2026-05-27T12:34:52.457Z",
+      "lastUpdate": "2026-05-27T12:34:53.696Z",
+      "note": "respawned by self-planner (was error; attempts=3)",
+      "attempts": 4,
+      "slackTs": null,
+      "prNumber": null,
+      "failureMode": null,
+      "verification": "unit-test-verified"
+    },
+    {
+      "name": "audit-doctor",
+      "type": "worker",
+      "branch": "orch/agcli-audit/audit-doctor",
+      "startingRef": "cursor/agcli-subtensor-audit-e2e7",
+      "dependsOn": [],
+      "agentId": "bc-5a72f2c2-fa57-4ab3-98fd-29a875084d82",
+      "runId": "run-c9ba9f13-8b8c-4040-92f8-6f840827a910",
+      "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
+      "status": "handed-off",
+      "resultStatus": "finished",
+      "handoffPath": "handoffs/audit-doctor.md",
+      "startedAt": "2026-05-27T11:17:09.730Z",
+      "finishedAt": "2026-05-27T11:33:26.885Z",
+      "lastUpdate": "2026-05-27T11:33:28.030Z",
+      "note": null,
+      "attempts": 1,
+      "slackTs": null,
+      "prNumber": null,
+      "failureMode": null,
+      "verification": "unit-test-verified"
+    },
+    {
+      "name": "audit-explain",
+      "type": "worker",
+      "branch": "orch/agcli-audit/audit-explain",
+      "startingRef": "cursor/agcli-subtensor-audit-e2e7",
+      "dependsOn": [],
+      "agentId": "bc-66f3b332-876b-4b4a-bc48-d7d0443e37a8",
+      "runId": "run-af08afe8-68f0-4018-be01-f3c9f1eaa65e",
+      "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
+      "status": "handed-off",
+      "resultStatus": "finished",
+      "handoffPath": "handoffs/audit-explain.md",
+      "startedAt": "2026-05-27T11:17:12.865Z",
+      "finishedAt": "2026-05-27T11:33:31.087Z",
+      "lastUpdate": "2026-05-27T11:33:32.118Z",
+      "note": null,
+      "attempts": 1,
+      "slackTs": null,
+      "prNumber": null,
+      "failureMode": null,
+      "verification": "type-check-only"
+    },
+    {
+      "name": "audit-completions-update",
+      "type": "worker",
+      "branch": "orch/agcli-audit/audit-completions-update",
+      "startingRef": "cursor/agcli-subtensor-audit-e2e7",
+      "dependsOn": [
+        "audit-config"
+      ],
+      "agentId": "bc-5a6bb3c1-3a19-4fe5-9b52-06d622ade613",
+      "runId": "run-cdd99ec7-5593-443b-aa87-fbefcd423a09",
+      "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
+      "status": "handed-off",
+      "resultStatus": "finished",
+      "handoffPath": "handoffs/audit-completions-update.md",
+      "startedAt": "2026-05-27T12:45:44.091Z",
+      "finishedAt": "2026-05-27T13:01:23.541Z",
+      "lastUpdate": "2026-05-27T13:01:24.927Z",
+      "note": "respawned by self-planner (was error; attempts=3)",
+      "attempts": 4,
+      "slackTs": null,
+      "prNumber": null,
+      "failureMode": null,
+      "verification": "unit-test-verified"
+    },
+    {
+      "name": "audit-audit-cmd",
+      "type": "worker",
+      "branch": "orch/agcli-audit/audit-audit-cmd",
+      "startingRef": "cursor/agcli-subtensor-audit-e2e7",
+      "dependsOn": [],
+      "agentId": "bc-5a916090-892a-4bf8-9c89-3c75c6e92971",
+      "runId": "run-4da7bcd2-3162-43fc-8509-9579162bd7ac",
+      "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
+      "status": "handed-off",
+      "resultStatus": "finished",
+      "handoffPath": "handoffs/audit-audit-cmd.md",
+      "startedAt": "2026-05-27T11:34:45.454Z",
+      "finishedAt": "2026-05-27T11:47:00.283Z",
+      "lastUpdate": "2026-05-27T11:47:30.582Z",
+      "note": "respawned by self-planner (was error; attempts=1)",
+      "attempts": 2,
+      "slackTs": null,
+      "prNumber": null,
+      "failureMode": null,
+      "verification": "unit-test-verified"
+    },
+    {
+      "name": "audit-batch",
+      "type": "worker",
+      "branch": "orch/agcli-audit/audit-batch",
+      "startingRef": "cursor/agcli-subtensor-audit-e2e7",
+      "dependsOn": [
+        "audit-completions-update"
+      ],
+      "agentId": "bc-68aac5ab-c145-4220-a752-0fbcf596f165",
+      "runId": "run-05e8385b-2f74-4f9f-b4fc-ae2a183a320f",
+      "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
+      "status": "handed-off",
+      "resultStatus": "finished",
+      "handoffPath": "handoffs/audit-batch.md",
+      "startedAt": "2026-05-27T13:01:25.118Z",
+      "finishedAt": "2026-05-27T13:16:05.365Z",
+      "lastUpdate": "2026-05-27T13:16:06.541Z",
+      "note": "respawned by self-planner (was error; attempts=2)",
+      "attempts": 3,
+      "slackTs": null,
+      "prNumber": null,
+      "failureMode": null,
+      "verification": "unit-test-verified"
+    },
+    {
+      "name": "audit-utils-cli",
+      "type": "worker",
+      "branch": "orch/agcli-audit/audit-utils-cli",
+      "startingRef": "cursor/agcli-subtensor-audit-e2e7",
+      "dependsOn": [
+        "audit-batch"
+      ],
+      "agentId": "bc-e5650f05-2171-420c-ae85-c1da7736565a",
+      "runId": "run-c5370b58-b0ab-4b31-95a2-20b4444a50df",
+      "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
+      "status": "handed-off",
+      "resultStatus": "finished",
+      "handoffPath": "handoffs/audit-utils-cli.md",
+      "startedAt": "2026-05-27T13:16:06.590Z",
+      "finishedAt": "2026-05-27T13:28:09.952Z",
+      "lastUpdate": "2026-05-27T13:28:11.135Z",
+      "note": "respawned by self-planner (was error; attempts=2)",
+      "attempts": 3,
+      "slackTs": null,
+      "prNumber": null,
+      "failureMode": null,
+      "verification": "unit-test-verified"
+    },
+    {
+      "name": "audit-admin",
+      "type": "worker",
+      "branch": "orch/agcli-audit/audit-admin",
+      "startingRef": "cursor/agcli-subtensor-audit-e2e7",
+      "dependsOn": [],
+      "agentId": "bc-f85e68a1-ec09-4e9b-9e79-4f4154fd48ae",
+      "runId": "run-8d11a630-ca8e-4555-9159-5ff5e57c36b9",
+      "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
+      "status": "handed-off",
+      "resultStatus": "finished",
+      "handoffPath": "handoffs/audit-admin.md",
+      "startedAt": "2026-05-27T11:34:58.478Z",
+      "finishedAt": "2026-05-27T11:49:15.594Z",
+      "lastUpdate": "2026-05-27T11:50:40.578Z",
+      "note": "respawned by self-planner (was error; attempts=1)",
+      "attempts": 2,
+      "slackTs": null,
+      "prNumber": null,
+      "failureMode": null,
+      "verification": "type-check-only"
+    },
+    {
+      "name": "audit-localnet",
+      "type": "worker",
+      "branch": "orch/agcli-audit/audit-localnet",
+      "startingRef": "cursor/agcli-subtensor-audit-e2e7",
+      "dependsOn": [],
+      "agentId": "bc-eb9c21ad-602a-403e-b77b-26602e770c11",
+      "runId": "run-ccd55fe4-b199-471f-aac4-c9cb8b49caff",
+      "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
+      "status": "handed-off",
+      "resultStatus": "finished",
+      "handoffPath": "handoffs/audit-localnet.md",
+      "startedAt": "2026-05-27T11:17:38.730Z",
+      "finishedAt": "2026-05-27T11:33:32.134Z",
+      "lastUpdate": "2026-05-27T11:33:33.089Z",
+      "note": null,
+      "attempts": 1,
+      "slackTs": null,
+      "prNumber": null,
+      "failureMode": null,
+      "verification": "type-check-only"
+    },
+    {
+      "name": "verify-write-batch",
+      "type": "verifier",
+      "branch": "orch/agcli-audit/audit-wallet",
+      "startingRef": "orch/agcli-audit/audit-wallet",
+      "dependsOn": [
+        "audit-wallet",
+        "audit-balance-transfer",
+        "audit-stake",
+        "audit-subnet",
+        "audit-weights",
+        "audit-root",
+        "audit-delegate"
+      ],
+      "agentId": "bc-7c47ddbe-9a89-4c75-9576-33fcf42ef94e",
+      "runId": "run-69718f2f-5516-48a7-aa0c-84f7aadae103",
+      "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
+      "status": "handed-off",
+      "resultStatus": "finished",
+      "handoffPath": "handoffs/verify-write-batch.md",
+      "startedAt": "2026-05-27T13:49:19.905Z",
+      "finishedAt": "2026-05-27T13:59:17.019Z",
+      "lastUpdate": "2026-05-27T13:59:17.019Z",
+      "note": null,
+      "attempts": 1,
+      "slackTs": null,
+      "prNumber": null,
+      "failureMode": null,
+      "verification": null
+    },
+    {
+      "name": "verify-network-batch",
+      "type": "verifier",
+      "branch": "orch/agcli-audit/audit-identity",
+      "startingRef": "orch/agcli-audit/audit-identity",
+      "dependsOn": [
+        "audit-identity",
+        "audit-serve",
+        "audit-proxy",
+        "audit-swap-keys",
+        "audit-subscribe",
+        "audit-multisig"
+      ],
+      "agentId": "bc-f89f7025-36b5-4678-b400-95a72c473a9f",
+      "runId": "run-06364018-8e21-4ebc-af7e-3272ae91d88a",
+      "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
+      "status": "handed-off",
+      "resultStatus": "finished",
+      "handoffPath": "handoffs/verify-network-batch.md",
+      "startedAt": "2026-05-27T13:32:42.004Z",
+      "finishedAt": "2026-05-27T13:43:37.102Z",
+      "lastUpdate": "2026-05-27T13:43:37.102Z",
+      "note": null,
+      "attempts": 1,
+      "slackTs": null,
+      "prNumber": null,
+      "failureMode": null,
+      "verification": null
+    },
+    {
+      "name": "verify-governance-batch",
+      "type": "verifier",
+      "branch": "orch/agcli-audit/audit-scheduler",
+      "startingRef": "orch/agcli-audit/audit-scheduler",
+      "dependsOn": [
+        "audit-scheduler",
+        "audit-preimage",
+        "audit-contracts",
+        "audit-evm",
+        "audit-safe-mode",
+        "audit-drand"
+      ],
+      "agentId": "bc-c0f68c90-1a6a-4301-8ef7-79586e271084",
+      "runId": "run-b7b0f6cf-5f1e-44ea-bafe-1da35ca13428",
+      "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
+      "status": "handed-off",
+      "resultStatus": "finished",
+      "handoffPath": "handoffs/verify-governance-batch.md",
+      "startedAt": "2026-05-27T13:07:06.415Z",
+      "finishedAt": "2026-05-27T13:15:10.989Z",
+      "lastUpdate": "2026-05-27T13:15:10.990Z",
+      "note": null,
+      "attempts": 1,
+      "slackTs": null,
+      "prNumber": null,
+      "failureMode": null,
+      "verification": null
+    },
+    {
+      "name": "verify-economy-batch",
+      "type": "verifier",
+      "branch": "orch/agcli-audit/audit-crowdloan",
+      "startingRef": "orch/agcli-audit/audit-crowdloan",
+      "dependsOn": [
+        "audit-crowdloan",
+        "audit-liquidity",
+        "audit-commitment"
+      ],
+      "agentId": "bc-39c932ff-3fdd-426a-9d09-87d0da782784",
+      "runId": "run-061799af-de4a-44fa-be6b-4bd2ac0078e9",
+      "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
+      "status": "handed-off",
+      "resultStatus": "finished",
+      "handoffPath": "handoffs/verify-economy-batch.md",
+      "startedAt": "2026-05-27T11:47:30.606Z",
+      "finishedAt": "2026-05-27T12:10:07.214Z",
+      "lastUpdate": "2026-05-27T12:10:07.214Z",
+      "note": null,
+      "attempts": 1,
+      "slackTs": null,
+      "prNumber": null,
+      "failureMode": null,
+      "verification": null
+    },
+    {
+      "name": "verify-readonly-batch",
+      "type": "verifier",
+      "branch": "orch/agcli-audit/audit-view",
+      "startingRef": "orch/agcli-audit/audit-view",
+      "dependsOn": [
+        "audit-view",
+        "audit-block",
+        "audit-diff",
+        "audit-audit-cmd",
+        "audit-doctor",
+        "audit-explain",
+        "audit-config",
+        "audit-completions-update",
+        "audit-batch",
+        "audit-utils-cli",
+        "audit-admin",
+        "audit-localnet"
+      ],
+      "agentId": "bc-1b15551f-8a08-4351-a4d4-cb6abc6b19c0",
+      "runId": "run-8bf057b4-14d8-49c2-97f0-c04b21be2552",
+      "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
+      "status": "handed-off",
+      "resultStatus": "finished",
+      "handoffPath": "handoffs/verify-readonly-batch.md",
+      "startedAt": "2026-05-27T13:31:58.259Z",
+      "finishedAt": "2026-05-27T13:41:35.416Z",
+      "lastUpdate": "2026-05-27T13:41:35.420Z",
+      "note": null,
+      "attempts": 1,
+      "slackTs": null,
+      "prNumber": null,
+      "failureMode": null,
+      "verification": null
+    },
+    {
+      "name": "fix-error-mapping",
+      "type": "worker",
+      "branch": "orch/agcli-audit/fix-error-mapping",
+      "startingRef": "cursor/agcli-subtensor-audit-e2e7",
+      "dependsOn": [
+        "audit-wallet",
+        "audit-balance-transfer",
+        "audit-stake",
+        "audit-subnet",
+        "audit-weights",
+        "audit-root",
+        "audit-delegate",
+        "audit-view",
+        "audit-identity",
+        "audit-serve",
+        "audit-proxy",
+        "audit-swap-keys",
+        "audit-subscribe",
+        "audit-multisig",
+        "audit-scheduler",
+        "audit-preimage",
+        "audit-contracts",
+        "audit-evm",
+        "audit-safe-mode",
+        "audit-drand",
+        "audit-crowdloan",
+        "audit-liquidity",
+        "audit-commitment",
+        "audit-block",
+        "audit-diff",
+        "audit-config",
+        "audit-doctor",
+        "audit-explain",
+        "audit-completions-update",
+        "audit-audit-cmd",
+        "audit-batch",
+        "audit-utils-cli",
+        "audit-admin",
+        "audit-localnet"
+      ],
+      "agentId": "bc-70ff6bc0-84b8-4ec0-925e-ef9c5a5ee28d",
+      "runId": "run-b3d108d9-196d-4db5-a3ad-a64eae29f375",
+      "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
+      "status": "handed-off",
+      "resultStatus": "finished",
+      "handoffPath": "handoffs/fix-error-mapping.md",
+      "startedAt": "2026-05-27T13:49:23.931Z",
+      "finishedAt": "2026-05-27T14:02:20.982Z",
+      "lastUpdate": "2026-05-27T14:19:31.453Z",
+      "note": null,
+      "attempts": 1,
+      "slackTs": null,
+      "prNumber": null,
+      "failureMode": null,
+      "verification": "verifier-failed"
+    },
+    {
+      "name": "fix-events-pretty",
+      "type": "worker",
+      "branch": "orch/agcli-audit/fix-events-pretty",
+      "startingRef": "cursor/agcli-subtensor-audit-e2e7",
+      "dependsOn": [
+        "audit-wallet",
+        "audit-balance-transfer",
+        "audit-stake",
+        "audit-subnet",
+        "audit-weights",
+        "audit-root",
+        "audit-delegate",
+        "audit-view",
+        "audit-identity",
+        "audit-serve",
+        "audit-proxy",
+        "audit-swap-keys",
+        "audit-subscribe",
+        "audit-multisig",
+        "audit-scheduler",
+        "audit-preimage",
+        "audit-contracts",
+        "audit-evm",
+        "audit-safe-mode",
+        "audit-drand",
+        "audit-crowdloan",
+        "audit-liquidity",
+        "audit-commitment",
+        "audit-block",
+        "audit-diff",
+        "audit-config",
+        "audit-doctor",
+        "audit-explain",
+        "audit-completions-update",
+        "audit-audit-cmd",
+        "audit-batch",
+        "audit-utils-cli",
+        "audit-admin",
+        "audit-localnet"
+      ],
+      "agentId": "bc-2ed0cc06-b2ff-41b5-ae4a-486fdbf77216",
+      "runId": "run-e23586a7-8639-4add-933c-6c5bbc892dd1",
+      "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
+      "status": "handed-off",
+      "resultStatus": "finished",
+      "handoffPath": "handoffs/fix-events-pretty.md",
+      "startedAt": "2026-05-27T13:49:27.248Z",
+      "finishedAt": "2026-05-27T13:59:42.631Z",
+      "lastUpdate": "2026-05-27T13:59:43.762Z",
+      "note": null,
+      "attempts": 1,
+      "slackTs": null,
+      "prNumber": null,
+      "failureMode": null,
+      "verification": "type-check-only"
+    },
+    {
+      "name": "fix-explain-topics",
+      "type": "worker",
+      "branch": "orch/agcli-audit/fix-explain-topics",
+      "startingRef": "cursor/agcli-subtensor-audit-e2e7",
+      "dependsOn": [
+        "audit-wallet",
+        "audit-balance-transfer",
+        "audit-stake",
+        "audit-subnet",
+        "audit-weights",
+        "audit-root",
+        "audit-delegate",
+        "audit-view",
+        "audit-identity",
+        "audit-serve",
+        "audit-proxy",
+        "audit-swap-keys",
+        "audit-subscribe",
+        "audit-multisig",
+        "audit-scheduler",
+        "audit-preimage",
+        "audit-contracts",
+        "audit-evm",
+        "audit-safe-mode",
+        "audit-drand",
+        "audit-crowdloan",
+        "audit-liquidity",
+        "audit-commitment",
+        "audit-block",
+        "audit-diff",
+        "audit-config",
+        "audit-doctor",
+        "audit-explain",
+        "audit-completions-update",
+        "audit-audit-cmd",
+        "audit-batch",
+        "audit-utils-cli",
+        "audit-admin",
+        "audit-localnet"
+      ],
+      "agentId": "bc-2e1e16b9-b7d8-433a-b457-df8431b01331",
+      "runId": "run-386180aa-5f1f-4a1b-811b-c42e5c6a320b",
+      "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
+      "status": "handed-off",
+      "resultStatus": "finished",
+      "handoffPath": "handoffs/fix-explain-topics.md",
+      "startedAt": "2026-05-27T13:49:31.065Z",
+      "finishedAt": "2026-05-27T13:56:50.659Z",
+      "lastUpdate": "2026-05-27T13:56:52.020Z",
+      "note": null,
+      "attempts": 1,
+      "slackTs": null,
+      "prNumber": null,
+      "failureMode": null,
+      "verification": "type-check-only"
+    },
+    {
+      "name": "fix-llm-txt",
+      "type": "worker",
+      "branch": "orch/agcli-audit/fix-llm-txt",
+      "startingRef": "cursor/agcli-subtensor-audit-e2e7",
+      "dependsOn": [
+        "audit-wallet",
+        "audit-balance-transfer",
+        "audit-stake",
+        "audit-subnet",
+        "audit-weights",
+        "audit-root",
+        "audit-delegate",
+        "audit-view",
+        "audit-identity",
+        "audit-serve",
+        "audit-proxy",
+        "audit-swap-keys",
+        "audit-subscribe",
+        "audit-multisig",
+        "audit-scheduler",
+        "audit-preimage",
+        "audit-contracts",
+        "audit-evm",
+        "audit-safe-mode",
+        "audit-drand",
+        "audit-crowdloan",
+        "audit-liquidity",
+        "audit-commitment",
+        "audit-block",
+        "audit-diff",
+        "audit-config",
+        "audit-doctor",
+        "audit-explain",
+        "audit-completions-update",
+        "audit-audit-cmd",
+        "audit-batch",
+        "audit-utils-cli",
+        "audit-admin",
+        "audit-localnet"
+      ],
+      "agentId": "bc-8522d10c-2005-42f9-af14-b0c799c5a134",
+      "runId": "run-6b618028-6528-4789-bc8a-6d040b261732",
+      "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
+      "status": "handed-off",
+      "resultStatus": "finished",
+      "handoffPath": "handoffs/fix-llm-txt.md",
+      "startedAt": "2026-05-27T13:52:53.254Z",
+      "finishedAt": "2026-05-27T14:09:07.072Z",
+      "lastUpdate": "2026-05-27T14:09:08.220Z",
+      "note": "respawned by self-planner (was error; attempts=1)",
+      "attempts": 2,
+      "slackTs": null,
+      "prNumber": null,
+      "failureMode": null,
+      "verification": "type-check-only"
+    },
+    {
+      "name": "fix-chain-queries",
+      "type": "worker",
+      "branch": "orch/agcli-audit/fix-chain-queries",
+      "startingRef": "cursor/agcli-subtensor-audit-e2e7",
+      "dependsOn": [
+        "audit-wallet",
+        "audit-balance-transfer",
+        "audit-stake",
+        "audit-subnet",
+        "audit-weights",
+        "audit-root",
+        "audit-delegate",
+        "audit-view",
+        "audit-identity",
+        "audit-serve",
+        "audit-proxy",
+        "audit-swap-keys",
+        "audit-subscribe",
+        "audit-multisig",
+        "audit-scheduler",
+        "audit-preimage",
+        "audit-contracts",
+        "audit-evm",
+        "audit-safe-mode",
+        "audit-drand",
+        "audit-crowdloan",
+        "audit-liquidity",
+        "audit-commitment",
+        "audit-block",
+        "audit-diff",
+        "audit-config",
+        "audit-doctor",
+        "audit-explain",
+        "audit-completions-update",
+        "audit-audit-cmd",
+        "audit-batch",
+        "audit-utils-cli",
+        "audit-admin",
+        "audit-localnet"
+      ],
+      "agentId": "bc-daaa9a14-269b-4bac-b6d0-1317f3403fe8",
+      "runId": "run-48069901-b395-4051-9d4c-fc3e41ae2ee5",
+      "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
+      "status": "handed-off",
+      "resultStatus": "finished",
+      "handoffPath": "handoffs/fix-chain-queries.md",
+      "startedAt": "2026-05-27T13:49:37.788Z",
+      "finishedAt": "2026-05-27T14:03:21.187Z",
+      "lastUpdate": "2026-05-27T14:03:22.458Z",
+      "note": null,
+      "attempts": 1,
+      "slackTs": null,
+      "prNumber": null,
+      "failureMode": null,
+      "verification": "type-check-only"
+    },
+    {
+      "name": "fix-chain-extrinsics",
+      "type": "worker",
+      "branch": "orch/agcli-audit/fix-chain-extrinsics",
+      "startingRef": "cursor/agcli-subtensor-audit-e2e7",
+      "dependsOn": [
+        "audit-wallet",
+        "audit-balance-transfer",
+        "audit-stake",
+        "audit-subnet",
+        "audit-weights",
+        "audit-root",
+        "audit-delegate",
+        "audit-view",
+        "audit-identity",
+        "audit-serve",
+        "audit-proxy",
+        "audit-swap-keys",
+        "audit-subscribe",
+        "audit-multisig",
+        "audit-scheduler",
+        "audit-preimage",
+        "audit-contracts",
+        "audit-evm",
+        "audit-safe-mode",
+        "audit-drand",
+        "audit-crowdloan",
+        "audit-liquidity",
+        "audit-commitment",
+        "audit-block",
+        "audit-diff",
+        "audit-config",
+        "audit-doctor",
+        "audit-explain",
+        "audit-completions-update",
+        "audit-audit-cmd",
+        "audit-batch",
+        "audit-utils-cli",
+        "audit-admin",
+        "audit-localnet"
+      ],
+      "agentId": "bc-45dcf513-ce1e-4bae-a1d0-c1246bb1b063",
+      "runId": "run-f5c64366-cc29-4f11-b660-6994c87289fb",
+      "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
+      "status": "handed-off",
+      "resultStatus": "finished",
+      "handoffPath": "handoffs/fix-chain-extrinsics.md",
+      "startedAt": "2026-05-27T13:49:40.716Z",
+      "finishedAt": "2026-05-27T14:02:57.914Z",
+      "lastUpdate": "2026-05-27T14:02:59.008Z",
+      "note": null,
+      "attempts": 1,
+      "slackTs": null,
+      "prNumber": null,
+      "failureMode": null,
+      "verification": "type-check-only"
+    },
+    {
+      "name": "fix-scaffold-localnet",
+      "type": "worker",
+      "branch": "orch/agcli-audit/fix-scaffold-localnet",
+      "startingRef": "cursor/agcli-subtensor-audit-e2e7",
+      "dependsOn": [
+        "audit-wallet",
+        "audit-balance-transfer",
+        "audit-stake",
+        "audit-subnet",
+        "audit-weights",
+        "audit-root",
+        "audit-delegate",
+        "audit-view",
+        "audit-identity",
+        "audit-serve",
+        "audit-proxy",
+        "audit-swap-keys",
+        "audit-subscribe",
+        "audit-multisig",
+        "audit-scheduler",
+        "audit-preimage",
+        "audit-contracts",
+        "audit-evm",
+        "audit-safe-mode",
+        "audit-drand",
+        "audit-crowdloan",
+        "audit-liquidity",
+        "audit-commitment",
+        "audit-block",
+        "audit-diff",
+        "audit-config",
+        "audit-doctor",
+        "audit-explain",
+        "audit-completions-update",
+        "audit-audit-cmd",
+        "audit-batch",
+        "audit-utils-cli",
+        "audit-admin",
+        "audit-localnet"
+      ],
+      "agentId": "bc-5e435f81-e175-44aa-8b45-d3a38c04a824",
+      "runId": "run-c96a4e29-b0dc-4ecf-a3d4-07f7a3970916",
+      "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
+      "status": "handed-off",
+      "resultStatus": "finished",
+      "handoffPath": "handoffs/fix-scaffold-localnet.md",
+      "startedAt": "2026-05-27T13:52:56.685Z",
+      "finishedAt": "2026-05-27T14:06:01.154Z",
+      "lastUpdate": "2026-05-27T14:06:01.154Z",
+      "note": "respawned by self-planner (was error; attempts=1)",
+      "attempts": 2,
+      "slackTs": null,
+      "prNumber": null,
+      "failureMode": null,
+      "verification": null
+    },
+    {
+      "name": "verify-xcut-batch",
+      "type": "verifier",
+      "branch": "orch/agcli-audit/fix-error-mapping",
+      "startingRef": "orch/agcli-audit/fix-error-mapping",
+      "dependsOn": [
+        "fix-error-mapping",
+        "fix-events-pretty",
+        "fix-explain-topics",
+        "fix-llm-txt",
+        "fix-chain-queries",
+        "fix-chain-extrinsics",
+        "fix-scaffold-localnet"
+      ],
+      "agentId": "bc-068d011b-6cc8-442e-8623-ea1c6fbc2eb1",
+      "runId": "run-d4eb1272-b770-4be3-8f85-777ab5639da9",
+      "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
+      "status": "handed-off",
+      "resultStatus": "finished",
+      "handoffPath": "handoffs/verify-xcut-batch.md",
+      "startedAt": "2026-05-27T14:09:11.559Z",
+      "finishedAt": "2026-05-27T14:19:30.174Z",
+      "lastUpdate": "2026-05-27T14:19:30.174Z",
+      "note": null,
+      "attempts": 1,
+      "slackTs": null,
+      "prNumber": null,
+      "failureMode": null,
+      "verification": null
+    }
+  ],
+  "attention": [
+    {
+      "at": "2026-05-27T11:13:20.169Z",
+      "message": "bootstrap-env: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status"
+    },
+    {
+      "at": "2026-05-27T11:13:21.138Z",
+      "message": "bootstrap-env: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/bootstrap-env.md"
+    },
+    {
+      "at": "2026-05-27T11:13:21.139Z",
+      "message": "bootstrap-env: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/bootstrap-env-failure.md"
+    },
+    {
+      "at": "2026-05-27T11:15:11.589Z",
+      "message": "bootstrap-env: respawned by self-planner (was error)"
+    },
+    {
+      "at": "2026-05-27T11:16:25.773Z",
+      "message": "bootstrap-env: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status"
+    },
+    {
+      "at": "2026-05-27T11:16:26.754Z",
+      "message": "bootstrap-env: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/bootstrap-env.md"
+    },
+    {
+      "at": "2026-05-27T11:16:26.756Z",
+      "message": "bootstrap-env: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/bootstrap-env-failure.md"
+    },
+    {
+      "at": "2026-05-27T11:16:28.794Z",
+      "message": "audit-weights: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status"
+    },
+    {
+      "at": "2026-05-27T11:16:29.869Z",
+      "message": "audit-weights: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-weights.md"
+    },
+    {
+      "at": "2026-05-27T11:16:29.870Z",
+      "message": "audit-weights: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-weights-failure.md"
+    },
+    {
+      "at": "2026-05-27T11:16:29.962Z",
+      "message": "audit-stake: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status"
+    },
+    {
+      "at": "2026-05-27T11:16:30.925Z",
+      "message": "audit-stake: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-stake.md"
+    },
+    {
+      "at": "2026-05-27T11:16:30.926Z",
+      "message": "audit-stake: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-stake-failure.md"
+    },
+    {
+      "at": "2026-05-27T11:16:31.976Z",
+      "message": "audit-identity: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status"
+    },
+    {
+      "at": "2026-05-27T11:16:33.017Z",
+      "message": "audit-identity: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-identity.md"
+    },
+    {
+      "at": "2026-05-27T11:16:33.018Z",
+      "message": "audit-identity: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-identity-failure.md"
+    },
+    {
+      "at": "2026-05-27T11:16:33.089Z",
+      "message": "audit-view: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status"
+    },
+    {
+      "at": "2026-05-27T11:16:34.044Z",
+      "message": "audit-view: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-view.md"
+    },
+    {
+      "at": "2026-05-27T11:16:34.045Z",
+      "message": "audit-view: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-view-failure.md"
+    },
+    {
+      "at": "2026-05-27T11:16:41.531Z",
+      "message": "audit-wallet: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status"
+    },
+    {
+      "at": "2026-05-27T11:16:42.511Z",
+      "message": "audit-wallet: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-wallet.md"
+    },
+    {
+      "at": "2026-05-27T11:16:42.511Z",
+      "message": "audit-wallet: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-wallet-failure.md"
+    },
+    {
+      "at": "2026-05-27T11:16:44.031Z",
+      "message": "audit-root: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status"
+    },
+    {
+      "at": "2026-05-27T11:16:46.501Z",
+      "message": "audit-root: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-root.md"
+    },
+    {
+      "at": "2026-05-27T11:16:46.502Z",
+      "message": "audit-root: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-root-failure.md"
+    },
+    {
+      "at": "2026-05-27T11:16:49.558Z",
+      "message": "audit-balance-transfer: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status"
+    },
+    {
+      "at": "2026-05-27T11:16:52.287Z",
+      "message": "audit-balance-transfer: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-balance-transfer.md"
+    },
+    {
+      "at": "2026-05-27T11:16:52.288Z",
+      "message": "audit-balance-transfer: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-balance-transfer-failure.md"
+    },
+    {
+      "at": "2026-05-27T11:16:52.296Z",
+      "message": "audit-subscribe: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status"
+    },
+    {
+      "at": "2026-05-27T11:16:55.475Z",
+      "message": "audit-subscribe: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-subscribe.md"
+    },
+    {
+      "at": "2026-05-27T11:16:55.476Z",
+      "message": "audit-subscribe: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-subscribe-failure.md"
+    },
+    {
+      "at": "2026-05-27T11:16:56.769Z",
+      "message": "audit-subnet: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status"
+    },
+    {
+      "at": "2026-05-27T11:16:58.233Z",
+      "message": "audit-subnet: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-subnet.md"
+    },
+    {
+      "at": "2026-05-27T11:16:58.234Z",
+      "message": "audit-subnet: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-subnet-failure.md"
+    },
+    {
+      "at": "2026-05-27T11:16:58.836Z",
+      "message": "audit-proxy: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status"
+    },
+    {
+      "at": "2026-05-27T11:16:59.880Z",
+      "message": "audit-proxy: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-proxy.md"
+    },
+    {
+      "at": "2026-05-27T11:16:59.881Z",
+      "message": "audit-proxy: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-proxy-failure.md"
+    },
+    {
+      "at": "2026-05-27T11:17:01.032Z",
+      "message": "audit-delegate: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status"
+    },
+    {
+      "at": "2026-05-27T11:17:02.009Z",
+      "message": "audit-delegate: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-delegate.md"
+    },
+    {
+      "at": "2026-05-27T11:17:02.010Z",
+      "message": "audit-delegate: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-delegate-failure.md"
+    },
+    {
+      "at": "2026-05-27T11:17:04.291Z",
+      "message": "audit-serve: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status"
+    },
+    {
+      "at": "2026-05-27T11:17:05.202Z",
+      "message": "audit-serve: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-serve.md"
+    },
+    {
+      "at": "2026-05-27T11:17:05.203Z",
+      "message": "audit-serve: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-serve-failure.md"
+    },
+    {
+      "at": "2026-05-27T11:17:07.516Z",
+      "message": "audit-contracts: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status"
+    },
+    {
+      "at": "2026-05-27T11:17:08.503Z",
+      "message": "audit-contracts: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-contracts.md"
+    },
+    {
+      "at": "2026-05-27T11:17:08.504Z",
+      "message": "audit-contracts: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-contracts-failure.md"
+    },
+    {
+      "at": "2026-05-27T11:17:16.677Z",
+      "message": "audit-scheduler: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status"
+    },
+    {
+      "at": "2026-05-27T11:17:17.713Z",
+      "message": "audit-scheduler: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-scheduler.md"
+    },
+    {
+      "at": "2026-05-27T11:17:17.714Z",
+      "message": "audit-scheduler: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-scheduler-failure.md"
+    },
+    {
+      "at": "2026-05-27T11:17:17.844Z",
+      "message": "audit-multisig: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status"
+    },
+    {
+      "at": "2026-05-27T11:17:18.880Z",
+      "message": "audit-multisig: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-multisig.md"
+    },
+    {
+      "at": "2026-05-27T11:17:18.881Z",
+      "message": "audit-multisig: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-multisig-failure.md"
+    },
+    {
+      "at": "2026-05-27T11:17:20.595Z",
+      "message": "audit-diff: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status"
+    },
+    {
+      "at": "2026-05-27T11:17:23.302Z",
+      "message": "audit-diff: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-diff.md"
+    },
+    {
+      "at": "2026-05-27T11:17:23.303Z",
+      "message": "audit-diff: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-diff-failure.md"
+    },
+    {
+      "at": "2026-05-27T11:17:26.564Z",
+      "message": "audit-drand: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status"
+    },
+    {
+      "at": "2026-05-27T11:17:27.763Z",
+      "message": "audit-drand: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-drand.md"
+    },
+    {
+      "at": "2026-05-27T11:17:27.764Z",
+      "message": "audit-drand: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-drand-failure.md"
+    },
+    {
+      "at": "2026-05-27T11:17:27.770Z",
+      "message": "audit-liquidity: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status"
+    },
+    {
+      "at": "2026-05-27T11:17:29.851Z",
+      "message": "audit-liquidity: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-liquidity.md"
+    },
+    {
+      "at": "2026-05-27T11:17:29.852Z",
+      "message": "audit-liquidity: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-liquidity-failure.md"
+    },
+    {
+      "at": "2026-05-27T11:17:30.888Z",
+      "message": "audit-config: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status"
+    },
+    {
+      "at": "2026-05-27T11:17:32.125Z",
+      "message": "audit-config: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-config.md"
+    },
+    {
+      "at": "2026-05-27T11:17:32.126Z",
+      "message": "audit-config: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-config-failure.md"
+    },
+    {
+      "at": "2026-05-27T11:17:32.137Z",
+      "message": "audit-swap-keys: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status"
+    },
+    {
+      "at": "2026-05-27T11:17:34.038Z",
+      "message": "audit-swap-keys: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-swap-keys.md"
+    },
+    {
+      "at": "2026-05-27T11:17:34.039Z",
+      "message": "audit-swap-keys: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-swap-keys-failure.md"
+    },
+    {
+      "at": "2026-05-27T11:17:34.040Z",
+      "message": "audit-crowdloan: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status"
+    },
+    {
+      "at": "2026-05-27T11:17:35.313Z",
+      "message": "audit-crowdloan: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-crowdloan.md"
+    },
+    {
+      "at": "2026-05-27T11:17:35.314Z",
+      "message": "audit-crowdloan: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-crowdloan-failure.md"
+    },
+    {
+      "at": "2026-05-27T11:17:42.473Z",
+      "message": "audit-completions-update: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status"
+    },
+    {
+      "at": "2026-05-27T11:17:43.459Z",
+      "message": "audit-completions-update: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-completions-update.md"
+    },
+    {
+      "at": "2026-05-27T11:17:43.460Z",
+      "message": "audit-completions-update: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-completions-update-failure.md"
+    },
+    {
+      "at": "2026-05-27T11:18:06.980Z",
+      "message": "audit-batch: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status"
+    },
+    {
+      "at": "2026-05-27T11:18:08.096Z",
+      "message": "audit-batch: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-batch.md"
+    },
+    {
+      "at": "2026-05-27T11:18:08.098Z",
+      "message": "audit-batch: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-batch-failure.md"
+    },
+    {
+      "at": "2026-05-27T11:18:13.381Z",
+      "message": "audit-audit-cmd: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status"
+    },
+    {
+      "at": "2026-05-27T11:18:14.260Z",
+      "message": "audit-audit-cmd: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-audit-cmd.md"
+    },
+    {
+      "at": "2026-05-27T11:18:14.261Z",
+      "message": "audit-audit-cmd: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-audit-cmd-failure.md"
+    },
+    {
+      "at": "2026-05-27T11:18:17.232Z",
+      "message": "audit-safe-mode: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status"
+    },
+    {
+      "at": "2026-05-27T11:18:18.192Z",
+      "message": "audit-safe-mode: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-safe-mode.md"
+    },
+    {
+      "at": "2026-05-27T11:18:18.193Z",
+      "message": "audit-safe-mode: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-safe-mode-failure.md"
+    },
+    {
+      "at": "2026-05-27T11:18:20.007Z",
+      "message": "audit-block: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status"
+    },
+    {
+      "at": "2026-05-27T11:18:20.960Z",
+      "message": "audit-block: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-block.md"
+    },
+    {
+      "at": "2026-05-27T11:18:20.961Z",
+      "message": "audit-block: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-block-failure.md"
+    },
+    {
+      "at": "2026-05-27T11:18:38.222Z",
+      "message": "audit-utils-cli: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status"
+    },
+    {
+      "at": "2026-05-27T11:18:39.226Z",
+      "message": "audit-utils-cli: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-utils-cli.md"
+    },
+    {
+      "at": "2026-05-27T11:18:39.227Z",
+      "message": "audit-utils-cli: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-utils-cli-failure.md"
+    },
+    {
+      "at": "2026-05-27T11:18:52.658Z",
+      "message": "audit-admin: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status"
+    },
+    {
+      "at": "2026-05-27T11:18:53.623Z",
+      "message": "audit-admin: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-admin.md"
+    },
+    {
+      "at": "2026-05-27T11:18:53.625Z",
+      "message": "audit-admin: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-admin-failure.md"
+    },
+    {
+      "at": "2026-05-27T11:32:00.175Z",
+      "message": "bootstrap-env: respawned by self-planner (was error)"
+    },
+    {
+      "at": "2026-05-27T11:32:01.630Z",
+      "message": "audit-wallet: respawned by self-planner (was error)"
+    },
+    {
+      "at": "2026-05-27T11:32:03.028Z",
+      "message": "audit-balance-transfer: respawned by self-planner (was error)"
+    },
+    {
+      "at": "2026-05-27T11:32:04.537Z",
+      "message": "audit-stake: respawned by self-planner (was error)"
+    },
+    {
+      "at": "2026-05-27T11:32:05.970Z",
+      "message": "audit-subnet: respawned by self-planner (was error)"
+    },
+    {
+      "at": "2026-05-27T11:32:07.938Z",
+      "message": "audit-weights: respawned by self-planner (was error)"
+    },
+    {
+      "at": "2026-05-27T11:32:09.400Z",
+      "message": "audit-root: respawned by self-planner (was error)"
+    },
+    {
+      "at": "2026-05-27T11:32:10.988Z",
+      "message": "audit-delegate: respawned by self-planner (was error)"
+    },
+    {
+      "at": "2026-05-27T11:32:12.447Z",
+      "message": "audit-view: respawned by self-planner (was error)"
+    },
+    {
+      "at": "2026-05-27T11:32:13.964Z",
+      "message": "audit-identity: respawned by self-planner (was error)"
+    },
+    {
+      "at": "2026-05-27T11:32:15.525Z",
+      "message": "audit-serve: respawned by self-planner (was error)"
+    },
+    {
+      "at": "2026-05-27T11:32:16.989Z",
+      "message": "audit-proxy: respawned by self-planner (was error)"
+    },
+    {
+      "at": "2026-05-27T11:32:18.469Z",
+      "message": "audit-swap-keys: respawned by self-planner (was error)"
+    },
+    {
+      "at": "2026-05-27T11:32:19.975Z",
+      "message": "audit-subscribe: respawned by self-planner (was error)"
+    },
+    {
+      "at": "2026-05-27T11:32:21.581Z",
+      "message": "audit-multisig: respawned by self-planner (was error)"
+    },
+    {
+      "at": "2026-05-27T11:32:22.926Z",
+      "message": "audit-scheduler: respawned by self-planner (was error)"
+    },
+    {
+      "at": "2026-05-27T11:32:30.361Z",
+      "message": "audit-contracts: respawned by self-planner (was error)"
+    },
+    {
+      "at": "2026-05-27T11:32:32.025Z",
+      "message": "audit-safe-mode: respawned by self-planner (was error)"
+    },
+    {
+      "at": "2026-05-27T11:32:33.734Z",
+      "message": "audit-drand: respawned by self-planner (was error)"
+    },
+    {
+      "at": "2026-05-27T11:32:35.372Z",
+      "message": "audit-crowdloan: respawned by self-planner (was error)"
+    },
+    {
+      "at": "2026-05-27T11:32:37.170Z",
+      "message": "audit-liquidity: respawned by self-planner (was error)"
+    },
+    {
+      "at": "2026-05-27T11:32:38.727Z",
+      "message": "audit-block: respawned by self-planner (was error)"
+    },
+    {
+      "at": "2026-05-27T11:32:40.342Z",
+      "message": "audit-diff: respawned by self-planner (was error)"
+    },
+    {
+      "at": "2026-05-27T11:32:41.831Z",
+      "message": "audit-config: respawned by self-planner (was error)"
+    },
+    {
+      "at": "2026-05-27T11:32:43.258Z",
+      "message": "audit-completions-update: respawned by self-planner (was error)"
+    },
+    {
+      "at": "2026-05-27T11:32:44.692Z",
+      "message": "audit-audit-cmd: respawned by self-planner (was error)"
+    },
+    {
+      "at": "2026-05-27T11:32:46.021Z",
+      "message": "audit-batch: respawned by self-planner (was error)"
+    },
+    {
+      "at": "2026-05-27T11:32:47.455Z",
+      "message": "audit-utils-cli: respawned by self-planner (was error)"
+    },
+    {
+      "at": "2026-05-27T11:32:49.188Z",
+      "message": "audit-admin: respawned by self-planner (was error)"
+    },
+    {
+      "at": "2026-05-27T11:33:28.031Z",
+      "message": "audit-doctor: verification self-reported (unit-test-verified)"
+    },
+    {
+      "at": "2026-05-27T11:33:29.048Z",
+      "message": "audit-evm: verification self-reported (unit-test-verified)"
+    },
+    {
+      "at": "2026-05-27T11:33:30.129Z",
+      "message": "audit-preimage: verification self-reported (type-check-only)"
+    },
+    {
+      "at": "2026-05-27T11:33:31.066Z",
+      "message": "audit-commitment: verification self-reported (unit-test-verified)"
+    },
+    {
+      "at": "2026-05-27T11:33:32.119Z",
+      "message": "audit-explain: verification self-reported (type-check-only)"
+    },
+    {
+      "at": "2026-05-27T11:33:33.089Z",
+      "message": "audit-localnet: verification self-reported (type-check-only)"
+    },
+    {
+      "at": "2026-05-27T11:34:06.991Z",
+      "message": "audit-stake: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status"
+    },
+    {
+      "at": "2026-05-27T11:34:08.045Z",
+      "message": "audit-stake: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-stake.md"
+    },
+    {
+      "at": "2026-05-27T11:34:08.047Z",
+      "message": "audit-stake: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-stake-failure.md"
+    },
+    {
+      "at": "2026-05-27T11:34:12.233Z",
+      "message": "audit-wallet: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status"
+    },
+    {
+      "at": "2026-05-27T11:34:13.341Z",
+      "message": "audit-wallet: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-wallet.md"
+    },
+    {
+      "at": "2026-05-27T11:34:13.342Z",
+      "message": "audit-wallet: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-wallet-failure.md"
+    },
+    {
+      "at": "2026-05-27T11:34:16.006Z",
+      "message": "audit-view: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status"
+    },
+    {
+      "at": "2026-05-27T11:34:17.088Z",
+      "message": "audit-view: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-view.md"
+    },
+    {
+      "at": "2026-05-27T11:34:17.089Z",
+      "message": "audit-view: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-view-failure.md"
+    },
+    {
+      "at": "2026-05-27T11:34:18.170Z",
+      "message": "audit-serve: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status"
+    },
+    {
+      "at": "2026-05-27T11:34:19.128Z",
+      "message": "audit-serve: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-serve.md"
+    },
+    {
+      "at": "2026-05-27T11:34:19.129Z",
+      "message": "audit-serve: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-serve-failure.md"
+    },
+    {
+      "at": "2026-05-27T11:34:19.134Z",
+      "message": "bootstrap-env: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status"
+    },
+    {
+      "at": "2026-05-27T11:34:20.225Z",
+      "message": "bootstrap-env: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/bootstrap-env.md"
+    },
+    {
+      "at": "2026-05-27T11:34:20.226Z",
+      "message": "bootstrap-env: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/bootstrap-env-failure.md"
+    },
+    {
+      "at": "2026-05-27T11:34:30.189Z",
+      "message": "audit-weights: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status"
+    },
+    {
+      "at": "2026-05-27T11:34:31.287Z",
+      "message": "audit-weights: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-weights.md"
+    },
+    {
+      "at": "2026-05-27T11:34:31.288Z",
+      "message": "audit-weights: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-weights-failure.md"
+    },
+    {
+      "at": "2026-05-27T11:34:31.291Z",
+      "message": "audit-balance-transfer: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status"
+    },
+    {
+      "at": "2026-05-27T11:34:33.076Z",
+      "message": "audit-balance-transfer: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-balance-transfer.md"
+    },
+    {
+      "at": "2026-05-27T11:34:33.077Z",
+      "message": "audit-balance-transfer: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-balance-transfer-failure.md"
+    },
+    {
+      "at": "2026-05-27T11:34:41.034Z",
+      "message": "audit-root: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status"
+    },
+    {
+      "at": "2026-05-27T11:34:42.204Z",
+      "message": "audit-root: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-root.md"
+    },
+    {
+      "at": "2026-05-27T11:34:42.206Z",
+      "message": "audit-root: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-root-failure.md"
+    },
+    {
+      "at": "2026-05-27T11:34:46.740Z",
+      "message": "audit-delegate: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status"
+    },
+    {
+      "at": "2026-05-27T11:34:47.929Z",
+      "message": "audit-delegate: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-delegate.md"
+    },
+    {
+      "at": "2026-05-27T11:34:47.930Z",
+      "message": "audit-delegate: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-delegate-failure.md"
+    },
+    {
+      "at": "2026-05-27T11:34:50.205Z",
+      "message": "audit-proxy: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status"
+    },
+    {
+      "at": "2026-05-27T11:34:51.844Z",
+      "message": "audit-proxy: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-proxy.md"
+    },
+    {
+      "at": "2026-05-27T11:34:51.845Z",
+      "message": "audit-proxy: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-proxy-failure.md"
+    },
+    {
+      "at": "2026-05-27T11:34:53.204Z",
+      "message": "audit-identity: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status"
+    },
+    {
+      "at": "2026-05-27T11:34:54.474Z",
+      "message": "audit-identity: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-identity.md"
+    },
+    {
+      "at": "2026-05-27T11:34:54.476Z",
+      "message": "audit-identity: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-identity-failure.md"
+    },
+    {
+      "at": "2026-05-27T11:34:54.483Z",
+      "message": "audit-safe-mode: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status"
+    },
+    {
+      "at": "2026-05-27T11:34:55.892Z",
+      "message": "audit-safe-mode: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-safe-mode.md"
+    },
+    {
+      "at": "2026-05-27T11:34:55.893Z",
+      "message": "audit-safe-mode: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-safe-mode-failure.md"
+    },
+    {
+      "at": "2026-05-27T11:35:04.551Z",
+      "message": "audit-contracts: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status"
+    },
+    {
+      "at": "2026-05-27T11:35:05.701Z",
+      "message": "audit-contracts: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-contracts.md"
+    },
+    {
+      "at": "2026-05-27T11:35:05.703Z",
+      "message": "audit-contracts: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-contracts-failure.md"
+    },
+    {
+      "at": "2026-05-27T11:35:05.952Z",
+      "message": "audit-multisig: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status"
+    },
+    {
+      "at": "2026-05-27T11:35:07.105Z",
+      "message": "audit-multisig: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-multisig.md"
+    },
+    {
+      "at": "2026-05-27T11:35:07.106Z",
+      "message": "audit-multisig: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-multisig-failure.md"
+    },
+    {
+      "at": "2026-05-27T11:35:10.549Z",
+      "message": "audit-block: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status"
+    },
+    {
+      "at": "2026-05-27T11:35:11.813Z",
+      "message": "audit-block: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-block.md"
+    },
+    {
+      "at": "2026-05-27T11:35:11.815Z",
+      "message": "audit-block: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-block-failure.md"
+    },
+    {
+      "at": "2026-05-27T11:35:17.628Z",
+      "message": "audit-batch: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status"
+    },
+    {
+      "at": "2026-05-27T11:35:18.746Z",
+      "message": "audit-batch: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-batch.md"
+    },
+    {
+      "at": "2026-05-27T11:35:18.747Z",
+      "message": "audit-batch: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-batch-failure.md"
+    },
+    {
+      "at": "2026-05-27T11:35:19.588Z",
+      "message": "audit-completions-update: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status"
+    },
+    {
+      "at": "2026-05-27T11:35:20.646Z",
+      "message": "audit-completions-update: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-completions-update.md"
+    },
+    {
+      "at": "2026-05-27T11:35:20.647Z",
+      "message": "audit-completions-update: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-completions-update-failure.md"
+    },
+    {
+      "at": "2026-05-27T11:35:31.045Z",
+      "message": "audit-config: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status"
+    },
+    {
+      "at": "2026-05-27T11:35:32.304Z",
+      "message": "audit-config: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-config.md"
+    },
+    {
+      "at": "2026-05-27T11:35:32.306Z",
+      "message": "audit-config: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-config-failure.md"
+    },
+    {
+      "at": "2026-05-27T11:35:40.505Z",
+      "message": "audit-subscribe: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status"
+    },
+    {
+      "at": "2026-05-27T11:35:42.001Z",
+      "message": "audit-subscribe: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-subscribe.md"
+    },
+    {
+      "at": "2026-05-27T11:35:42.003Z",
+      "message": "audit-subscribe: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-subscribe-failure.md"
+    },
+    {
+      "at": "2026-05-27T11:35:46.666Z",
+      "message": "audit-diff: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status"
+    },
+    {
+      "at": "2026-05-27T11:35:47.955Z",
+      "message": "audit-diff: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-diff.md"
+    },
+    {
+      "at": "2026-05-27T11:35:47.956Z",
+      "message": "audit-diff: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-diff-failure.md"
+    },
+    {
+      "at": "2026-05-27T11:35:58.009Z",
+      "message": "audit-utils-cli: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status"
+    },
+    {
+      "at": "2026-05-27T11:35:59.139Z",
+      "message": "audit-utils-cli: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-utils-cli.md"
+    },
+    {
+      "at": "2026-05-27T11:35:59.141Z",
+      "message": "audit-utils-cli: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-utils-cli-failure.md"
+    },
+    {
+      "at": "2026-05-27T11:39:37.591Z",
+      "message": "audit-swap-keys: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status"
+    },
+    {
+      "at": "2026-05-27T11:39:45.184Z",
+      "message": "audit-swap-keys: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-swap-keys.md"
+    },
+    {
+      "at": "2026-05-27T11:39:45.185Z",
+      "message": "audit-swap-keys: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-swap-keys-failure.md"
+    },
+    {
+      "at": "2026-05-27T11:45:11.078Z",
+      "message": "audit-drand: verification self-reported (unit-test-verified)"
+    },
+    {
+      "at": "2026-05-27T11:45:56.812Z",
+      "message": "audit-scheduler: verification self-reported (type-check-only)"
+    },
+    {
+      "at": "2026-05-27T11:46:25.482Z",
+      "message": "audit-liquidity: verification self-reported (unit-test-verified)"
+    },
+    {
+      "at": "2026-05-27T11:47:00.279Z",
+      "message": "audit-crowdloan: verification self-reported (type-check-only)"
+    },
+    {
+      "at": "2026-05-27T11:47:30.583Z",
+      "message": "audit-audit-cmd: verification self-reported (unit-test-verified)"
+    },
+    {
+      "at": "2026-05-27T11:49:15.592Z",
+      "message": "audit-subnet: verification self-reported (unit-test-verified)"
+    },
+    {
+      "at": "2026-05-27T11:50:40.579Z",
+      "message": "audit-admin: verification self-reported (type-check-only)"
+    },
+    {
+      "at": "2026-05-27T11:58:24.137Z",
+      "message": "bootstrap-env: respawned by self-planner (was error)"
+    },
+    {
+      "at": "2026-05-27T11:59:02.903Z",
+      "message": "audit-wallet: respawned by self-planner (was error)"
+    },
+    {
+      "at": "2026-05-27T11:59:56.784Z",
+      "message": "audit-balance-transfer: respawned by self-planner (was error)"
+    },
+    {
+      "at": "2026-05-27T12:01:04.418Z",
+      "message": "audit-stake: respawned by self-planner (was error)"
+    },
+    {
+      "at": "2026-05-27T12:02:05.947Z",
+      "message": "audit-weights: respawned by self-planner (was error)"
+    },
+    {
+      "at": "2026-05-27T12:03:34.009Z",
+      "message": "audit-root: respawned by self-planner (was error)"
+    },
+    {
+      "at": "2026-05-27T12:04:46.941Z",
+      "message": "audit-delegate: respawned by self-planner (was error)"
+    },
+    {
+      "at": "2026-05-27T12:05:39.800Z",
+      "message": "audit-view: respawned by self-planner (was error)"
+    },
+    {
+      "at": "2026-05-27T12:06:25.038Z",
+      "message": "audit-identity: respawned by self-planner (was error)"
+    },
+    {
+      "at": "2026-05-27T12:07:04.710Z",
+      "message": "audit-serve: respawned by self-planner (was error)"
+    },
+    {
+      "at": "2026-05-27T12:07:58.375Z",
+      "message": "audit-proxy: respawned by self-planner (was error)"
+    },
+    {
+      "at": "2026-05-27T12:08:20.423Z",
+      "message": "audit-swap-keys: respawned by self-planner (was error)"
+    },
+    {
+      "at": "2026-05-27T12:08:36.346Z",
+      "message": "audit-subscribe: respawned by self-planner (was error)"
+    },
+    {
+      "at": "2026-05-27T12:08:37.829Z",
+      "message": "git-sync failed (audit-multisig error -> pending): Command failed: git -C /workspace/.orchestrate/agcli-audit push\nremote: Internal Server Error        \nremote: Request ID AC2E:6C1C7:5DF03A9:7889A7D:6A16DEC5        \nremote: Time 2026-05-27T12:08:37Z\nT…"
+    },
+    {
+      "at": "2026-05-27T12:08:37.830Z",
+      "message": "audit-multisig: respawned by self-planner (was error)"
+    },
+    {
+      "at": "2026-05-27T12:08:44.735Z",
+      "message": "audit-contracts: respawned by self-planner (was error)"
+    },
+    {
+      "at": "2026-05-27T12:08:53.947Z",
+      "message": "audit-safe-mode: respawned by self-planner (was error)"
+    },
+    {
+      "at": "2026-05-27T12:09:00.516Z",
+      "message": "audit-block: respawned by self-planner (was error)"
+    },
+    {
+      "at": "2026-05-27T12:09:04.501Z",
+      "message": "audit-diff: respawned by self-planner (was error)"
+    },
+    {
+      "at": "2026-05-27T12:09:07.897Z",
+      "message": "audit-config: respawned by self-planner (was error)"
+    },
+    {
+      "at": "2026-05-27T12:09:11.312Z",
+      "message": "audit-completions-update: respawned by self-planner (was error)"
+    },
+    {
+      "at": "2026-05-27T12:09:15.157Z",
+      "message": "audit-batch: respawned by self-planner (was error)"
+    },
+    {
+      "at": "2026-05-27T12:09:20.880Z",
+      "message": "audit-utils-cli: respawned by self-planner (was error)"
+    },
+    {
+      "at": "2026-05-27T12:10:58.323Z",
+      "message": "audit-crowdloan: verification recorded (verifier-failed) by verifier verify-economy-batch"
+    },
+    {
+      "at": "2026-05-27T12:14:13.005Z",
+      "message": "audit-wallet: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status"
+    },
+    {
+      "at": "2026-05-27T12:15:24.700Z",
+      "message": "audit-wallet: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-wallet.md"
+    },
+    {
+      "at": "2026-05-27T12:15:24.703Z",
+      "message": "audit-wallet: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-wallet-failure.md"
+    },
+    {
+      "at": "2026-05-27T12:16:20.137Z",
+      "message": "audit-proxy: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status"
+    },
+    {
+      "at": "2026-05-27T12:17:15.473Z",
+      "message": "audit-proxy: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-proxy.md"
+    },
+    {
+      "at": "2026-05-27T12:17:15.475Z",
+      "message": "audit-proxy: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-proxy-failure.md"
+    },
+    {
+      "at": "2026-05-27T12:17:35.917Z",
+      "message": "audit-delegate: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status"
+    },
+    {
+      "at": "2026-05-27T12:17:46.866Z",
+      "message": "audit-delegate: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-delegate.md"
+    },
+    {
+      "at": "2026-05-27T12:17:46.867Z",
+      "message": "audit-delegate: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-delegate-failure.md"
+    },
+    {
+      "at": "2026-05-27T12:17:46.875Z",
+      "message": "bootstrap-env: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status"
+    },
+    {
+      "at": "2026-05-27T12:17:53.810Z",
+      "message": "bootstrap-env: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/bootstrap-env.md"
+    },
+    {
+      "at": "2026-05-27T12:17:53.812Z",
+      "message": "bootstrap-env: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/bootstrap-env-failure.md"
+    },
+    {
+      "at": "2026-05-27T12:17:53.816Z",
+      "message": "audit-contracts: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status"
+    },
+    {
+      "at": "2026-05-27T12:18:06.727Z",
+      "message": "audit-contracts: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-contracts.md"
+    },
+    {
+      "at": "2026-05-27T12:18:06.730Z",
+      "message": "audit-contracts: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-contracts-failure.md"
+    },
+    {
+      "at": "2026-05-27T12:18:20.793Z",
+      "message": "audit-config: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status"
+    },
+    {
+      "at": "2026-05-27T12:18:29.712Z",
+      "message": "audit-config: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-config.md"
+    },
+    {
+      "at": "2026-05-27T12:18:29.713Z",
+      "message": "audit-config: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-config-failure.md"
+    },
+    {
+      "at": "2026-05-27T12:18:29.729Z",
+      "message": "audit-balance-transfer: unreachable — blocked on audit-wallet (error). Fix the upstream and rerun, or `kill audit-balance-transfer` to abandon."
+    },
+    {
+      "at": "2026-05-27T12:18:29.730Z",
+      "message": "audit-view: unreachable — blocked on audit-delegate (error). Fix the upstream and rerun, or `kill audit-view` to abandon."
+    },
+    {
+      "at": "2026-05-27T12:18:29.731Z",
+      "message": "audit-swap-keys: unreachable — blocked on audit-proxy (error). Fix the upstream and rerun, or `kill audit-swap-keys` to abandon."
+    },
+    {
+      "at": "2026-05-27T12:18:29.731Z",
+      "message": "audit-safe-mode: unreachable — blocked on audit-contracts (error). Fix the upstream and rerun, or `kill audit-safe-mode` to abandon."
+    },
+    {
+      "at": "2026-05-27T12:18:29.732Z",
+      "message": "audit-completions-update: unreachable — blocked on audit-config (error). Fix the upstream and rerun, or `kill audit-completions-update` to abandon."
+    },
+    {
+      "at": "2026-05-27T12:18:29.732Z",
+      "message": "verify-write-batch: unreachable — blocked on audit-wallet (error), audit-delegate (error). Fix the upstream and rerun, or `kill verify-write-batch` to abandon."
+    },
+    {
+      "at": "2026-05-27T12:18:29.733Z",
+      "message": "verify-network-batch: unreachable — blocked on audit-proxy (error). Fix the upstream and rerun, or `kill verify-network-batch` to abandon."
+    },
+    {
+      "at": "2026-05-27T12:18:29.734Z",
+      "message": "verify-governance-batch: unreachable — blocked on audit-contracts (error). Fix the upstream and rerun, or `kill verify-governance-batch` to abandon."
+    },
+    {
+      "at": "2026-05-27T12:18:29.735Z",
+      "message": "verify-readonly-batch: unreachable — blocked on audit-config (error). Fix the upstream and rerun, or `kill verify-readonly-batch` to abandon."
+    },
+    {
+      "at": "2026-05-27T12:18:29.735Z",
+      "message": "fix-error-mapping: unreachable — blocked on audit-wallet (error), audit-delegate (error), audit-proxy (error), audit-contracts (error), audit-config (error). Fix the upstream and rerun, or `kill fix-error-mapping` to abandon."
+    },
+    {
+      "at": "2026-05-27T12:18:29.736Z",
+      "message": "fix-events-pretty: unreachable — blocked on audit-wallet (error), audit-delegate (error), audit-proxy (error), audit-contracts (error), audit-config (error). Fix the upstream and rerun, or `kill fix-events-pretty` to abandon."
+    },
+    {
+      "at": "2026-05-27T12:18:29.737Z",
+      "message": "fix-explain-topics: unreachable — blocked on audit-wallet (error), audit-delegate (error), audit-proxy (error), audit-contracts (error), audit-config (error). Fix the upstream and rerun, or `kill fix-explain-topics` to abandon."
+    },
+    {
+      "at": "2026-05-27T12:18:29.737Z",
+      "message": "fix-llm-txt: unreachable — blocked on audit-wallet (error), audit-delegate (error), audit-proxy (error), audit-contracts (error), audit-config (error). Fix the upstream and rerun, or `kill fix-llm-txt` to abandon."
+    },
+    {
+      "at": "2026-05-27T12:18:29.738Z",
+      "message": "fix-chain-queries: unreachable — blocked on audit-wallet (error), audit-delegate (error), audit-proxy (error), audit-contracts (error), audit-config (error). Fix the upstream and rerun, or `kill fix-chain-queries` to abandon."
+    },
+    {
+      "at": "2026-05-27T12:18:29.739Z",
+      "message": "fix-chain-extrinsics: unreachable — blocked on audit-wallet (error), audit-delegate (error), audit-proxy (error), audit-contracts (error), audit-config (error). Fix the upstream and rerun, or `kill fix-chain-extrinsics` to abandon."
+    },
+    {
+      "at": "2026-05-27T12:18:29.740Z",
+      "message": "fix-scaffold-localnet: unreachable — blocked on audit-wallet (error), audit-delegate (error), audit-proxy (error), audit-contracts (error), audit-config (error). Fix the upstream and rerun, or `kill fix-scaffold-localnet` to abandon."
+    },
+    {
+      "at": "2026-05-27T12:21:28.240Z",
+      "message": "bootstrap-env: respawned by self-planner (was error)"
+    },
+    {
+      "at": "2026-05-27T12:21:38.509Z",
+      "message": "audit-wallet: respawned by self-planner (was error)"
+    },
+    {
+      "at": "2026-05-27T12:21:52.119Z",
+      "message": "audit-delegate: respawned by self-planner (was error)"
+    },
+    {
+      "at": "2026-05-27T12:22:05.142Z",
+      "message": "audit-proxy: respawned by self-planner (was error)"
+    },
+    {
+      "at": "2026-05-27T12:22:18.393Z",
+      "message": "audit-contracts: respawned by self-planner (was error)"
+    },
+    {
+      "at": "2026-05-27T12:22:30.624Z",
+      "message": "audit-config: respawned by self-planner (was error)"
+    },
+    {
+      "at": "2026-05-27T12:22:46.540Z",
+      "message": "bootstrap-env: model \"claude-sonnet-4-6\" not in MODEL_CATALOG (spawning anyway). Run `bun cli.ts models` to see known slugs."
+    },
+    {
+      "at": "2026-05-27T12:23:00.307Z",
+      "message": "audit-wallet: model \"claude-sonnet-4-6\" not in MODEL_CATALOG (spawning anyway). Run `bun cli.ts models` to see known slugs."
+    },
+    {
+      "at": "2026-05-27T12:23:07.871Z",
+      "message": "audit-delegate: model \"claude-sonnet-4-6\" not in MODEL_CATALOG (spawning anyway). Run `bun cli.ts models` to see known slugs."
+    },
+    {
+      "at": "2026-05-27T12:23:14.740Z",
+      "message": "audit-proxy: model \"claude-sonnet-4-6\" not in MODEL_CATALOG (spawning anyway). Run `bun cli.ts models` to see known slugs."
+    },
+    {
+      "at": "2026-05-27T12:23:22.081Z",
+      "message": "audit-contracts: model \"claude-sonnet-4-6\" not in MODEL_CATALOG (spawning anyway). Run `bun cli.ts models` to see known slugs."
+    },
+    {
+      "at": "2026-05-27T12:23:31.009Z",
+      "message": "audit-config: model \"claude-sonnet-4-6\" not in MODEL_CATALOG (spawning anyway). Run `bun cli.ts models` to see known slugs."
+    },
+    {
+      "at": "2026-05-27T12:27:42.408Z",
+      "message": "bootstrap-env: verification self-reported (type-check-only)"
+    },
+    {
+      "at": "2026-05-27T12:34:38.059Z",
+      "message": "audit-delegate: verification self-reported (unit-test-verified)"
+    },
+    {
+      "at": "2026-05-27T12:34:53.698Z",
+      "message": "audit-config: verification self-reported (unit-test-verified)"
+    },
+    {
+      "at": "2026-05-27T12:35:07.991Z",
+      "message": "audit-view: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status"
+    },
+    {
+      "at": "2026-05-27T12:35:09.477Z",
+      "message": "audit-view: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-view.md"
+    },
+    {
+      "at": "2026-05-27T12:35:09.480Z",
+      "message": "audit-view: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-view-failure.md"
+    },
+    {
+      "at": "2026-05-27T12:35:22.629Z",
+      "message": "audit-completions-update: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status"
+    },
+    {
+      "at": "2026-05-27T12:35:23.924Z",
+      "message": "audit-completions-update: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-completions-update.md"
+    },
+    {
+      "at": "2026-05-27T12:35:23.925Z",
+      "message": "audit-completions-update: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-completions-update-failure.md"
+    },
+    {
+      "at": "2026-05-27T12:36:11.369Z",
+      "message": "audit-safe-mode: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status"
+    },
+    {
+      "at": "2026-05-27T12:36:12.539Z",
+      "message": "audit-safe-mode: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-safe-mode.md"
+    },
+    {
+      "at": "2026-05-27T12:36:12.540Z",
+      "message": "audit-safe-mode: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-safe-mode-failure.md"
+    },
+    {
+      "at": "2026-05-27T12:38:00.866Z",
+      "message": "audit-swap-keys: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status"
+    },
+    {
+      "at": "2026-05-27T12:38:01.945Z",
+      "message": "audit-swap-keys: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-swap-keys.md"
+    },
+    {
+      "at": "2026-05-27T12:38:01.947Z",
+      "message": "audit-swap-keys: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-swap-keys-failure.md"
+    },
+    {
+      "at": "2026-05-27T12:42:11.506Z",
+      "message": "audit-view: respawned by self-planner (was error)"
+    },
+    {
+      "at": "2026-05-27T12:42:13.719Z",
+      "message": "audit-swap-keys: respawned by self-planner (was error)"
+    },
+    {
+      "at": "2026-05-27T12:42:15.891Z",
+      "message": "audit-safe-mode: respawned by self-planner (was error)"
+    },
+    {
+      "at": "2026-05-27T12:42:17.951Z",
+      "message": "audit-completions-update: respawned by self-planner (was error)"
+    },
+    {
+      "at": "2026-05-27T12:42:33.540Z",
+      "message": "audit-view: model \"claude-sonnet-4-6\" not in MODEL_CATALOG (spawning anyway). Run `bun cli.ts models` to see known slugs."
+    },
+    {
+      "at": "2026-05-27T12:43:17.829Z",
+      "message": "audit-wallet: verification self-reported (unit-test-verified)"
+    },
+    {
+      "at": "2026-05-27T12:43:17.835Z",
+      "message": "audit-swap-keys: model \"claude-sonnet-4-6\" not in MODEL_CATALOG (spawning anyway). Run `bun cli.ts models` to see known slugs."
+    },
+    {
+      "at": "2026-05-27T12:44:28.848Z",
+      "message": "audit-safe-mode: model \"claude-sonnet-4-6\" not in MODEL_CATALOG (spawning anyway). Run `bun cli.ts models` to see known slugs."
+    },
+    {
+      "at": "2026-05-27T12:45:44.090Z",
+      "message": "audit-completions-update: model \"claude-sonnet-4-6\" not in MODEL_CATALOG (spawning anyway). Run `bun cli.ts models` to see known slugs."
+    },
+    {
+      "at": "2026-05-27T12:47:18.581Z",
+      "message": "audit-balance-transfer: model \"claude-sonnet-4-6\" not in MODEL_CATALOG (spawning anyway). Run `bun cli.ts models` to see known slugs."
+    },
+    {
+      "at": "2026-05-27T12:59:05.335Z",
+      "message": "audit-view: verification self-reported (unit-test-verified)"
+    },
+    {
+      "at": "2026-05-27T12:59:11.401Z",
+      "message": "audit-identity: model \"claude-sonnet-4-6\" not in MODEL_CATALOG (spawning anyway). Run `bun cli.ts models` to see known slugs."
+    },
+    {
+      "at": "2026-05-27T13:01:24.928Z",
+      "message": "audit-completions-update: verification self-reported (unit-test-verified)"
+    },
+    {
+      "at": "2026-05-27T13:01:25.116Z",
+      "message": "audit-batch: model \"claude-sonnet-4-6\" not in MODEL_CATALOG (spawning anyway). Run `bun cli.ts models` to see known slugs."
+    },
+    {
+      "at": "2026-05-27T13:03:25.195Z",
+      "message": "audit-subscribe: model \"claude-sonnet-4-6\" not in MODEL_CATALOG (spawning anyway). Run `bun cli.ts models` to see known slugs."
+    },
+    {
+      "at": "2026-05-27T13:06:38.712Z",
+      "message": "audit-stake: model \"claude-sonnet-4-6\" not in MODEL_CATALOG (spawning anyway). Run `bun cli.ts models` to see known slugs."
+    },
+    {
+      "at": "2026-05-27T13:07:03.012Z",
+      "message": "audit-block: model \"claude-sonnet-4-6\" not in MODEL_CATALOG (spawning anyway). Run `bun cli.ts models` to see known slugs."
+    },
+    {
+      "at": "2026-05-27T13:12:16.214Z",
+      "message": "audit-identity: verification self-reported (unit-test-verified)"
+    },
+    {
+      "at": "2026-05-27T13:12:22.869Z",
+      "message": "audit-serve: model \"claude-sonnet-4-6\" not in MODEL_CATALOG (spawning anyway). Run `bun cli.ts models` to see known slugs."
+    },
+    {
+      "at": "2026-05-27T13:15:12.201Z",
+      "message": "audit-scheduler: verification recorded (verifier-failed) by verifier verify-governance-batch"
+    },
+    {
+      "at": "2026-05-27T13:16:06.543Z",
+      "message": "audit-batch: verification self-reported (unit-test-verified)"
+    },
+    {
+      "at": "2026-05-27T13:16:06.588Z",
+      "message": "audit-utils-cli: model \"claude-sonnet-4-6\" not in MODEL_CATALOG (spawning anyway). Run `bun cli.ts models` to see known slugs."
+    },
+    {
+      "at": "2026-05-27T13:18:36.381Z",
+      "message": "audit-diff: model \"claude-sonnet-4-6\" not in MODEL_CATALOG (spawning anyway). Run `bun cli.ts models` to see known slugs."
+    },
+    {
+      "at": "2026-05-27T13:19:19.624Z",
+      "message": "audit-multisig: model \"claude-sonnet-4-6\" not in MODEL_CATALOG (spawning anyway). Run `bun cli.ts models` to see known slugs."
+    },
+    {
+      "at": "2026-05-27T13:20:42.491Z",
+      "message": "audit-weights: model \"claude-sonnet-4-6\" not in MODEL_CATALOG (spawning anyway). Run `bun cli.ts models` to see known slugs."
+    },
+    {
+      "at": "2026-05-27T13:26:43.800Z",
+      "message": "audit-serve: verification self-reported (unit-test-verified)"
+    },
+    {
+      "at": "2026-05-27T13:28:11.137Z",
+      "message": "audit-utils-cli: verification self-reported (unit-test-verified)"
+    },
+    {
+      "at": "2026-05-27T13:36:55.999Z",
+      "message": "audit-root: model \"claude-sonnet-4-6\" not in MODEL_CATALOG (spawning anyway). Run `bun cli.ts models` to see known slugs."
+    },
+    {
+      "at": "2026-05-27T13:41:36.518Z",
+      "message": "audit-view: verification recorded (verifier-failed) by verifier verify-readonly-batch"
+    },
+    {
+      "at": "2026-05-27T13:43:38.426Z",
+      "message": "audit-identity: verification recorded (verifier-failed) by verifier verify-network-batch"
+    },
+    {
+      "at": "2026-05-27T13:50:33.510Z",
+      "message": "fix-llm-txt: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status"
+    },
+    {
+      "at": "2026-05-27T13:50:34.598Z",
+      "message": "fix-llm-txt: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/fix-llm-txt.md"
+    },
+    {
+      "at": "2026-05-27T13:50:34.600Z",
+      "message": "fix-llm-txt: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/fix-llm-txt-failure.md"
+    },
+    {
+      "at": "2026-05-27T13:50:49.184Z",
+      "message": "fix-scaffold-localnet: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status"
+    },
+    {
+      "at": "2026-05-27T13:50:50.254Z",
+      "message": "fix-scaffold-localnet: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/fix-scaffold-localnet.md"
+    },
+    {
+      "at": "2026-05-27T13:50:50.257Z",
+      "message": "fix-scaffold-localnet: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/fix-scaffold-localnet-failure.md"
+    },
+    {
+      "at": "2026-05-27T13:52:27.186Z",
+      "message": "fix-llm-txt: respawned by self-planner (was error)"
+    },
+    {
+      "at": "2026-05-27T13:52:28.762Z",
+      "message": "fix-scaffold-localnet: respawned by self-planner (was error)"
+    },
+    {
+      "at": "2026-05-27T13:52:53.253Z",
+      "message": "fix-llm-txt: model \"claude-sonnet-4-6\" not in MODEL_CATALOG (spawning anyway). Run `bun cli.ts models` to see known slugs."
+    },
+    {
+      "at": "2026-05-27T13:52:56.684Z",
+      "message": "fix-scaffold-localnet: model \"claude-sonnet-4-6\" not in MODEL_CATALOG (spawning anyway). Run `bun cli.ts models` to see known slugs."
+    },
+    {
+      "at": "2026-05-27T13:56:52.022Z",
+      "message": "fix-explain-topics: verification self-reported (type-check-only)"
+    },
+    {
+      "at": "2026-05-27T13:59:18.245Z",
+      "message": "audit-wallet: verification recorded (verifier-failed) by verifier verify-write-batch"
+    },
+    {
+      "at": "2026-05-27T13:59:43.764Z",
+      "message": "fix-events-pretty: verification self-reported (type-check-only)"
+    },
+    {
+      "at": "2026-05-27T14:02:22.229Z",
+      "message": "fix-error-mapping: verification self-reported (unit-test-verified)"
+    },
+    {
+      "at": "2026-05-27T14:02:59.011Z",
+      "message": "fix-chain-extrinsics: verification self-reported (type-check-only)"
+    },
+    {
+      "at": "2026-05-27T14:03:22.460Z",
+      "message": "fix-chain-queries: verification self-reported (type-check-only)"
+    },
+    {
+      "at": "2026-05-27T14:09:08.223Z",
+      "message": "fix-llm-txt: verification self-reported (type-check-only)"
+    },
+    {
+      "at": "2026-05-27T14:19:31.455Z",
+      "message": "fix-error-mapping: verification recorded (verifier-failed) by verifier verify-xcut-batch"
+    }
+  ]
+}

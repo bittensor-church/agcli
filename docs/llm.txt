@@ -12,33 +12,33 @@ cargo install --git https://github.com/unarbos/agcli
 
 ### Common Tasks (intent → command)
 ```
-Check my balance          → agcli balance   # e2e Phase 20 `balance_preflight` in tests/e2e_test.rs
+Check my balance          → agcli balance
 Check someone's balance   → agcli --output json balance --address 5Gx...
 List all subnets          → agcli --output json subnet list
-Subnet summary (pools)    → agcli subnet show --netuid 1   # alias: subnet info
-View subnet metagraph     → agcli --output json subnet metagraph --netuid 1   # unknown netuid → exit 12 (validation), like subnet show
+Subnet summary (pools)    → agcli subnet show --netuid 1
+View subnet metagraph     → agcli --output json subnet metagraph --netuid 1
 Check one neuron          → agcli --output json subnet metagraph --netuid 1 --uid 0
-Subnet hyperparameters    → agcli subnet hyperparams --netuid 1 [--at-block N]   # unknown netuid → exit 12 (validation), like subnet show
-Registration cost         → agcli subnet cost --netuid 1   # unknown netuid → exit 12 (validation), like subnet show
-Subnet health check       → agcli subnet health --netuid 1   # unknown netuid → exit 12, like subnet show/cost
+Subnet hyperparameters    → agcli subnet hyperparams --netuid 1 [--at-block N]
+Registration cost         → agcli subnet cost --netuid 1
+Subnet health check       → agcli subnet health --netuid 1
 Subnet liquidity/AMM      → agcli subnet liquidity --netuid 1
 Live tempo countdown      → agcli subnet watch --netuid 1
 Snipe registration slot   → agcli subnet snipe --netuid 97 --fast --max-cost 2.0
 Monitor registration      → agcli subnet snipe --netuid 97 --watch --max-cost 1.5
 Monitor subnet UIDs       → agcli subnet monitor --netuid 1 --json
-Per-UID emissions         → agcli subnet emissions --netuid 1   # unknown netuid → exit 12, like subnet show/cost
+Per-UID emissions         → agcli subnet emissions --netuid 1
 Pending weight commits    → agcli subnet commits --netuid 1
 Create wallet             → agcli wallet create --name w1 --password p --yes
-Import from mnemonic      → agcli wallet import --name w1 --mnemonic "..." --password p
+Import from mnemonic      → AGCLI_MNEMONIC="..." agcli wallet import --name w1 --password p
 List wallets              → agcli --output json wallet list
-Stake TAO on subnet       → agcli stake add --amount 10 --netuid 1 --password p --yes   # e2e Phase 20 `stake_add_preflight` in tests/e2e_test.rs; full add/remove Phase 8 `test_add_remove_stake`
-Unstake                   → agcli stake remove --amount 5 --netuid 1 --password p --yes   # e2e Phase 20 `stake_remove_preflight` in tests/e2e_test.rs; full add/remove Phase 8 `test_add_remove_stake`
-Move alpha SN→SN         → agcli stake move --amount 1 --from 1 --to 2 --password p --yes   # e2e Phase 20 `stake_move_preflight` in tests/e2e_test.rs
-Swap alpha SN→SN (AMM)    → agcli stake swap --amount 1 --from 1 --to 2 --password p --yes   # e2e Phase 20 `stake_swap_preflight` in tests/e2e_test.rs
-Unstake all (one hotkey)  → agcli stake unstake-all --password p --yes   # e2e Phase 20 `stake_unstake_all_preflight` in tests/e2e_test.rs
-View all stakes           → agcli --output json stake list   # e2e Phase 20 `stake_list_preflight` in tests/e2e_test.rs
-Full portfolio            → agcli --output json view portfolio   # e2e Phase 20 `view_portfolio_preflight` in tests/e2e_test.rs; docs/commands/view.md
-Transfer TAO              → agcli transfer --dest 5FHn... --amount 10 --password p --yes   # e2e Phase 20 `transfer_preflight`; see docs/commands/transfer.md
+Stake TAO on subnet       → agcli stake add --amount 10 --netuid 1 --password p --yes
+Unstake                   → agcli stake remove --amount 5 --netuid 1 --password p --yes
+Move alpha SN→SN          → agcli stake move --amount 1 --from 1 --to 2 --password p --yes
+Swap alpha SN→SN (AMM)    → agcli stake swap --amount 1 --from 1 --to 2 --password p --yes
+Unstake all (one hotkey)  → agcli stake unstake-all --password p --yes
+View all stakes           → agcli --output json stake list
+Full portfolio            → agcli --output json view portfolio
+Transfer TAO              → agcli transfer --dest 5FHn... --amount 10 --password p --yes
 Show on-chain weights     → agcli weights show --netuid 1
 Set weights               → agcli weights set --netuid 1 --weights "0:100,1:200" --dry-run
 Commit weights (CR p1)    → agcli weights commit --netuid 1 --weights "0:100,1:200"
@@ -51,9 +51,11 @@ Subscribe to events       → agcli subscribe events --filter staking --netuid 1
 Historical query          → agcli --network archive subnet list --at-block 3500000
 Stream blocks             → agcli subscribe blocks
 Explain a concept         → agcli explain --topic tempo
-Weight flow cheat sheet   → agcli explain --topic weights (aliases: settingweights, setweights); `--full` → `docs/commands/weights.md` when present
+Weight flow cheat sheet   → agcli explain --topic weights
 Alpha↔TAO conversion      → agcli utils convert --tao 10 --netuid 1
                           → agcli utils convert --alpha 500 --netuid 1
+RAO→TAO conversion        → agcli utils convert --amount 1000000000
+TAO→RAO conversion        → agcli utils convert --amount 1.0 --to-rao
 Set commitment (miner)    → agcli commitment set --netuid 1 --data "endpoint:http://..."
 Read commitments          → agcli --output json commitment get --netuid 1 --hotkey-address 5H...
 All commitments on SN     → agcli --output json commitment list --netuid 1
@@ -63,7 +65,7 @@ Stop local chain          → agcli localnet stop
 Local chain status        → agcli localnet status --output json
 Reset local chain         → agcli localnet reset
 Local chain logs          → agcli localnet logs --tail 100
-Smoke-check install + RPC → agcli doctor [--network local]   # per-row OK/FAIL; process exit 0 unless clap error; see docs/commands/doctor.md
+Smoke-check install + RPC → agcli doctor [--network local]
 Scaffold test env         → agcli localnet scaffold --output json
 Scaffold with config      → agcli localnet scaffold --config scaffold.toml --output json
 Set tempo (sudo)          → agcli admin set-tempo --netuid 1 --tempo 100 --sudo-key //Alice --network local
@@ -73,6 +75,7 @@ Set weights rate (sudo)   → agcli admin set-weights-rate-limit --netuid 1 --li
 Disable commit-reveal     → agcli admin set-commit-reveal --netuid 1 --enabled false --sudo-key //Alice --network local
 Generic admin call        → agcli admin raw --call sudo_set_bonds_moving_average --args '[1, 900000]' --sudo-key //Alice --network local
 List admin params         → agcli admin list --output json
+Live prices (place --live after subcommand) → agcli view dynamic --live
 ```
 
 ### Global Flags
@@ -89,16 +92,28 @@ List admin params         → agcli admin list --output json
 | `--hotkey` / `--hotkey-name NAME` | `AGCLI_HOTKEY` | Wallet hotkey file name |
 | `--wallet-dir DIR` | `AGCLI_WALLET_DIR` | Wallet dir |
 | `--proxy SS58` | `AGCLI_PROXY` | Proxy account |
-| `--live [SECS]` | — | Live polling (default 12s) |
+| `--live [SECS]` | — | Live polling (default 12s) — place AFTER subcommand name |
 | `--dry-run` | — | Preview without signing |
 | `--mev` | — | ML-KEM-768 encrypted submission |
 | `--at-block N` | — | Historical query |
 | `--timeout SECS` | — | Operation timeout |
 | `--verbose` / `-v` | — | Show connection info |
 
+**`--live` ordering**: always place after the subcommand name. `agcli view dynamic --live` works; `agcli --live view dynamic` fails because clap consumes `view` as the optional seconds value.
+
 ### Exit Codes
-- 0 = success, 1 = error
-- Batch/JSON mode: `{"error": true, "message": "..."}` on stderr
+| Code | Meaning |
+|------|---------|
+| 0 | success |
+| 1 | generic error |
+| 10 | network error (transport / DNS) |
+| 11 | auth error (bad password / key) |
+| 12 | validation error (bad arg value, unknown netuid) |
+| 13 | chain error (dispatch rejected on-chain) |
+| 14 | I/O error (file not found, wallet missing) |
+| 15 | timeout |
+
+Batch/JSON mode: `{"error": true, "message": "..."}` on stderr.
 
 ### Key Concepts
 - **TAO** = native token, 1 TAO = 1e9 RAO (u64)
@@ -119,32 +134,40 @@ Detailed per-command docs: `docs/commands/*.md` (on-chain behavior, pallet refs,
 
 | Group | File | Key Commands |
 |-------|------|-------------|
-| Wallet | [wallet.md](commands/wallet.md) | create, list, show, import, sign, verify, derive |
-| Balance | [balance.md](commands/balance.md) | one-shot / `--at-block` / `--watch` + `--threshold`; e2e Phase 20 `balance_preflight` |
-| Transfer | [transfer.md](commands/transfer.md) | `transfer` (allow_death), `transfer-all`, `transfer-keep-alive`; e2e Phase 20 `transfer_preflight` + Phase 2 `test_transfer` + Phase 16 `test_transfer_all` |
-| Stake | [stake.md](commands/stake.md) | **`stake list`** (e2e `stake_list_preflight`); **`stake add`** (e2e `stake_add_preflight` + Phase 8 `test_add_remove_stake`); **`stake remove`** (e2e `stake_remove_preflight` + same Phase 8); **`stake move`** (e2e `stake_move_preflight`); **`stake swap`** (e2e `stake_swap_preflight`); **`stake unstake-all`** (e2e `stake_unstake_all_preflight`); wizard, limits, childkeys |
-| Subnet | [subnet.md](commands/subnet.md) | list, show, metagraph, register, register-leased, register-neuron, pow, snipe, hyperparams, watch, monitor, health, emissions, cost, liquidity, set-param, set-symbol, trim, terminate-lease |
-| Weights | [weights.md](commands/weights.md) | show, set, commit, reveal, commit-reveal, status |
+| Wallet | [wallet.md](commands/wallet.md) | create, list, show, import, sign, verify, derive, check-swap, associate-hotkey |
+| Balance | [balance.md](commands/balance.md) | one-shot / `--at-block` / `--watch` + `--threshold` |
+| Transfer | [transfer.md](commands/transfer.md) | `transfer` (allow_death), `transfer-all`, `transfer-keep-alive` |
+| Stake | [stake.md](commands/stake.md) | list, add, remove, move, swap, unstake-all, unstake-all-alpha, claim-root, process-claim, add-limit, remove-limit, remove-full-limit, swap-limit, recycle-alpha, burn-alpha, childkey-take, set-children, set-auto, show-auto, set-claim, transfer-stake, wizard |
+| Subnet | [subnet.md](commands/subnet.md) | list, show, metagraph, register, register-leased, register-neuron, pow, snipe, hyperparams, watch, monitor, health, emissions, cost, liquidity, set-param, set-symbol, trim, terminate-lease, start, check-start, probe, dissolve, root-dissolve, cache-list, cache-load, cache-diff, cache-prune, emission-split, mechanism-count, set-mechanism-count, set-emission-split, commits |
+| Weights | [weights.md](commands/weights.md) | show, set, commit, reveal, commit-reveal, status, commit-timelocked, set-mechanism, commit-mechanism, reveal-mechanism |
 | Commitment | [commitment.md](commands/commitment.md) | set, get, list |
-| View | [view.md](commands/view.md) | portfolio, dynamic, network, neuron, validators, account, swap-sim, analytics |
+| View | [view.md](commands/view.md) | portfolio, dynamic, network, neuron, validators, account, swap-sim, analytics, history, nominations, metagraph, axon, health, emissions |
 | Delegate | [delegate.md](commands/delegate.md) | list, show, decrease-take, increase-take |
-| Identity | [identity.md](commands/identity.md) | show, set, set-subnet |
+| Identity | [identity.md](commands/identity.md) | show, set, clear, set-subnet |
 | Root | [root.md](commands/root.md) | register, weights |
-| Serve | [serve.md](commands/serve.md) | axon |
+| Serve | [serve.md](commands/serve.md) | axon, reset, batch-axon, prometheus, axon-tls |
 | Subscribe | [subscribe.md](commands/subscribe.md) | blocks, events |
-| Config | [config.md](commands/config.md) | show, set, unset, path |
+| Config | [config.md](commands/config.md) | show, set, unset, path, cache-clear, cache-info |
 | Block | [block.md](commands/block.md) | latest, info, range |
 | Diff | [diff.md](commands/diff.md) | portfolio, subnet, network, metagraph |
-| Proxy | [proxy.md](commands/proxy.md) | add, remove, list |
-| Multisig | [multisig.md](commands/multisig.md) | address, submit, approve |
-| Batch | [batch.md](commands/batch.md) | --file (atomic/non-atomic) |
-| Swap | [swap.md](commands/swap.md) | hotkey, coldkey |
-| Crowdloan | [crowdloan.md](commands/crowdloan.md) | contribute, withdraw, finalize |
+| Proxy | [proxy.md](commands/proxy.md) | add, remove, list, list-announcements, create-pure, kill-pure, announce, remove-all, remove-announcement, reject-announcement, proxy-announced |
+| Multisig | [multisig.md](commands/multisig.md) | address, submit, approve, execute, cancel, list |
+| Batch | [batch.md](commands/batch.md) | --file (atomic/non-atomic/force) |
+| Swap | [swap.md](commands/swap.md) | hotkey, coldkey, evm-key |
+| Liquidity | [swap.md](commands/swap.md) | add, remove, modify, toggle |
+| Crowdloan | [crowdloan.md](commands/crowdloan.md) | create, contribute, withdraw, finalize, refund, dissolve, info, list, contributors, update-min-contribution, update-end, update-cap |
 | Localnet | [localnet.md](commands/localnet.md) | start, stop, status, reset, logs, scaffold |
-| Admin | [admin.md](commands/admin.md) | set-tempo, set-max-validators, set-max-uids, set-min-weights, set-weights-rate-limit, set-commit-reveal, raw, list |
+| Admin | [admin.md](commands/admin.md) | set-tempo, set-max-validators, set-max-uids, set-min-weights, set-max-weight-limit, set-weights-rate-limit, set-commit-reveal, set-difficulty, set-activity-cutoff, set-default-take, set-tx-rate-limit, set-min-difficulty, set-max-difficulty, set-adjustment-interval, set-kappa, set-rho, set-min-burn, set-max-burn, set-liquid-alpha, set-alpha-values, set-yuma3, set-bonds-penalty, set-stake-threshold, set-network-registration, set-pow-registration, set-adjustment-alpha, set-subnet-moving-alpha, set-mechanism-count, set-mechanism-emission-split, set-nominator-min-stake, raw, list |
+| Scheduler | [scheduler.md](commands/scheduler.md) | schedule, schedule-named, cancel, cancel-named |
+| Preimage | [preimage.md](commands/preimage.md) | note, unnote |
+| Contracts | [contracts.md](commands/contracts.md) | upload, instantiate, call, remove-code |
+| EVM | [evm.md](commands/evm.md) | call, withdraw |
+| Safe Mode | [safe-mode.md](commands/safe-mode.md) | enter, extend, force-enter, force-exit |
+| Drand | [drand.md](commands/drand.md) | write-pulse |
 | Doctor | [doctor.md](commands/doctor.md) | top-level smoke: version, network, WS connect, block height, subnet count, 3×RPC ping, disk cache, default wallet |
-| Utils | [utils.md](commands/utils.md) | convert (alpha↔TAO), latency; top-level `completions`, `update` (see utils.md) |
+| Utils | [utils.md](commands/utils.md) | convert (alpha↔TAO, RAO↔TAO), latency; top-level `completions`, `update` |
 | Explain | [explain.md](commands/explain.md) | 32 built-in topics |
+| Audit | [view.md](commands/view.md) | top-level command: `agcli audit [--address SS58]` |
 
 ### Agent / Non-Interactive Mode
 
@@ -166,143 +189,188 @@ agcli config set --key spending_limit.* --value 500.0     # Global max
 - `wallet create --name NAME [--password PW]` → `{"name","coldkey","hotkey"}`
 - `wallet list` → `[{"name","coldkey"}]`
 - `wallet show [--all]` → `[{"name","coldkey","hotkeys":[...]}]`
-- `wallet import --name NAME [--mnemonic "..."] [--password PW]` → `{"name","coldkey"}`
-- `wallet regen-coldkey [--mnemonic "..."] [--password PW]` → `{"coldkey"}`
-- `wallet regen-hotkey --name NAME [--mnemonic "..."]` → `{"name","hotkey"}`
+- `wallet import --name NAME [--password PW]` → `{"name","coldkey"}` — **never pass `--mnemonic` on command line** (process table visible); use `AGCLI_MNEMONIC` env var instead
+- `wallet regen-coldkey [--password PW]` → `{"coldkey"}` — uses `AGCLI_MNEMONIC` env var
+- `wallet regen-hotkey --name NAME` → `{"name","hotkey"}` — uses `AGCLI_MNEMONIC` env var
 - `wallet new-hotkey --name NAME` → `{"name","hotkey"}`
-- `wallet sign --message MSG [--password PW]` → `{"signer","message","signature"}`
+- `wallet sign --message MSG [--password PW]` → `{"signer","message","signature"}` — always JSON regardless of `--output`
 - `wallet verify --message MSG --signature 0x... [--signer SS58]` → exit 0=valid
 - `wallet derive --input INPUT` → SS58 from pubkey/mnemonic
+- `wallet check-swap` → check pending coldkey swap announcement status; JSON: `{"address","new_coldkey_hash","scheduled_for"}`
+- `wallet associate-hotkey --hotkey-address SS58` → associate hotkey with coldkey on-chain
 - Reads Python bittensor-wallet keyfiles (NaCl SecretBox + JSON)
+- `coldkeypub.txt` stores raw 64-hex-char pubkey (no `0x` prefix), not SS58
 
 ### Balance & Transfer
-- `balance [--address SS58]` → `{"address","balance_rao","balance_tao"}`
-- `balance --watch [N] --threshold T` → streaming JSON with alerts
-- `transfer --dest SS58 --amount TAO` → `{"tx_hash","message"}`
-- `transfer-all --dest SS58 [--keep-alive]`
+- `balance [--address SS58] [--at-block N] [--watch [N]] [--threshold T]` → `{"address","balance_rao","balance_tao"}` — balance shown is free (spendable) only, excludes reserved/frozen
+- `balance --watch [N] --threshold T` → streaming JSON with alerts (use `--watch` and `--threshold` together; `--threshold` alone is silently ignored)
+- `balance --at-block N` → historical query (use `--network archive` for pruned heights); when combined with `--watch`, `--at-block` wins silently
+- `transfer --dest SS58 --amount TAO` → `{"tx_hash","message"}` — calls `Balances::transfer_allow_death` (account may be reaped if balance drops below existential deposit)
+- `transfer-all --dest SS58 [--keep-alive]` — no client-side balance preflight; chain decides amount at execution time
+- `transfer-keep-alive --dest SS58 --amount TAO` → safe transfer that fails rather than reap the account
 
 ### Staking
-- `stake add --amount AMT --netuid N [--hotkey-address SS58] [--max-slippage PCT]` → validate_netuid → validate_amount (`stake amount`) → check_spending_limit → unlock → get_balance → optional `try_join` slippage sim (`current_alpha_price` + `sim_swap_tao_for_alpha`); e2e `stake_add_preflight`
-- `stake remove --amount AMT --netuid N [--hotkey-address SS58] [--max-slippage PCT]` → validate_netuid → validate_amount (`unstake amount`) → unlock → optional `try_join` (`current_alpha_price` + `sim_swap_alpha_for_tao`); no spending-limit preflight; e2e `stake_remove_preflight`
-- `stake list [--address SS58] [--at-block N]` → JSON array of `StakeInfo` (latest or pinned); archive for old heights; e2e `stake_list_preflight`
-- `stake move --amount AMT --from SRC --to DST [--hotkey-address SS58]` → validate_netuid×2 → reject same from/to → validate_amount (`move amount`) → check_spending_limit(**destination** `--to`) → unlock → move_stake; no balance/slippage RPC preflight; e2e `stake_move_preflight`
-- `stake swap --amount AMT --from SRC --to DST [--hotkey-address SS58]` → same pre-wallet order as `stake move` but **`swap amount`** + **`swap_stake_mev`**; e2e `stake_swap_preflight`
-- `stake unstake-all [--hotkey-address SS58]` → **`unlock_and_resolve`** only (optional **`validate_ss58`(`hotkey-address`)**); no netuid/amount/spending-limit pre-read; e2e `stake_unstake_all_preflight`
-- `stake claim-root --netuid N` (uses wallet hotkey)
-- `stake add-limit / remove-limit --amount AMT --netuid N --price P [--partial]`
-- `stake childkey-take --take PCT --netuid N`
-- `stake set-children --netuid N --children "proportion:hotkey,..."`
-- `stake recycle-alpha / burn-alpha --amount AMT --netuid N`
-- `stake unstake-all-alpha` — all subnets
-- `stake wizard [--netuid N] [--amount X]` — guided staking
+- `stake add --amount AMT --netuid N [--hotkey-address SS58] [--max-slippage PCT]` → validate_netuid → validate_amount → check_spending_limit → unlock → balance check → optional slippage sim
+- `stake remove --amount AMT --netuid N [--hotkey-address SS58] [--max-slippage PCT]` → validate_netuid → validate_amount → unlock → optional slippage sim; no spending-limit preflight
+- `stake list [--address SS58] [--at-block N]` → JSON array of `StakeInfo`; exit 12 with hint when `--address` is missing and no wallet found
+- `stake move --amount AMT --from SRC --to DST [--hotkey-address SS58]` → moves alpha cross-subnet (same hotkey); no `--dest-hotkey` flag — both origin and destination use same hotkey
+- `stake swap --amount AMT --from SRC --to DST [--hotkey-address SS58]` → AMM-path cross-subnet swap
+- `stake unstake-all [--hotkey-address SS58]` — unstake all alpha from all subnets for the hotkey
+- `stake unstake-all-alpha` — unstake all alpha across all subnets
+- `stake claim-root --netuid N` → claim root dividends for single subnet (pallet supports batch; CLI is single-subnet only)
+- `stake process-claim --netuid N --hotkey-address SS58` → process root dividend claim for specific hotkey; exit 0 even on per-subnet partial failure
+- `stake add-limit --amount AMT --netuid N --price P [--partial]` → add limit-order stake
+- `stake remove-limit --amount AMT --netuid N --price P [--partial]` → remove limit-order stake; `--amount` is in TAO-scale (× 1e9), not alpha
+- `stake remove-full-limit --netuid N` → cancel all limit orders on subnet
+- `stake swap-limit --amount AMT --netuid N --price P [--partial]` → swap via limit order
+- `stake recycle-alpha --amount AMT --netuid N` → recycle alpha; `--amount` is TAO-scale (× 1e9)
+- `stake burn-alpha --amount AMT --netuid N` → burn alpha; `--amount` is TAO-scale (× 1e9)
+- `stake childkey-take --take PCT --netuid N` → set childkey take rate (0–18%)
+- `stake set-children --netuid N --children "proportion:hotkey,..."` → configure childkeys
+- `stake set-auto --netuid N --hotkey-address SS58` → auto-stake configuration
+- `stake show-auto [--address SS58]` → show auto-stake configuration
+- `stake set-claim --netuid N` → set dividend claim preferences
+- `stake transfer-stake --netuid N --amount AMT --dest-hotkey SS58` → transfer stake to different coldkey/hotkey
+- `stake wizard [--netuid N] [--amount X] [--yes]` → guided staking; requires TTY unless all flags + `--yes` are provided
 
 ### Subnets
-- `subnet list [--at-block N]` → `[{"netuid","name","n","max_n","tempo","emission","burn_rao","owner"}]`; no `--netuid` / no exit **12** for unknown SN; e2e `subnet_list` calls `list_subnets` (`pin_latest` + `get_all_subnets_at_block` + `get_all_dynamic_info_at_block`)
-- `subnet show --netuid N [--at-block N]` → full details + Dynamic TAO pricing
+- `subnet list [--at-block N]` → `[{"netuid","name","n","max_n","tempo","emission","burn_rao","owner"}]`
+- `subnet show --netuid N [--at-block N]` → full details + Dynamic TAO pricing; unknown netuid → exit 12
 - `subnet metagraph --netuid N [--uid UID] [--full] [--save] [--at-block N]`
 - `subnet hyperparams --netuid N [--at-block B]` → all hyperparameters
-- `subnet register` — create new subnet (burn lock cost); no `--netuid` / no exit **12**; lock amount via `subnet create-cost`; e2e **`subnet_register_plain`** reuses same `get_subnet_registration_cost` log as **`subnet_create_cost`**
-- `subnet register-with-identity --name ...` — register + subnet identity in one call; optional `--github` / `--url` / etc.; pre-unlock validation like `identity set-subnet`; no `--netuid`; e2e `subnet_register_with_identity` uses `get_subnet_identity`
-- `subnet create-cost` — read-only subnet creation lock (TAO) for `register` / `register-leased`; no `--netuid`; RPC/runtime API read errors only
-- `subnet register-leased [--end-block N]` — create leased subnet; no unknown-netuid preflight; lock amount via `subnet create-cost`; pair with `subnet terminate-lease`
-- `subnet register-neuron --netuid N` — burn registration; unknown netuid → exit **12** before hotkey unlock (same as `subnet show`)
-- `subnet pow --netuid N [--threads 8]` — POW registration; unknown netuid → exit **12** before hotkey unlock; `--threads 0` → exit **1**; no solution found → message, exit **0**
-- `subnet dissolve --netuid N` — schedule dissolve (owner); unknown netuid → exit **12** before wallet; confirm unless `--yes`; decline → exit **0**
-- `subnet root-dissolve --netuid N` — root-only removal; same **`require_subnet_exists`** preflight → exit **12** before wallet
-- `subnet terminate-lease --netuid N` — owner ends a leased subnet early; same preflight → exit **12** before wallet
-- `subnet watch --netuid N [--interval 12]` — live tempo / rate-limit TUI (latest head each tick); unknown netuid → exit **12** like `subnet show`; no `--output json`
-- `subnet monitor --netuid N [--interval 24] [--json]` — metagraph diff / event stream (latest head each tick); unknown netuid → exit **12** like `subnet show`; JSON via `--json` on the subcommand (not global `--output json`)
+- `subnet register` — create new subnet (burn lock cost)
+- `subnet register-with-identity --name ...` — register + subnet identity in one call
+- `subnet create-cost` — read-only subnet creation lock (TAO)
+- `subnet register-leased [--end-block N]` — create leased subnet
+- `subnet register-neuron --netuid N` — burn registration
+- `subnet pow --netuid N [--threads 8]` — POW registration
+- `subnet dissolve --netuid N` — schedule dissolve (owner; pallet is root-gated)
+- `subnet root-dissolve --netuid N` — root-only removal
+- `subnet terminate-lease --netuid N` — owner ends a leased subnet
+- `subnet watch --netuid N [--interval 12]` — live tempo / rate-limit TUI; no `--output json`
+- `subnet monitor --netuid N [--interval 24] [--json]` — metagraph diff stream; JSON via `--json` subcommand flag (not global `--output json`)
 - `subnet health --netuid N` — miner/validator status
 - `subnet emissions --netuid N` — per-UID emissions
 - `subnet cost --netuid N` — registration cost
-- `subnet liquidity [--netuid N]` — AMM depth, slippage estimates; with `--netuid`, unknown SN → exit **12** like `subnet show`; omit `--netuid` to scan all subnets with pool depth
-- `subnet commits --netuid N [--hotkey-address SS58]` — pending weight commits; unknown netuid → exit **12** like `subnet show`; if CR disabled → notice / JSON and exit **0**
-- `subnet set-param --netuid N --param list|NAME [--value V]` — list catalog (`--output json` for list) or set hyperparam (owner); unknown netuid → exit **12** before list / wallet (same as `subnet show`)
-- `subnet set-symbol --netuid N --symbol "SYM"` — set token symbol (owner); invalid symbol → exit **1**; unknown netuid → exit **12** before wallet (same as `subnet set-param`)
-- `subnet trim --netuid N --max-uids M` — lower max UIDs / trim metagraph capacity (owner); unknown netuid → exit **12** before wallet; confirm prompt unless `--yes`
-- `subnet probe --netuid N [--uids "0,1,2"]` — HTTP axon reachability (`GET /`); unknown netuid → exit **12** like `subnet show`; pinned lite+full neuron snapshot
-- `subnet check-start --netuid N` — read-only: active flag, neuron count, `can_start`, tempo; unknown netuid → exit **12** like `subnet show`
-- `subnet start --netuid N` — owner starts emission schedule; unknown netuid → exit **12** before wallet (same preflight as `check-start`)
-- `subnet snipe --netuid N [--fast] [--watch] [--all-hotkeys] [--max-cost TAO] [--max-attempts N]` — block-level registration sniper; unknown netuid → exit **12** before streaming / wallet
-- `subnet cache-list|cache-load|cache-diff|cache-prune --netuid N` — metagraph disk snapshots (`metagraph --save`); unknown netuid → exit **12** like `subnet show`; missing cache files → tip / empty JSON and exit **0** (see `docs/commands/subnet.md`)
-- `subnet emission-split --netuid N` — mechanism emission weights (`MechanismEmissionSplit`); unknown netuid → exit **12** like `subnet show`; no custom split → notice or JSON `configured: false`, exit **0**
-- `subnet mechanism-count --netuid N` — `MechanismCountCurrent` (default 1 if unset); unknown netuid → exit **12** like `subnet show`
-- `subnet set-mechanism-count --netuid N --count K` — owner `sudo_set_mechanism_count`; unknown netuid → exit **12** before wallet; e2e **`subnet_owner_mechanism_writes`**
-- `subnet set-emission-split --netuid N --weights "a,b,..."` — owner `sudo_set_mechanism_emission_split`; invalid weights → exit **1** before wallet; unknown netuid → **12** after parse; confirm unless `--yes`
+- `subnet liquidity [--netuid N]` — AMM depth, slippage estimates
+- `subnet commits --netuid N [--hotkey-address SS58]` — pending weight commits
+- `subnet set-param --netuid N --param list|NAME [--value V]` — list catalog or set hyperparam (owner)
+- `subnet set-symbol --netuid N --symbol "SYM"` — set token symbol (owner)
+- `subnet trim --netuid N --max-uids M` — lower max UIDs / trim metagraph capacity (owner)
+- `subnet probe --netuid N [--uids "0,1,2"]` — HTTP axon reachability
+- `subnet check-start --netuid N` — read-only: active flag, neuron count, can_start, tempo
+- `subnet start --netuid N` — owner starts emission schedule
+- `subnet snipe --netuid N [--fast] [--watch] [--all-hotkeys] [--max-cost TAO] [--max-attempts N]`
+- `subnet cache-list|cache-load|cache-diff|cache-prune --netuid N` — metagraph disk snapshots
+- `subnet emission-split --netuid N` — mechanism emission weights
+- `subnet mechanism-count --netuid N` — current mechanism count
+- `subnet set-mechanism-count --netuid N --count K` — owner sets mechanism count
+- `subnet set-emission-split --netuid N --weights "a,b,..."` — owner sets mechanism emission split
 
 ### Weights
-- `weights show --netuid N [--hotkey-address SS58] [--limit L]` — read-only on-chain weights; no wallet; unknown SN → same bail as `subnet show` (exit **12**); flaky hyperparams RPC → warn and continue; e2e **`weights_show_preflight`** + read bundle in Phase 37 `test_all_weights`
-- `weights set --netuid N --weights "uid:weight,..." [--version-key K] [--dry-run]` — unknown SN → same "Subnet N not found" + `subnet list` as `subnet show` (exit **12**); e2e `weights_set_preflight` + Phase 7 `set_weights`; `--dry-run` still unlocks wallet for stake check; on-chain `WeightVecLengthIsLow` when vector shorter than `min_allowed_weights` (see `subnet hyperparams`)
-- `weights commit --netuid N --weights "uid:weight,..." [--salt S]` — unknown SN → same bail as `subnet show` (exit **12**) before wallet; e2e **`weights_commit_preflight`** + Phase 17 `commit_weights` (no pre-submit stake check unlike `weights set`)
-- `weights reveal --netuid N --weights "uid:weight,..." --salt S` — same unknown-SN pre-check as `commit`; e2e **`weights_reveal_preflight`** + Phase 17 `reveal_weights` (`test_reveal_weights_rejected_without_prior_commit` and follow-on reveal cases)
-- `weights commit-reveal --netuid N --weights "uid:weight,..." [--version-key K] [--wait]` — atomic commit+wait+reveal (or `set_weights` when CR off); unknown SN → exit **12** before wallet; hyperparams RPC failure aborts (unlike commit/reveal/status); e2e **`weights_commit_reveal_preflight`** in Phase 17 `test_commit_weights_rejected_when_commit_reveal_disabled`
-- `weights status --netuid N` — pending commit-reveal rows for default hotkey (`get_weight_commits` + head + hyperparams + `reveal_period_epochs`); unknown SN → same hyperparams preflight (exit **12**) before wallet; RPC warn+continue on preflight; e2e **`weights_status_preflight`** in Phase 17 `test_reveal_weights_rejected_without_prior_commit`
-- `weights commit-timelocked --netuid N --weights "..." --round R` — drand timelock commit; unknown SN → exit **12** before wallet (same hyperparams preflight as `weights commit`; RPC warn+continue); SDK reads `CommitRevealWeightsVersion` at submit; e2e **`weights_commit_timelocked_preflight`** in Phase 17 `test_commit_timelocked_weights_rejected_when_incorrect_commit_reveal_version`; on-chain **111** = version mismatch (rare with current CLI)
-- `weights set-mechanism --netuid N --mechanism-id M --weights "..." [--version-key K]` — `set_mechanism_weights`; unknown SN → exit **12** before wallet (`require_subnet_exists_for_weights_cmd`; RPC warn+continue); **`--dry-run`** = JSON only, no wallet; e2e **`weights_set_mechanism_preflight`** in Phase 5 `test_set_mechanism_weights`
-- `weights commit-mechanism --netuid N --mechanism-id M --hash H` — `commit_mechanism_weights`; same preflight as `set-mechanism`; **`H`** = 32-byte hex (blake2 over uids+weights+salt like `weights commit`); invalid length/hex → exit **1** before RPC; e2e **`weights_commit_mechanism_preflight`** in Phase 5 `test_commit_mechanism_weights`
-- `weights reveal-mechanism --netuid N --mechanism-id M --weights "..." --salt S [--version-key K]` — `reveal_mechanism_weights`; same preflight as `set-mechanism` / `commit-mechanism`; **`S`** → little-endian u16 pairs like **`weights reveal`**; bad **`--weights`** → exit **1** before RPC; e2e **`weights_reveal_mechanism_preflight`** in Phase 5 `test_reveal_mechanism_weights`
+- `weights show --netuid N [--hotkey-address SS58] [--limit L]` — read-only on-chain weights
+- `weights set --netuid N --weights "uid:weight,..." [--version-key K] [--dry-run]`
+- `weights commit --netuid N --weights "uid:weight,..." [--salt S]`
+- `weights reveal --netuid N --weights "uid:weight,..." --salt S`
+- `weights commit-reveal --netuid N --weights "uid:weight,..." [--version-key K] [--wait]` — falls back to `set_weights` silently when commit-reveal is disabled
+- `weights status --netuid N` — pending commit-reveal rows for default hotkey
+- `weights commit-timelocked --netuid N --weights "..." --round R` — drand timelock commit
+- `weights set-mechanism --netuid N --mechanism-id M --weights "..." [--version-key K]`
+- `weights commit-mechanism --netuid N --mechanism-id M --hash H` — `H` = precomputed 32-byte hex hash; no `--weights`/`--salt` flags (must compute hash out-of-band)
+- `weights reveal-mechanism --netuid N --mechanism-id M --weights "..." --salt S [--version-key K]`
 
 ### Block
-- `block latest` — read-only head (no wallet); `get_block_number` → `get_block_hash` → extrinsic count + timestamp; e2e **`block_latest_preflight`** in Phase 20 `test_block_queries`; network **10** / timeout **15** / generic **1**; head \> `u32::MAX` → **1** (theoretical)
-- `block info --number N` — `get_block_hash` → header + extrinsic count + timestamp; e2e **`block_info_preflight`** in Phase 20 `test_block_queries`; same exit classification as `block latest`
-- `block range --from A --to B` — local span ≤1000 and `from` ≤ `to` (else exit **1**); concurrent `get_block_hash` then concurrent per-block ext+timestamp; e2e **`block_range_preflight`** in Phase 20 `test_block_queries`
+- `block latest` — best head (note: not necessarily finalized); exit codes: network 10 / timeout 15 / generic 1
+- `block info --number N` — block details
+- `block range --from A --to B` — concurrent block info for span ≤ 1000
 
 ### Commitment (Miner Endpoints)
-- `commitment set --netuid N --data "key:value,..."` — publish miner commitment
-- `commitment get --netuid N --hotkey-address SS58` → `{"hotkey","netuid","data"}`
-- `commitment list --netuid N` → `[{"hotkey","data"}]`
+- `commitment set --netuid N --data "key:value,..."` — publish miner commitment; field values truncated to 128 bytes; only `RawN` variant encoded
+- `commitment get --netuid N --hotkey-address SS58` → `{"hotkey","netuid","block","fields"}` or `{"hotkey","netuid","found":false}`
+- `commitment list --netuid N` → JSON array
 
 ### View / Query
-- `view portfolio [--address SS58]` → full stake portfolio with prices
-- `view dynamic` → Dynamic TAO prices, pools, volumes, emissions
-- `view network` → block, issuance, stake, emission
-- `view neuron --netuid N --uid UID` → full neuron detail
+- `view portfolio [--address SS58] [--at-block N]` → full stake portfolio with prices
+- `view dynamic [--at-block N]` → Dynamic TAO prices, pools, volumes, emissions
+- `view network [--at-block N]` → block, issuance, stake, emission
+- `view neuron --netuid N --uid UID [--at-block N]` → full neuron detail (ignores `--output json/csv`; always human text)
 - `view validators [--netuid N] [--limit 50]` → top validators
-- `view history [--address SS58] [--limit 20]` → recent extrinsics (Subscan)
+- `view history [--address SS58] [--limit 20]` → recent extrinsics via Subscan API; exits 0 with stderr note if Subscan unavailable
 - `view account [--address SS58]` → comprehensive account explorer
 - `view subnet-analytics --netuid N` → detailed subnet analysis
 - `view staking-analytics [--address SS58]` → APY estimates
-- `view swap-sim --netuid N [--tao X | --alpha X]` → swap simulation
-- `view nominations --hotkey-address SS58` → who delegates to a validator
+- `view swap-sim --netuid N [--tao X | --alpha X]` → swap simulation; missing `--tao`/`--alpha` exits 1 (should be 12)
+- `view nominations --hotkey-address SS58` → who delegates to a validator; `--output csv` falls back to table text
+- `view metagraph --netuid N` → metagraph view
+- `view axon [--uid UID | --hotkey-address SS58] --netuid N` → axon endpoint lookup; missing arg exits 1 (should be 12)
+- `view health` → network health indicators
+- `view emissions` → network-wide emission summary
+- `agcli audit [--address SS58]` → comprehensive account audit (no subcommand; top-level)
 
 ### Identity
 - `identity show --address SS58` → on-chain identity
-- `identity set --name "..." [--url "..."] [--github "..."]` → set identity
-- `identity set-subnet --netuid N --name "..." [--url "..."]` → subnet identity
+- `identity set --name "..." [--url "..."] [--github "..."] [--image "..."] [--description "..."]` → set identity; ignores `--output json`
+- `identity clear` → clear on-chain identity
+- `identity set-subnet --netuid N --name "..." [--github "..."] [--url "..."]` → subnet identity (note: several pallet fields have no CLI surface: `discord`, `description`, `logo_url`, `subnet_contact`)
 
 ### Other Commands
-- `delegate list/show/decrease-take/increase-take` — validator delegation
-- `root register / root weights` — root network (SN0)
-- `serve axon --netuid N --ip IP --port PORT` — miner endpoint
-- `subscribe blocks / events [--filter F] [--netuid N] [--account SS58]` — WebSocket finalized stream; events: filters incl. delegation, keys, swap, governance, crowdloan; invalid `--filter` → exit **12**; e2e Phase 26 `test_subscribe_blocks` + `test_subscribe_events_preflight` (`docs/commands/subscribe.md`)
-- `proxy add/remove/list` — proxy account delegation
-- `multisig address/submit/approve` — multi-signature
-- `swap hotkey/coldkey` — key rotation
-- `batch --file calls.json [--no-atomic]` — bulk extrinsics
-- `crowdloan contribute/withdraw/finalize`
-- `config show/set/unset/path` — persistent settings
+- `delegate list [--limit N]` — validator delegation; hardcaps at 50 without `--limit`
+- `delegate show --hotkey-address SS58` — show validator info; ignores `--output` flag
+- `delegate decrease-take --take PCT` — lower your delegate take
+- `delegate increase-take --take PCT` — raise take (rate-limited ~300 blocks); hardcoded 18% max may lag on-chain `MaxDelegateTake`
+- `root register` — register on root network
+- `root weights --netuid 0 --weights "uid:weight,..."` — set root weights (version-key hardcoded 0; no `--version-key` flag)
+- `serve axon --netuid N --ip IP --port PORT [--protocol P] [--version V]`
+- `serve reset --netuid N` — reset axon (submits port=0; may fail on-chain since pallet rejects port=0)
+- `serve batch-axon --file JSON` — batch axon registration from JSON file
+- `serve prometheus --netuid N --ip IP --port PORT` — register prometheus endpoint
+- `serve axon-tls --netuid N --ip IP --port PORT --cert PATH` — register TLS axon; cert must be ≤ 65 bytes raw binary (NOT standard PEM/DER)
+- `subscribe blocks` — WebSocket finalized block stream
+- `subscribe events [--filter F] [--netuid N] [--account SS58]` — event stream; `--filter` options: staking, delegation, keys, swap, governance, crowdloan; unknown filter → exit 12
+- `proxy add/remove/list/list-announcements/create-pure/kill-pure/announce/remove-all/remove-announcement/reject-announcement/proxy-announced` — proxy account delegation; 18 valid proxy types
+- `multisig address/submit/approve/execute/cancel/list` — multi-signature; approve requires `--timepoint-height`/`--timepoint-index` for non-first approvals (missing flags → chain NoTimepoint error)
+- `swap hotkey --new-hotkey SS58` — swap hotkey across all subnets (no per-subnet option)
+- `swap coldkey --new-coldkey SS58` — schedule coldkey swap (calls deprecated `schedule_swap_coldkey`; use chain announcement flow instead)
+- `swap evm-key --evm-address 0x... --block-number N --signature 0x...` — associate EVM key (note: `--netuid` arg absent; `--block-number` parsed as u32 but pallet expects u64)
+- `batch --file calls.json [--no-atomic] [--force]` — bulk extrinsics; 1000-call limit; `--no-atomic` and `--force` can coexist but `--force` wins silently
+- `crowdloan create/contribute/withdraw/finalize/refund/dissolve/info/list/contributors/update-min-contribution/update-end/update-cap`
+- `liquidity add/remove/modify/toggle` — liquidity management (`add` currently fails on-chain: UserLiquidityDisabled)
+- `scheduler schedule/schedule-named/cancel/cancel-named` — block scheduler (root-only; named IDs must be ≤ 32 bytes)
+- `preimage note --data HEX` — note a preimage on-chain
+- `preimage unnote --hash 0x...` — remove a preimage
+- `contracts upload/instantiate/call/remove-code` — smart contracts (pallet index 29)
+- `evm call/withdraw` — EVM operations
+- `safe-mode enter/extend/force-enter/force-exit` — safe mode control; `force-enter` sends no args (pallet takes none)
+- `drand write-pulse` — write a drand randomness pulse
+- `config show/set/unset/path/cache-clear/cache-info` — persistent settings; `config show` ignores `--output json` (outputs TOML); settable keys include `finalization_timeout` and `mortality_blocks` only via TOML edit
 - `block latest / block info --number N / block range` — block explorer
-- `diff portfolio|subnet|network|metagraph --block1 A --block2 B` — historical comparison at two heights (`--netuid` on subnet/metagraph); archive endpoint if pruned; e2e Phase 20 `test_diff_queries` (`diff_*_preflight` logs)
-- `utils convert --tao X --netuid N / --alpha X --netuid N` — alpha↔TAO conversion
-- `utils latency` — endpoint latency test
-- `completions --shell bash|zsh|fish` — shell completions
-- `update` — self-update
+- `diff portfolio|subnet|network|metagraph --block1 A --block2 B` — historical comparison; use archive endpoint for pruned blocks
+- `utils convert --tao X --netuid N` → Alpha↔TAO via SwapRuntimeApi (requires chain)
+- `utils convert --alpha X --netuid N` → Alpha→TAO
+- `utils convert --amount X` → RAO→TAO (no chain required)
+- `utils convert --amount X --to-rao` → TAO→RAO (no chain required)
+- `utils latency [--extra URL,URL2] [--pings N]` — endpoint latency test (`--pings` default 5; `--count` does not exist)
+- `completions --shell bash|zsh|fish|powershell` — shell completions
+- `update` — self-update via cargo
 - `doctor` — diagnostic checks
-- `explain [--topic T]` — 32 built-in concept explanations
+- `explain [--topic T] [--full]` — 32 built-in concept explanations
 
 ### Localnet (Local Chain Management)
 - `localnet start [--image TAG] [--port N] [--container NAME] [--wait false] [--timeout 120]` → `{"status","container_name","container_id","image","endpoint","port","block_height","dev_accounts"}`
 - `localnet stop [--container NAME]` → `{"status":"stopped","container_name"}`
 - `localnet status [--container NAME] [--port N]` → `{"running","container_name","container_id","image","endpoint","block_height"}`
 - `localnet reset [--image TAG] [--port N] [--timeout 120]` → `{"status":"reset","container_name","endpoint","block_height"}`
-- `localnet logs [--container NAME] [--tail N]`
-- `localnet scaffold [--config scaffold.toml] [--image TAG] [--port N] [--no-start]` — one-command test env: start chain + register subnets + fund accounts + set hyperparams + register neurons → JSON manifest
+- `localnet logs [--container NAME] [--tail N]` — always plain text (ignores `--output json`)
+- `localnet scaffold [--config scaffold.toml] [--image TAG] [--port N] [--no-start]` — one-command test env: start chain + register subnets + fund accounts + set hyperparams + register neurons → JSON manifest; `seed` field omitted from JSON output
   - Default: 1 subnet (tempo=100, max_val=8), 3 neurons (validator1@1000 TAO, miner1@100 TAO, miner2@100 TAO)
   - Uses TOML config with `[chain]`, `[[subnet]]`, `[[subnet.neuron]]` sections
-  - Output: `{"endpoint","container","block_height","subnets":[{"netuid","hyperparams","neurons":[{"name","ss58","seed","uid","balance_tao"}]}]}`
+  - Output: `{"endpoint","container","block_height","subnets":[{"netuid","hyperparams","neurons":[{"name","ss58","uid","balance_tao"}]}]}`
 
 ### Admin (Sudo AdminUtils)
-- `admin set-tempo --netuid N --tempo T [--sudo-key //Alice] [--network local]`
+See [admin.md](commands/admin.md) and [hyperparameters.md](../hyperparameters.md) for full parameter reference.
+
+Named commands (per-subnet unless noted):
+- `admin set-tempo --netuid N --tempo T [--sudo-key //Alice]`
 - `admin set-max-validators --netuid N --max M [--sudo-key //Alice]`
 - `admin set-max-uids --netuid N --max M [--sudo-key //Alice]`
 - `admin set-immunity-period --netuid N --period P [--sudo-key //Alice]`
@@ -312,14 +380,37 @@ agcli config set --key spending_limit.* --value 500.0     # Global max
 - `admin set-commit-reveal --netuid N --enabled true|false [--sudo-key //Alice]`
 - `admin set-difficulty --netuid N --difficulty D [--sudo-key //Alice]`
 - `admin set-activity-cutoff --netuid N --cutoff C [--sudo-key //Alice]`
-- `admin raw --call EXTRINSIC --args '[N, V]' [--sudo-key //Alice]` — generic escape hatch
+- `admin set-default-take --take T [--sudo-key //Alice]` — global delegate default take (u16, 0–65535)
+- `admin set-tx-rate-limit --limit L [--sudo-key //Alice]` — global transaction rate limit
+- `admin set-min-difficulty --netuid N --difficulty D [--sudo-key //Alice]`
+- `admin set-max-difficulty --netuid N --difficulty D [--sudo-key //Alice]`
+- `admin set-adjustment-interval --netuid N --interval I [--sudo-key //Alice]`
+- `admin set-kappa --netuid N --kappa K [--sudo-key //Alice]`
+- `admin set-rho --netuid N --rho R [--sudo-key //Alice]`
+- `admin set-min-burn --netuid N --burn B [--sudo-key //Alice]` — RAO units
+- `admin set-max-burn --netuid N --burn B [--sudo-key //Alice]` — RAO units
+- `admin set-liquid-alpha --netuid N --enabled true|false [--sudo-key //Alice]`
+- `admin set-alpha-values --netuid N --alpha-low L --alpha-high H [--sudo-key //Alice]`
+- `admin set-yuma3 --netuid N --enabled true|false [--sudo-key //Alice]`
+- `admin set-bonds-penalty --netuid N --penalty P [--sudo-key //Alice]`
+- `admin set-stake-threshold --threshold T [--sudo-key //Alice]` — global validator stake floor
+- `admin set-network-registration --netuid N --allowed true|false [--sudo-key //Alice]`
+- `admin set-pow-registration --netuid N --allowed true|false [--sudo-key //Alice]` — pallet hard-disables POW; call always returns `POWRegistrationDisabled`
+- `admin set-adjustment-alpha --netuid N --alpha A [--sudo-key //Alice]`
+- `admin set-subnet-moving-alpha --alpha A [--sudo-key //Alice]` — global EMA alpha (I96F32 encoded as u64 in CLI, encoding mismatch — prefer `admin raw`)
+- `admin set-mechanism-count --netuid N --count C [--sudo-key //Alice]`
+- `admin set-mechanism-emission-split --netuid N --weights "50,50" [--sudo-key //Alice]`
+- `admin set-nominator-min-stake --stake S [--sudo-key //Alice]` — global nominator min stake
+- `admin raw --call EXTRINSIC --args '[N, V]' [--sudo-key //Alice]` — generic escape hatch; limited to `known_params` allowlist
 - `admin list` → all known AdminUtils parameters with descriptions and arg types
+
+Generic `admin raw` covers remaining AdminUtils calls not surfaced as named commands, including: `sudo_set_subnet_owner_cut`, `sudo_set_network_rate_limit`, `sudo_set_total_issuance`, `sudo_set_network_immunity_period`, `sudo_set_network_min_lock_cost`, `sudo_set_subnet_limit`, `sudo_set_lock_reduction_interval`, `sudo_set_rao_recycled`, `sudo_set_tx_delegate_take_rate_limit`, `sudo_set_min_delegate_take`, `sudo_set_commit_reveal_weights_interval`, `sudo_set_evm_chain_id`, `sudo_set_toggle_transfer`, `sudo_set_recycle_or_burn`, `sudo_set_subnet_owner_hotkey`, `sudo_set_ema_price_halving_period`, `sudo_set_alpha_sigmoid_steepness`, `sudo_set_subtoken_enabled`, `sudo_set_commit_reveal_version`, `sudo_set_owner_immune_neuron_limit`, `sudo_set_ck_burn`, `sudo_set_admin_freeze_window`, `sudo_set_owner_hparam_rate_limit`, `sudo_set_max_mechanism_count`, `sudo_set_min_allowed_uids`, `sudo_set_tao_flow_cutoff`, `sudo_set_tao_flow_normalization_exponent`, `sudo_set_tao_flow_smoothing_factor`, `sudo_set_start_call_delay`, `sudo_set_coldkey_swap_announcement_delay`, `sudo_set_coldkey_swap_reannouncement_delay`, `sudo_set_burn_half_life`, `sudo_set_burn_increase_mult`.
 
 ### Live Mode
 ```bash
-agcli --live view dynamic          # poll prices with delta tracking
-agcli --live 30 subnet metagraph --netuid 1  # neuron changes every 30s
-agcli --live view portfolio        # watch portfolio
+agcli view dynamic --live          # poll prices with delta tracking (--live after subcommand!)
+agcli subnet metagraph --netuid 1 --live 30  # neuron changes every 30s
+agcli view portfolio --live        # watch portfolio
 ```
 
 ### Historical Queries (--at-block)
@@ -334,8 +425,10 @@ agcli --output csv view dynamic            # CSV
 agcli --output csv subnet metagraph --netuid 1
 ```
 
+Note: several commands ignore `--output json` and always emit plain text or TOML: `view neuron`, `config show`, `delegate show`, `root register`, `root weights`, `serve axon`, `safe-mode enter/extend`, `completions`.
+
 ### Error Handling
-Batch/JSON: structured `{"error": true, "message": "..."}` on stderr. Exit 1.
+Batch/JSON: structured `{"error": true, "message": "..."}` on stderr. See exit code table above.
 
 ### Spending Limits
 ```bash

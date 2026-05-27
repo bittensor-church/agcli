@@ -38,6 +38,12 @@ pub struct QueryCache {
     delegates: Cache<(), Arc<Vec<DelegateInfo>>>,
     /// Cached neurons_lite per subnet (keyed by netuid).
     neurons_lite: Cache<u16, Arc<Vec<NeuronInfoLite>>>,
+    /// Cached subnet list at a pinned block hash (immutable per block).
+    subnets_at_block: Cache<String, Arc<Vec<SubnetInfo>>>,
+    /// Cached dynamic info at a pinned block hash (immutable per block).
+    all_dynamic_at_block: Cache<String, Arc<Vec<DynamicInfo>>>,
+    /// Cached neurons_lite at a pinned block hash and netuid.
+    neurons_lite_at_block: Cache<String, Arc<Vec<NeuronInfoLite>>>,
     /// Whether to use the disk cache layer. Disabled for tests with custom TTLs.
     use_disk: bool,
     /// Network prefix for disk cache keys (e.g. "finney", "test") to prevent
@@ -72,6 +78,10 @@ impl QueryCache {
             dynamic_by_netuid: Cache::builder().time_to_live(ttl).max_capacity(100).build(),
             delegates: Cache::builder().time_to_live(ttl).max_capacity(1).build(),
             neurons_lite: Cache::builder().time_to_live(ttl).max_capacity(100).build(),
+            // Pinned block data is immutable per hash, so no TTL is needed.
+            subnets_at_block: Cache::builder().max_capacity(256).build(),
+            all_dynamic_at_block: Cache::builder().max_capacity(256).build(),
+            neurons_lite_at_block: Cache::builder().max_capacity(512).build(),
             use_disk,
             network_prefix: String::new(),
         }
@@ -96,6 +106,11 @@ impl QueryCache {
         } else {
             format!("{}_{}", self.network_prefix, base)
         }
+    }
+
+    /// Return a disk cache key for immutable at-block reads.
+    fn at_block_disk_key(&self, base: &str, block_hash: &str) -> String {
+        self.disk_key(&format!("atblock:{}:{}", base, block_hash))
     }
 
     /// Get or fetch all subnets. Concurrent callers coalesce into one fetch.
@@ -304,6 +319,139 @@ impl QueryCache {
             .map_err(|e| anyhow::anyhow!("{}", e))
     }
 
+    /// Get or fetch all subnets for an explicit pinned block hash.
+    /// Uses immutable block-hash keys to avoid serving latest/stale TTL entries.
+    pub async fn get_all_subnets_at_block<F, Fut>(
+        &self,
+        block_hash: &str,
+        fetch: F,
+    ) -> anyhow::Result<Arc<Vec<SubnetInfo>>>
+    where
+        F: FnOnce() -> Fut,
+        Fut: std::future::Future<Output = anyhow::Result<Vec<SubnetInfo>>>,
+    {
+        let key = block_hash.to_string();
+        let log_hash = key.clone();
+        let disk = self.use_disk;
+        let dk = self.at_block_disk_key("all_subnets", block_hash);
+        self.subnets_at_block
+            .try_get_with(key, async move {
+                if disk {
+                    if let Some(cached) = super::disk_cache::get::<Vec<SubnetInfo>>(&dk, DISK_TTL) {
+                        tracing::debug!(
+                            block_hash = %log_hash,
+                            count = cached.len(),
+                            "cache hit: all_subnets_at_block (disk)"
+                        );
+                        return Ok(Arc::new(cached)) as anyhow::Result<_>;
+                    }
+                }
+                let data = fetch().await?;
+                if disk {
+                    if let Err(e) = super::disk_cache::put(&dk, &data) {
+                        tracing::warn!(
+                            block_hash = %log_hash,
+                            error = %e,
+                            "failed to write all_subnets_at_block to disk cache"
+                        );
+                    }
+                }
+                Ok(Arc::new(data))
+            })
+            .await
+            .map_err(|e| anyhow::anyhow!("{}", e))
+    }
+
+    /// Get or fetch all dynamic info for an explicit pinned block hash.
+    /// Uses immutable block-hash keys to avoid serving latest/stale TTL entries.
+    pub async fn get_all_dynamic_info_at_block<F, Fut>(
+        &self,
+        block_hash: &str,
+        fetch: F,
+    ) -> anyhow::Result<Arc<Vec<DynamicInfo>>>
+    where
+        F: FnOnce() -> Fut,
+        Fut: std::future::Future<Output = anyhow::Result<Vec<DynamicInfo>>>,
+    {
+        let key = block_hash.to_string();
+        let log_hash = key.clone();
+        let disk = self.use_disk;
+        let dk = self.at_block_disk_key("all_dynamic_info", block_hash);
+        self.all_dynamic_at_block
+            .try_get_with(key, async move {
+                if disk {
+                    if let Some(cached) = super::disk_cache::get::<Vec<DynamicInfo>>(&dk, DISK_TTL) {
+                        tracing::debug!(
+                            block_hash = %log_hash,
+                            count = cached.len(),
+                            "cache hit: all_dynamic_info_at_block (disk)"
+                        );
+                        return Ok(Arc::new(cached)) as anyhow::Result<_>;
+                    }
+                }
+                let data = fetch().await?;
+                if disk {
+                    if let Err(e) = super::disk_cache::put(&dk, &data) {
+                        tracing::warn!(
+                            block_hash = %log_hash,
+                            error = %e,
+                            "failed to write all_dynamic_info_at_block to disk cache"
+                        );
+                    }
+                }
+                Ok(Arc::new(data))
+            })
+            .await
+            .map_err(|e| anyhow::anyhow!("{}", e))
+    }
+
+    /// Get or fetch neurons_lite for an explicit pinned block hash and netuid.
+    /// Uses immutable block-hash keys to avoid serving latest/stale TTL entries.
+    pub async fn get_neurons_lite_at_block<F, Fut>(
+        &self,
+        netuid: u16,
+        block_hash: &str,
+        fetch: F,
+    ) -> anyhow::Result<Arc<Vec<NeuronInfoLite>>>
+    where
+        F: FnOnce() -> Fut,
+        Fut: std::future::Future<Output = anyhow::Result<Vec<NeuronInfoLite>>>,
+    {
+        let key = format!("{}:{}", netuid, block_hash);
+        let log_hash = block_hash.to_string();
+        let disk = self.use_disk;
+        let dk = self.at_block_disk_key(&format!("neurons_lite:{}", netuid), block_hash);
+        self.neurons_lite_at_block
+            .try_get_with(key, async move {
+                if disk {
+                    if let Some(cached) = super::disk_cache::get::<Vec<NeuronInfoLite>>(&dk, DISK_TTL)
+                    {
+                        tracing::debug!(
+                            netuid,
+                            block_hash = %log_hash,
+                            count = cached.len(),
+                            "cache hit: neurons_lite_at_block (disk)"
+                        );
+                        return Ok(Arc::new(cached)) as anyhow::Result<_>;
+                    }
+                }
+                let data = fetch().await?;
+                if disk {
+                    if let Err(e) = super::disk_cache::put(&dk, &data) {
+                        tracing::warn!(
+                            netuid,
+                            block_hash = %log_hash,
+                            error = %e,
+                            "failed to write neurons_lite_at_block to disk cache"
+                        );
+                    }
+                }
+                Ok(Arc::new(data))
+            })
+            .await
+            .map_err(|e| anyhow::anyhow!("{}", e))
+    }
+
     /// Invalidate all cached data (both in-memory and disk).
     pub async fn invalidate_all(&self) {
         self.subnets.invalidate_all();
@@ -311,6 +459,9 @@ impl QueryCache {
         self.dynamic_by_netuid.invalidate_all();
         self.delegates.invalidate_all();
         self.neurons_lite.invalidate_all();
+        self.subnets_at_block.invalidate_all();
+        self.all_dynamic_at_block.invalidate_all();
+        self.neurons_lite_at_block.invalidate_all();
         if self.use_disk {
             super::disk_cache::remove(&self.disk_key("all_subnets"));
             super::disk_cache::remove(&self.disk_key("all_dynamic_info"));

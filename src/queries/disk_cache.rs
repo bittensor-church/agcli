@@ -33,6 +33,10 @@ fn now_secs() -> u64 {
         .as_secs()
 }
 
+fn is_at_block_key(key: &str) -> bool {
+    key.contains("atblock:")
+}
+
 /// Read a cached value if it exists and hasn't expired.
 /// Returns `Some(data)` if cache hit, `None` if miss or expired.
 pub fn get<T: DeserializeOwned>(key: &str, ttl: Duration) -> Option<T> {
@@ -61,7 +65,9 @@ pub fn get<T: DeserializeOwned>(key: &str, ttl: Duration) -> Option<T> {
         }
     };
     let age = now_secs().saturating_sub(entry.written_at);
-    if ttl.is_zero() || age >= ttl.as_secs() {
+    // At-block keys are immutable snapshots keyed by block hash. They do not become
+    // semantically stale, so TTL expiry is skipped to avoid unnecessary refetches.
+    if !is_at_block_key(key) && (ttl.is_zero() || age >= ttl.as_secs()) {
         tracing::debug!(
             key,
             age_secs = age,
