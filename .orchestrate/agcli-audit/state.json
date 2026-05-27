@@ -249,13 +249,13 @@
       "handoffPath": "handoffs/audit-serve.md",
       "startedAt": "2026-05-27T13:12:22.871Z",
       "finishedAt": "2026-05-27T13:26:42.248Z",
-      "lastUpdate": "2026-05-27T13:26:42.248Z",
+      "lastUpdate": "2026-05-27T13:26:43.798Z",
       "note": "respawned by self-planner (was error; attempts=2)",
       "attempts": 3,
       "slackTs": null,
       "prNumber": null,
       "failureMode": null,
-      "verification": null
+      "verification": "unit-test-verified"
     },
     {
       "name": "audit-proxy",
@@ -746,12 +746,12 @@
       "agentId": "bc-e5650f05-2171-420c-ae85-c1da7736565a",
       "runId": "run-c5370b58-b0ab-4b31-95a2-20b4444a50df",
       "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
-      "status": "running",
-      "resultStatus": null,
-      "handoffPath": null,
+      "status": "handed-off",
+      "resultStatus": "finished",
+      "handoffPath": "handoffs/audit-utils-cli.md",
       "startedAt": "2026-05-27T13:16:06.590Z",
-      "finishedAt": null,
-      "lastUpdate": "2026-05-27T13:16:10.168Z",
+      "finishedAt": "2026-05-27T13:28:09.952Z",
+      "lastUpdate": "2026-05-27T13:28:09.953Z",
       "note": "respawned by self-planner (was error; attempts=2)",
       "attempts": 3,
       "slackTs": null,
@@ -2607,6 +2607,10 @@
     {
       "at": "2026-05-27T13:20:42.491Z",
       "message": "audit-weights: model \"claude-sonnet-4-6\" not in MODEL_CATALOG (spawning anyway). Run `bun cli.ts models` to see known slugs."
+    },
+    {
+      "at": "2026-05-27T13:26:43.800Z",
+      "message": "audit-serve: verification self-reported (unit-test-verified)"
     }
   ]
 }
