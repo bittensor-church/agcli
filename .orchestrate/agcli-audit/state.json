@@ -37,13 +37,13 @@
       "handoffPath": "handoffs/audit-wallet.md",
       "startedAt": "2026-05-27T12:23:00.308Z",
       "finishedAt": "2026-05-27T12:43:04.353Z",
-      "lastUpdate": "2026-05-27T12:43:17.828Z",
+      "lastUpdate": "2026-05-27T13:59:18.244Z",
       "note": "respawned by self-planner (was error; attempts=3)",
       "attempts": 4,
       "slackTs": null,
       "prNumber": null,
       "failureMode": null,
-      "verification": "unit-test-verified"
+      "verification": "verifier-failed"
     },
     {
       "name": "audit-balance-transfer",
@@ -1053,12 +1053,12 @@
       "agentId": "bc-2ed0cc06-b2ff-41b5-ae4a-486fdbf77216",
       "runId": "run-e23586a7-8639-4add-933c-6c5bbc892dd1",
       "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
-      "status": "running",
-      "resultStatus": null,
-      "handoffPath": null,
+      "status": "handed-off",
+      "resultStatus": "finished",
+      "handoffPath": "handoffs/fix-events-pretty.md",
       "startedAt": "2026-05-27T13:49:27.248Z",
-      "finishedAt": null,
-      "lastUpdate": "2026-05-27T13:49:31.063Z",
+      "finishedAt": "2026-05-27T13:59:42.631Z",
+      "lastUpdate": "2026-05-27T13:59:42.631Z",
       "note": null,
       "attempts": 1,
       "slackTs": null,
@@ -2681,6 +2681,10 @@
     {
       "at": "2026-05-27T13:56:52.022Z",
       "message": "fix-explain-topics: verification self-reported (type-check-only)"
+    },
+    {
+      "at": "2026-05-27T13:59:18.245Z",
+      "message": "audit-wallet: verification recorded (verifier-failed) by verifier verify-write-batch"
     }
   ]
 }
