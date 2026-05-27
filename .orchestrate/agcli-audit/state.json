@@ -472,16 +472,16 @@
       "agentId": "bc-efd56aae-bd56-4e19-8d74-eb0c1298c98c",
       "runId": "run-8ac7e8d4-79db-41fe-a217-c46694f59596",
       "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
-      "status": "running",
-      "resultStatus": null,
-      "handoffPath": null,
+      "status": "error",
+      "resultStatus": "error",
+      "handoffPath": "handoffs/audit-crowdloan.md",
       "startedAt": "2026-05-27T11:16:42.833Z",
-      "finishedAt": null,
-      "lastUpdate": "2026-05-27T11:16:46.512Z",
+      "finishedAt": "2026-05-27T11:17:34.041Z",
+      "lastUpdate": "2026-05-27T11:17:34.041Z",
       "note": null,
       "slackTs": null,
       "prNumber": null,
-      "failureMode": null,
+      "failureMode": "unknown",
       "verification": null,
       "attempts": 1
     },
@@ -1595,6 +1595,18 @@
     {
       "at": "2026-05-27T11:17:32.137Z",
       "message": "audit-swap-keys: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status"
+    },
+    {
+      "at": "2026-05-27T11:17:34.038Z",
+      "message": "audit-swap-keys: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-swap-keys.md"
+    },
+    {
+      "at": "2026-05-27T11:17:34.039Z",
+      "message": "audit-swap-keys: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-swap-keys-failure.md"
+    },
+    {
+      "at": "2026-05-27T11:17:34.040Z",
+      "message": "audit-crowdloan: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status"
     }
   ]
 }
