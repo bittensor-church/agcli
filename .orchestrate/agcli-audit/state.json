@@ -1335,20 +1335,20 @@
         "audit-admin",
         "audit-localnet"
       ],
-      "agentId": "bc-72f0a8cb-80cd-4ac4-946a-7e4e9a071b84",
-      "runId": "run-3292c4ea-6697-4b17-90bb-ad165e41a382",
+      "agentId": null,
+      "runId": null,
       "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
-      "status": "error",
-      "resultStatus": "error",
-      "handoffPath": "handoffs/fix-scaffold-localnet.md",
-      "startedAt": "2026-05-27T13:49:44.268Z",
-      "finishedAt": "2026-05-27T13:50:49.187Z",
-      "lastUpdate": "2026-05-27T13:50:49.187Z",
-      "note": null,
+      "status": "pending",
+      "resultStatus": null,
+      "handoffPath": null,
+      "startedAt": null,
+      "finishedAt": null,
+      "lastUpdate": "2026-05-27T13:52:27.580Z",
+      "note": "respawned by self-planner (was error; attempts=1)",
       "attempts": 1,
       "slackTs": null,
       "prNumber": null,
-      "failureMode": "unknown",
+      "failureMode": null,
       "verification": null
     },
     {
@@ -2661,6 +2661,10 @@
     {
       "at": "2026-05-27T13:50:50.257Z",
       "message": "fix-scaffold-localnet: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/fix-scaffold-localnet-failure.md"
+    },
+    {
+      "at": "2026-05-27T13:52:27.186Z",
+      "message": "fix-llm-txt: respawned by self-planner (was error)"
     }
   ]
 }
