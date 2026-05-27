@@ -648,17 +648,17 @@
       "agentId": "bc-91326555-9c63-4de9-8f79-5469bebe6183",
       "runId": "run-9422a96b-2e4c-4fc4-a64c-a50fc678723e",
       "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
-      "status": "running",
-      "resultStatus": null,
-      "handoffPath": null,
+      "status": "error",
+      "resultStatus": "error",
+      "handoffPath": "handoffs/audit-completions-update.md",
       "startedAt": "2026-05-27T11:34:42.218Z",
-      "finishedAt": null,
-      "lastUpdate": "2026-05-27T11:34:45.450Z",
+      "finishedAt": "2026-05-27T11:35:19.589Z",
+      "lastUpdate": "2026-05-27T11:35:19.589Z",
       "note": "respawned by self-planner (was error; attempts=1)",
       "attempts": 2,
       "slackTs": null,
       "prNumber": null,
-      "failureMode": null,
+      "failureMode": "unknown",
       "verification": null
     },
     {
@@ -2025,6 +2025,18 @@
     {
       "at": "2026-05-27T11:35:17.628Z",
       "message": "audit-batch: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status"
+    },
+    {
+      "at": "2026-05-27T11:35:18.746Z",
+      "message": "audit-batch: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-batch.md"
+    },
+    {
+      "at": "2026-05-27T11:35:18.747Z",
+      "message": "audit-batch: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-batch-failure.md"
+    },
+    {
+      "at": "2026-05-27T11:35:19.588Z",
+      "message": "audit-completions-update: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status"
     }
   ]
 }
