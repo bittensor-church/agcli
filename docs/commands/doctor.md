@@ -1,83 +1,124 @@
-# doctor — Install & connectivity smoke test
+# doctor — diagnostics command
 
-Run **`agcli doctor`** after installing the binary to confirm your build talks to the right network, the RPC endpoint answers, and your default wallet directory looks sane. No subcommands — one diagnostic panel.
+`agcli doctor` is a single-command diagnostic surface (no nested subcommands) that runs local + on-chain health checks and prints a report.
 
-**Discoverability:** `agcli doctor --help`; `agcli explain` Phase 6 cheat sheet lists **`agcli doctor`** with the e2e log name; [`docs/llm.txt`](../llm.txt) Tier 1 + command table link here.
+## Command surface
+
+- Top-level dispatch: `Commands::Doctor` in `src/cli/commands.rs`
+- Handler: `handle_doctor(...)` in `src/cli/system_cmds.rs`
+- Subcommands under `doctor`: **none**
 
 ## Usage
 
 ```bash
 agcli doctor
-agcli doctor --network test
-agcli doctor --endpoint ws://127.0.0.1:9944 --output json
-agcli --wallet mywallet --wallet-dir ~/.bittensor/wallets doctor
+agcli --network test doctor
+agcli --endpoint ws://127.0.0.1:9944 --output json doctor
+agcli --wallet-dir ~/.bittensor/wallets --wallet default doctor
 ```
 
-Uses global flags only (`--network`, `--endpoint`, `--wallet-dir`, `--wallet`, `--output`, etc.).
+## Clap flags and types
 
-## What it checks
+`doctor` has no local flags; it consumes global `Cli` flags.
 
-Order matches [`handle_doctor`](https://github.com/unarbos/agcli/blob/main/src/cli/system_cmds.rs) in `src/cli/system_cmds.rs`:
+### Flags used directly by `handle_doctor`
 
-1. **Version** — build label (`agcli v…` from `CARGO_PKG_VERSION`). Always OK.
-2. **Network** — resolved network name and how many WebSocket URLs are configured. Always OK.
-3. **Connection** — `Client::connect_network(network)`; OK or FAIL with error text (unreachable host, TLS, wrong URL, etc.).
-4. **Block height** — `get_block_number` when connected; OK or FAIL.
-5. **Subnets** — `get_total_networks` when connected; OK or FAIL.
-6. **Latency (3 pings)** — three sequential `get_block_number` calls; reports avg/min/max ms. FAIL if every ping errors; partial failures are noted in the detail line.
-7. **Disk cache** — [`disk_cache::list_keys`](https://github.com/unarbos/agcli/blob/main/src/queries/disk_cache.rs) + entry count / size under [`disk_cache::path`](https://github.com/unarbos/agcli/blob/main/src/queries/disk_cache.rs) (`~/.agcli/cache` by default). Informational; treated as OK even when empty.
-8. **Wallet** — opens `{wallet_dir}/{wallet_name}` (defaults: `~/.bittensor/wallets` / `default`, tildes expanded). OK if a coldkey is present; FAIL if coldkey missing or the wallet path cannot be opened as expected.
+| Flag | Type | Default | Meaning in doctor |
+|---|---|---|---|
+| `--network` (`-n`) | `String` | `"finney"` | Chooses network preset, converted to RPC URL list via `resolve_network()` / `Network::ws_urls()`. |
+| `--endpoint` | `Option<String>` | `None` | Overrides `--network` and forces a custom RPC endpoint. |
+| `--wallet-dir` | `String` | `"~/.bittensor/wallets"` | Base path used for wallet status check. |
+| `--wallet` (`-w`) | `String` | `"default"` | Wallet name used for wallet status check. |
+| `--output` | `OutputFormat` (`table|json|csv`) | `table` | `json` emits structured payload; all non-JSON formats currently use table-style text. |
 
-## Human output
+### Global flags that can still affect execution
+
+| Flag | Type | Effect |
+|---|---|---|
+| `--timeout` | `Option<u64>` | Wraps whole command in process-level timeout from `src/main.rs`; timeout errors classify to exit code `15`. |
+| `--time` | `bool` | Prints elapsed wall-clock time to stderr in `main`. |
+| `--verbose` / `--debug` / `--log-file` | `bool` / `bool` / `Option<String>` | Logging behavior only. |
+
+## Check list and chain mapping (execution order)
+
+| Check row | Chain call path | Pallet / storage / RPC reference | SCALE args | On-chain events emitted by this check |
+|---|---|---|---|---|
+| `Version` | local constant `env!("CARGO_PKG_VERSION")` | none (local build metadata) | n/a | none |
+| `Network` | `network.ws_urls()` | none (local config mapping) | n/a | none |
+| `Connection` | `Client::connect_network -> connect_with_retry -> connect_once` | subxt RPC transport connect only; no explicit `system_chain` / `system_version` probe is performed | n/a | none |
+| `Block height` | `Client::get_block_number` | best-head query via `inner.blocks().at_latest()` (RPC-backed head lookup) | n/a | none |
+| `Subnets` | `Client::get_total_networks` | `api::storage().subtensor_module().total_networks()` → `SubtensorModule::TotalNetworks` (`StorageValue<u16>`) in `subtensor/pallets/subtensor/src/lib.rs` | none (`StorageValue`, keyless fetch) | none (read-only); writes to this storage emit events such as `NetworkAdded` / `NetworkRemoved` in `subtensor/pallets/subtensor/src/macros/events.rs` |
+| `Latency (3 pings)` | three `Client::get_block_number` calls | same as `Block height` | n/a | none |
+| `Disk cache` | `queries::disk_cache::{list_keys,path}` + local `std::fs::metadata` | none (local filesystem) | n/a | none |
+| `Wallet` | `wallet::Wallet::open("{wallet_dir}/{wallet}")`, `coldkey_ss58`, `list_hotkeys` | none (wallet files on disk) | n/a | none |
+
+## Dispatchables in scope
+
+`doctor` submits **no extrinsics**. There is no pallet dispatchable name or call-argument SCALE encoding path in this command.
+
+## Output contract
+
+### Human/table mode (`--output table` or `--output csv`)
+
+Rows are printed as:
 
 ```
-agcli doctor
-------------------------------------------------------------
-  [  OK] Version              agcli v…
-  [  OK] Network              …
-  [  OK] Connection           OK (Nms)
-  ...
-------------------------------------------------------------
-  All checks passed.
+[STATUS] CHECK_NAME DETAIL
 ```
 
-Failed rows show `[FAIL]`; the footer reports how many checks failed.
+where `STATUS` is `OK` or `FAIL`.
 
-## JSON output
+### JSON mode (`--output json`)
 
-`--output json`:
+Schema:
+
+```json
+{
+  "type": "object",
+  "required": ["doctor"],
+  "properties": {
+    "doctor": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["check", "detail", "ok"],
+        "properties": {
+          "check": { "type": "string" },
+          "detail": { "type": "string" },
+          "ok": { "type": "boolean" }
+        }
+      }
+    }
+  }
+}
+```
+
+Example payload:
 
 ```json
 {
   "doctor": [
-    { "check": "Version", "detail": "…", "ok": true },
-    …
+    { "check": "Version", "detail": "agcli v0.0.0", "ok": true },
+    { "check": "Connection", "detail": "OK (78ms)", "ok": true }
   ]
 }
 ```
 
 ## Exit codes
 
-**The process exits `0` whenever `doctor` finishes**, even if some rows are FAIL — failures are visible in the table or JSON `ok: false`, not via a non-zero exit. That matches [`handle_doctor`](https://github.com/unarbos/agcli/blob/main/src/cli/system_cmds.rs), which always returns `Ok(())`.
+Compared to `src/error.rs`:
 
-For automation that must detect RPC failure, parse JSON and inspect `Connection`, `Block height`, or `Latency (3 pings)` entries.
+| Condition | Exit code |
+|---|---|
+| Doctor finishes and prints report (even with failed rows) | `0` |
+| Clap parse/usage failure (invalid arg shape) | `2` (clap standard) |
+| Global timeout reached (`--timeout`) | `15` (`error::exit_code::TIMEOUT`) |
+| Internal unexpected error outside normal doctor flow | classified by `src/error.rs` (`1/10/11/12/13/14/15`) |
 
-Other commands still use the normal map in [`src/error.rs`](https://github.com/unarbos/agcli/blob/main/src/error.rs) (**1** generic, **10** network, **12** validation, **15** timeout, etc.). **`doctor` is intentionally non-fatal** so a single run always produces a full report.
-
-Invalid global flags are handled by clap (typically exit **2**).
-
-## E2E
-
-Log line **`doctor_preflight`** in Phase 20 `test_doctor_preflight` (`tests/e2e_test.rs`) mirrors the post-connect RPC bundle: `get_block_number`, `get_total_networks`, three `get_block_number` pings, plus disk cache key count/path (same helpers as the CLI). Wallet state is environment-specific and is documented above rather than asserted in CI.
-
-## Source code
-
-**Handler:** [`src/cli/system_cmds.rs`](https://github.com/unarbos/agcli/blob/main/src/cli/system_cmds.rs) — `handle_doctor()`.
-
-**Dispatch:** [`src/cli/commands.rs`](https://github.com/unarbos/agcli/blob/main/src/cli/commands.rs) — `Commands::Doctor`.
+`handle_doctor` intentionally accumulates failures into report rows instead of bubbling `Err`, so RPC/wallet check failures usually remain in-band (`ok: false`) with process exit `0`.
 
 ## Related commands
 
-- `agcli utils latency` — dedicated round-trip benchmark
-- `agcli balance` — free balance for an address
-- `agcli config show` — persisted defaults (`network`, `wallet`, …)
+- `agcli utils latency`
+- `agcli balance`
+- `agcli config show`
