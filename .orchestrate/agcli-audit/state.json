@@ -1229,13 +1229,13 @@
       "handoffPath": "handoffs/fix-chain-queries.md",
       "startedAt": "2026-05-27T13:49:37.788Z",
       "finishedAt": "2026-05-27T14:03:21.187Z",
-      "lastUpdate": "2026-05-27T14:03:21.187Z",
+      "lastUpdate": "2026-05-27T14:03:22.458Z",
       "note": null,
       "attempts": 1,
       "slackTs": null,
       "prNumber": null,
       "failureMode": null,
-      "verification": null
+      "verification": "type-check-only"
     },
     {
       "name": "fix-chain-extrinsics",
@@ -1338,12 +1338,12 @@
       "agentId": "bc-5e435f81-e175-44aa-8b45-d3a38c04a824",
       "runId": "run-c96a4e29-b0dc-4ecf-a3d4-07f7a3970916",
       "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
-      "status": "running",
-      "resultStatus": null,
-      "handoffPath": null,
+      "status": "handed-off",
+      "resultStatus": "finished",
+      "handoffPath": "handoffs/fix-scaffold-localnet.md",
       "startedAt": "2026-05-27T13:52:56.685Z",
-      "finishedAt": null,
-      "lastUpdate": "2026-05-27T13:52:59.506Z",
+      "finishedAt": "2026-05-27T14:06:01.154Z",
+      "lastUpdate": "2026-05-27T14:06:01.154Z",
       "note": "respawned by self-planner (was error; attempts=1)",
       "attempts": 2,
       "slackTs": null,
@@ -2697,6 +2697,10 @@
     {
       "at": "2026-05-27T14:02:59.011Z",
       "message": "fix-chain-extrinsics: verification self-reported (type-check-only)"
+    },
+    {
+      "at": "2026-05-27T14:03:22.460Z",
+      "message": "fix-chain-queries: verification self-reported (type-check-only)"
     }
   ]
 }
