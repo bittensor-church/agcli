@@ -337,15 +337,15 @@
       "branch": "orch/agcli-audit/audit-scheduler",
       "startingRef": "cursor/agcli-subtensor-audit-e2e7",
       "dependsOn": [],
-      "agentId": null,
-      "runId": null,
-      "parentAgentId": null,
+      "agentId": "bc-a145e3f6-19c8-43df-9648-57bd5af584d8",
+      "runId": "run-b02086e3-6e61-4934-84d2-dca81520faba",
+      "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
       "status": "running",
       "resultStatus": null,
       "handoffPath": null,
       "startedAt": "2026-05-27T11:16:24.462Z",
       "finishedAt": null,
-      "lastUpdate": "2026-05-27T11:16:24.462Z",
+      "lastUpdate": "2026-05-27T11:16:27.297Z",
       "note": null,
       "slackTs": null,
       "prNumber": null,
@@ -362,17 +362,18 @@
       "agentId": null,
       "runId": null,
       "parentAgentId": null,
-      "status": "pending",
+      "status": "running",
       "resultStatus": null,
       "handoffPath": null,
-      "startedAt": null,
+      "startedAt": "2026-05-27T11:16:27.298Z",
       "finishedAt": null,
-      "lastUpdate": null,
+      "lastUpdate": "2026-05-27T11:16:27.298Z",
       "note": null,
       "slackTs": null,
       "prNumber": null,
       "failureMode": null,
-      "verification": null
+      "verification": null,
+      "attempts": 1
     },
     {
       "name": "audit-contracts",
@@ -1338,6 +1339,14 @@
     {
       "at": "2026-05-27T11:16:25.773Z",
       "message": "bootstrap-env: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status"
+    },
+    {
+      "at": "2026-05-27T11:16:26.754Z",
+      "message": "bootstrap-env: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/bootstrap-env.md"
+    },
+    {
+      "at": "2026-05-27T11:16:26.756Z",
+      "message": "bootstrap-env: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/bootstrap-env-failure.md"
     }
   ]
 }
