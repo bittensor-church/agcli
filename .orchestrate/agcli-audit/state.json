@@ -477,13 +477,13 @@
       "handoffPath": "handoffs/audit-crowdloan.md",
       "startedAt": "2026-05-27T11:34:23.080Z",
       "finishedAt": "2026-05-27T11:46:25.485Z",
-      "lastUpdate": "2026-05-27T11:46:25.485Z",
+      "lastUpdate": "2026-05-27T11:47:00.278Z",
       "note": "respawned by self-planner (was error; attempts=1)",
       "attempts": 2,
       "slackTs": null,
       "prNumber": null,
       "failureMode": null,
-      "verification": null
+      "verification": "type-check-only"
     },
     {
       "name": "audit-liquidity",
@@ -670,12 +670,12 @@
       "agentId": "bc-5a916090-892a-4bf8-9c89-3c75c6e92971",
       "runId": "run-4da7bcd2-3162-43fc-8509-9579162bd7ac",
       "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
-      "status": "running",
-      "resultStatus": null,
-      "handoffPath": null,
+      "status": "handed-off",
+      "resultStatus": "finished",
+      "handoffPath": "handoffs/audit-audit-cmd.md",
       "startedAt": "2026-05-27T11:34:45.454Z",
-      "finishedAt": null,
-      "lastUpdate": "2026-05-27T11:34:48.502Z",
+      "finishedAt": "2026-05-27T11:47:00.283Z",
+      "lastUpdate": "2026-05-27T11:47:00.284Z",
       "note": "respawned by self-planner (was error; attempts=1)",
       "attempts": 2,
       "slackTs": null,
@@ -2117,6 +2117,10 @@
     {
       "at": "2026-05-27T11:46:25.482Z",
       "message": "audit-liquidity: verification self-reported (unit-test-verified)"
+    },
+    {
+      "at": "2026-05-27T11:47:00.279Z",
+      "message": "audit-crowdloan: verification self-reported (type-check-only)"
     }
   ]
 }
