@@ -1001,13 +1001,13 @@
       "handoffPath": "handoffs/fix-error-mapping.md",
       "startedAt": "2026-05-27T13:49:23.931Z",
       "finishedAt": "2026-05-27T14:02:20.982Z",
-      "lastUpdate": "2026-05-27T14:02:20.983Z",
+      "lastUpdate": "2026-05-27T14:02:22.228Z",
       "note": null,
       "attempts": 1,
       "slackTs": null,
       "prNumber": null,
       "failureMode": null,
-      "verification": null
+      "verification": "unit-test-verified"
     },
     {
       "name": "fix-events-pretty",
@@ -1281,12 +1281,12 @@
       "agentId": "bc-45dcf513-ce1e-4bae-a1d0-c1246bb1b063",
       "runId": "run-f5c64366-cc29-4f11-b660-6994c87289fb",
       "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
-      "status": "running",
-      "resultStatus": null,
-      "handoffPath": null,
+      "status": "handed-off",
+      "resultStatus": "finished",
+      "handoffPath": "handoffs/fix-chain-extrinsics.md",
       "startedAt": "2026-05-27T13:49:40.716Z",
-      "finishedAt": null,
-      "lastUpdate": "2026-05-27T13:49:44.264Z",
+      "finishedAt": "2026-05-27T14:02:57.914Z",
+      "lastUpdate": "2026-05-27T14:02:57.914Z",
       "note": null,
       "attempts": 1,
       "slackTs": null,
@@ -2689,6 +2689,10 @@
     {
       "at": "2026-05-27T13:59:43.764Z",
       "message": "fix-events-pretty: verification self-reported (type-check-only)"
+    },
+    {
+      "at": "2026-05-27T14:02:22.229Z",
+      "message": "fix-error-mapping: verification self-reported (unit-test-verified)"
     }
   ]
 }
