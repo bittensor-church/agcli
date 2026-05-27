@@ -1,21 +1,21 @@
 <!-- orchestrate failure handoff
 task: audit-multisig
 branch: orch/agcli-audit/audit-multisig
-agentId: bc-cb1668e7-5810-4e00-b065-7a9958470be6
-runId: run-5777d47e-d4ac-46de-ba3c-043cd8d66d66
+agentId: bc-a55244c1-f59c-4bfb-95e6-47230d7ed381
+runId: run-bbada82a-4644-4f68-8c89-e562c74ab4a8
 failureMode: unknown
-terminatedAt: 2026-05-27T11:17:17.845Z
+terminatedAt: 2026-05-27T11:35:05.953Z
 -->
 
 # audit-multisig failure handoff
 
 Status: error (cloud agent terminated without writing a handoff)
 Failure mode: unknown
-Cloud agent: bc-cb1668e7-5810-4e00-b065-7a9958470be6
-Started: 2026-05-27T11:16:21.378Z
-Terminated: 2026-05-27T11:17:17.845Z
-Duration: 56467ms
-Last activity: 2026-05-27T11:17:17.715Z
+Cloud agent: bc-a55244c1-f59c-4bfb-95e6-47230d7ed381
+Started: 2026-05-27T11:34:08.056Z
+Terminated: 2026-05-27T11:35:05.953Z
+Duration: 57897ms
+Last activity: 2026-05-27T11:35:05.873Z - respawned by self-planner (was error; attempts=1)
 Last tool call: run_terminal_cmd
 Branch: orch/agcli-audit/audit-multisig
 SDK error: (none recorded)
