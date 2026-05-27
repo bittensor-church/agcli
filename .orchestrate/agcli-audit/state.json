@@ -535,15 +535,15 @@
       "branch": "orch/agcli-audit/audit-block",
       "startingRef": "cursor/agcli-subtensor-audit-e2e7",
       "dependsOn": [],
-      "agentId": null,
-      "runId": null,
+      "agentId": "bc-363b84fe-639f-45f1-9be1-86c6737981ab",
+      "runId": "run-443b85fe-9ca4-4946-a6b3-fd3a684790c8",
       "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
       "status": "running",
       "resultStatus": null,
       "handoffPath": null,
       "startedAt": "2026-05-27T11:34:29.150Z",
       "finishedAt": null,
-      "lastUpdate": "2026-05-27T11:34:29.151Z",
+      "lastUpdate": "2026-05-27T11:34:33.082Z",
       "note": "respawned by self-planner (was error; attempts=1)",
       "attempts": 2,
       "slackTs": null,
@@ -560,14 +560,14 @@
       "agentId": null,
       "runId": null,
       "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
-      "status": "pending",
+      "status": "running",
       "resultStatus": null,
       "handoffPath": null,
-      "startedAt": null,
+      "startedAt": "2026-05-27T11:34:33.083Z",
       "finishedAt": null,
-      "lastUpdate": "2026-05-27T11:32:39.111Z",
+      "lastUpdate": "2026-05-27T11:34:33.083Z",
       "note": "respawned by self-planner (was error; attempts=1)",
-      "attempts": 1,
+      "attempts": 2,
       "slackTs": null,
       "prNumber": null,
       "failureMode": null,
@@ -1917,6 +1917,14 @@
     {
       "at": "2026-05-27T11:34:31.291Z",
       "message": "audit-balance-transfer: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status"
+    },
+    {
+      "at": "2026-05-27T11:34:33.076Z",
+      "message": "audit-balance-transfer: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-balance-transfer.md"
+    },
+    {
+      "at": "2026-05-27T11:34:33.077Z",
+      "message": "audit-balance-transfer: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-balance-transfer-failure.md"
     }
   ]
 }
