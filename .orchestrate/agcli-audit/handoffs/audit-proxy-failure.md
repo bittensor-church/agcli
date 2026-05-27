@@ -1,21 +1,21 @@
 <!-- orchestrate failure handoff
 task: audit-proxy
 branch: orch/agcli-audit/audit-proxy
-agentId: bc-a3f7aef5-5f8d-4668-b448-853049c8977a
-runId: run-3a09bd4e-8b84-489e-a63b-2b25b2ef944c
+agentId: bc-5d4ea403-1ec8-4c41-9abf-f8ca2ce6aaf7
+runId: run-b9c41160-88e1-4de1-97e7-8936f09a3e9b
 failureMode: unknown
-terminatedAt: 2026-05-27T11:16:58.837Z
+terminatedAt: 2026-05-27T11:34:50.206Z
 -->
 
 # audit-proxy failure handoff
 
 Status: error (cloud agent terminated without writing a handoff)
 Failure mode: unknown
-Cloud agent: bc-a3f7aef5-5f8d-4668-b448-853049c8977a
-Started: 2026-05-27T11:16:12.590Z
-Terminated: 2026-05-27T11:16:58.837Z
-Duration: 46247ms
-Last activity: 2026-05-27T11:16:58.760Z
+Cloud agent: bc-5d4ea403-1ec8-4c41-9abf-f8ca2ce6aaf7
+Started: 2026-05-27T11:33:58.961Z
+Terminated: 2026-05-27T11:34:50.206Z
+Duration: 51245ms
+Last activity: 2026-05-27T11:34:49.790Z - respawned by self-planner (was error; attempts=1)
 Last tool call: run_terminal_cmd
 Branch: orch/agcli-audit/audit-proxy
 SDK error: (none recorded)
