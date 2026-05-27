@@ -513,15 +513,15 @@
       "branch": "orch/agcli-audit/audit-commitment",
       "startingRef": "cursor/agcli-subtensor-audit-e2e7",
       "dependsOn": [],
-      "agentId": null,
-      "runId": null,
-      "parentAgentId": null,
+      "agentId": "bc-93f861ab-b9a6-4053-a45a-f1fab6020a42",
+      "runId": "run-d38de302-19bf-46f4-99f2-a49af7e8309d",
+      "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
       "status": "running",
       "resultStatus": null,
       "handoffPath": null,
       "startedAt": "2026-05-27T11:16:55.479Z",
       "finishedAt": null,
-      "lastUpdate": "2026-05-27T11:16:55.479Z",
+      "lastUpdate": "2026-05-27T11:16:59.891Z",
       "note": null,
       "slackTs": null,
       "prNumber": null,
@@ -538,17 +538,18 @@
       "agentId": null,
       "runId": null,
       "parentAgentId": null,
-      "status": "pending",
+      "status": "running",
       "resultStatus": null,
       "handoffPath": null,
-      "startedAt": null,
+      "startedAt": "2026-05-27T11:16:59.893Z",
       "finishedAt": null,
-      "lastUpdate": null,
+      "lastUpdate": "2026-05-27T11:16:59.893Z",
       "note": null,
       "slackTs": null,
       "prNumber": null,
       "failureMode": null,
-      "verification": null
+      "verification": null,
+      "attempts": 1
     },
     {
       "name": "audit-diff",
@@ -1466,6 +1467,14 @@
     {
       "at": "2026-05-27T11:16:58.836Z",
       "message": "audit-proxy: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status"
+    },
+    {
+      "at": "2026-05-27T11:16:59.880Z",
+      "message": "audit-proxy: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-proxy.md"
+    },
+    {
+      "at": "2026-05-27T11:16:59.881Z",
+      "message": "audit-proxy: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-proxy-failure.md"
     }
   ]
 }
