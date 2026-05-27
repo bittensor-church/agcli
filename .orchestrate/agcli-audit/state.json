@@ -53,15 +53,15 @@
       "dependsOn": [
         "audit-wallet"
       ],
-      "agentId": null,
-      "runId": null,
+      "agentId": "bc-44b9a09a-4e78-4bbe-96cb-53fe5a292721",
+      "runId": "run-8731caf1-f8fb-41fc-8a2b-3b1c075cbaac",
       "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
       "status": "running",
       "resultStatus": null,
       "handoffPath": null,
       "startedAt": "2026-05-27T12:47:18.583Z",
       "finishedAt": null,
-      "lastUpdate": "2026-05-27T12:47:18.583Z",
+      "lastUpdate": "2026-05-27T12:49:45.183Z",
       "note": "respawned by self-planner (was error; attempts=2)",
       "attempts": 3,
       "slackTs": null,
