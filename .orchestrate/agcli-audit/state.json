@@ -743,15 +743,15 @@
       "dependsOn": [
         "audit-batch"
       ],
-      "agentId": null,
-      "runId": null,
+      "agentId": "bc-e5650f05-2171-420c-ae85-c1da7736565a",
+      "runId": "run-c5370b58-b0ab-4b31-95a2-20b4444a50df",
       "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
       "status": "running",
       "resultStatus": null,
       "handoffPath": null,
       "startedAt": "2026-05-27T13:16:06.590Z",
       "finishedAt": null,
-      "lastUpdate": "2026-05-27T13:16:06.590Z",
+      "lastUpdate": "2026-05-27T13:16:10.168Z",
       "note": "respawned by self-planner (was error; attempts=2)",
       "attempts": 3,
       "slackTs": null,
