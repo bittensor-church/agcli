@@ -123,15 +123,15 @@
       "dependsOn": [
         "audit-stake"
       ],
-      "agentId": null,
-      "runId": null,
+      "agentId": "bc-9c79c56b-5a27-43da-be75-5398af15189c",
+      "runId": "run-bf29cb0f-d0da-4ea8-8d32-0e0bc8f195aa",
       "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
       "status": "running",
       "resultStatus": null,
       "handoffPath": null,
       "startedAt": "2026-05-27T13:20:42.492Z",
       "finishedAt": null,
-      "lastUpdate": "2026-05-27T13:20:42.493Z",
+      "lastUpdate": "2026-05-27T13:20:46.347Z",
       "note": "respawned by self-planner (was error; attempts=2)",
       "attempts": 3,
       "slackTs": null,
