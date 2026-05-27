@@ -613,13 +613,13 @@
       "handoffPath": "handoffs/audit-config.md",
       "startedAt": "2026-05-27T12:23:31.010Z",
       "finishedAt": "2026-05-27T12:34:52.457Z",
-      "lastUpdate": "2026-05-27T12:34:52.458Z",
+      "lastUpdate": "2026-05-27T12:34:53.696Z",
       "note": "respawned by self-planner (was error; attempts=3)",
       "attempts": 4,
       "slackTs": null,
       "prNumber": null,
       "failureMode": null,
-      "verification": null
+      "verification": "unit-test-verified"
     },
     {
       "name": "audit-doctor",
@@ -676,14 +676,14 @@
       "agentId": null,
       "runId": null,
       "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
-      "status": "pending",
+      "status": "running",
       "resultStatus": null,
       "handoffPath": null,
-      "startedAt": null,
+      "startedAt": "2026-05-27T12:34:57.966Z",
       "finishedAt": null,
-      "lastUpdate": "2026-05-27T12:09:08.287Z",
+      "lastUpdate": "2026-05-27T12:34:57.966Z",
       "note": "respawned by self-planner (was error; attempts=2)",
-      "attempts": 2,
+      "attempts": 3,
       "slackTs": null,
       "prNumber": null,
       "failureMode": null,
@@ -2454,6 +2454,10 @@
     {
       "at": "2026-05-27T12:34:38.059Z",
       "message": "audit-delegate: verification self-reported (unit-test-verified)"
+    },
+    {
+      "at": "2026-05-27T12:34:53.698Z",
+      "message": "audit-config: verification self-reported (unit-test-verified)"
     }
   ]
 }
