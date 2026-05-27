@@ -20,3 +20,7 @@
   -y docker.io` + a /etc/docker/daemon.json with vfs + `sudo dockerd &` works.
   Recipe is captured in .orchestrate/agcli-audit/discovery.md so workers can
   reproduce.
+[2026-05-27T11:13:20.169Z] bootstrap-env: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status
+[2026-05-27T11:13:21.138Z] bootstrap-env: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/bootstrap-env.md
+[2026-05-27T11:13:21.139Z] bootstrap-env: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/bootstrap-env-failure.md
+[2026-05-27T11:15:11.589Z] bootstrap-env: respawned by self-planner (was error)

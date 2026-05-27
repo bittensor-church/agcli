@@ -1315,6 +1315,10 @@
     {
       "at": "2026-05-27T11:13:21.139Z",
       "message": "bootstrap-env: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/bootstrap-env-failure.md"
+    },
+    {
+      "at": "2026-05-27T11:15:11.589Z",
+      "message": "bootstrap-env: respawned by self-planner (was error)"
     }
   ]
 }
