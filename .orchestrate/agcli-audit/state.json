@@ -2498,6 +2498,14 @@
     {
       "at": "2026-05-27T12:38:00.866Z",
       "message": "audit-swap-keys: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status"
+    },
+    {
+      "at": "2026-05-27T12:38:01.945Z",
+      "message": "audit-swap-keys: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-swap-keys.md"
+    },
+    {
+      "at": "2026-05-27T12:38:01.947Z",
+      "message": "audit-swap-keys: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-swap-keys-failure.md"
     }
   ]
 }

@@ -1,21 +1,21 @@
 <!-- orchestrate failure handoff
 task: audit-swap-keys
 branch: orch/agcli-audit/audit-swap-keys
-agentId: bc-ace70aa8-04f5-4a02-830b-c95cf986de4d
-runId: run-7068d543-90ca-4f12-926b-6cdd9dc0cd19
+agentId: bc-7ac271d0-07bb-4192-a227-c4726a9b5bc1
+runId: run-7ff126d3-a54f-4b21-acba-335532c9c298
 failureMode: unknown
-terminatedAt: 2026-05-27T11:39:37.593Z
+terminatedAt: 2026-05-27T12:38:00.869Z
 -->
 
 # audit-swap-keys failure handoff
 
 Status: error (cloud agent terminated without writing a handoff)
 Failure mode: unknown
-Cloud agent: bc-ace70aa8-04f5-4a02-830b-c95cf986de4d
-Started: 2026-05-27T11:34:02.097Z
-Terminated: 2026-05-27T11:39:37.593Z
-Duration: 335496ms
-Last activity: 2026-05-27T11:39:37.460Z - respawned by self-planner (was error; attempts=1)
+Cloud agent: bc-7ac271d0-07bb-4192-a227-c4726a9b5bc1
+Started: 2026-05-27T12:37:25.423Z
+Terminated: 2026-05-27T12:38:00.869Z
+Duration: 35446ms
+Last activity: 2026-05-27T12:38:00.730Z - respawned by self-planner (was error; attempts=2)
 Last tool call: grep_search
 Branch: orch/agcli-audit/audit-swap-keys
 SDK error: (none recorded)
