@@ -1,22 +1,22 @@
 <!-- orchestrate failure handoff
 task: audit-identity
 branch: orch/agcli-audit/audit-identity
-agentId: bc-16c3b80c-ac3a-4709-a6fa-749967ea73f7
-runId: run-b19f0f9e-7621-46ef-9971-d37743c86863
+agentId: bc-89aeffb2-8e21-470a-9b95-b1f7d078bc41
+runId: run-fae891aa-c357-4336-9791-724f7a30c293
 failureMode: unknown
-terminatedAt: 2026-05-27T11:16:31.977Z
+terminatedAt: 2026-05-27T11:34:53.204Z
 -->
 
 # audit-identity failure handoff
 
 Status: error (cloud agent terminated without writing a handoff)
 Failure mode: unknown
-Cloud agent: bc-16c3b80c-ac3a-4709-a6fa-749967ea73f7
-Started: 2026-05-27T11:16:06.096Z
-Terminated: 2026-05-27T11:16:31.977Z
-Duration: 25881ms
-Last activity: 2026-05-27T11:16:30.930Z
-Last tool call: read_file
+Cloud agent: bc-89aeffb2-8e21-470a-9b95-b1f7d078bc41
+Started: 2026-05-27T11:33:53.181Z
+Terminated: 2026-05-27T11:34:53.204Z
+Duration: 60023ms
+Last activity: 2026-05-27T11:34:53.129Z - respawned by self-planner (was error; attempts=1)
+Last tool call: grep_search
 Branch: orch/agcli-audit/audit-identity
 SDK error: (none recorded)
 
