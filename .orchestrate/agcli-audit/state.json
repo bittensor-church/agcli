@@ -719,15 +719,15 @@
       "dependsOn": [
         "audit-completions-update"
       ],
-      "agentId": null,
-      "runId": null,
+      "agentId": "bc-68aac5ab-c145-4220-a752-0fbcf596f165",
+      "runId": "run-05e8385b-2f74-4f9f-b4fc-ae2a183a320f",
       "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
       "status": "running",
       "resultStatus": null,
       "handoffPath": null,
       "startedAt": "2026-05-27T13:01:25.118Z",
       "finishedAt": null,
-      "lastUpdate": "2026-05-27T13:01:25.118Z",
+      "lastUpdate": "2026-05-27T13:01:29.271Z",
       "note": "respawned by self-planner (was error; attempts=2)",
       "attempts": 3,
       "slackTs": null,
