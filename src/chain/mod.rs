@@ -1013,29 +1013,28 @@ impl Client {
 /// Format submission errors (before tx reaches chain) with actionable hints.
 fn format_submit_error(e: subxt::Error) -> anyhow::Error {
     let msg = e.to_string();
-    
+
     // Log the raw error for debugging
     tracing::debug!("Transaction submission error (raw): {}", msg);
-    
+
     // Try to decode custom error codes first
     let (decoded_msg, decoded_desc) = if let Some(decoded) = decode_custom_error(&msg) {
         tracing::debug!("Decoded custom error: {} - {}", decoded.name, decoded.desc);
-        (
-            format!("{} [{}]", msg, decoded.name),
-            Some(decoded.desc),
-        )
+        (format!("{} [{}]", msg, decoded.name), Some(decoded.desc))
     } else {
         // Check if this is an "Invalid Transaction" with a custom error code
         // These often indicate transaction pool validation failures (e.g., insufficient stake)
         if msg.contains("Invalid Transaction") && msg.contains("Custom error:") {
-            tracing::warn!("Invalid Transaction with unrecognized custom error code. This may indicate:
+            tracing::warn!(
+                "Invalid Transaction with unrecognized custom error code. This may indicate:
   - Insufficient stake to set weights (need ~1000τ)
   - Hotkey not registered on the subnet
-  - Transaction validation failure");
+  - Transaction validation failure"
+            );
         }
         (msg.clone(), None)
     };
-    
+
     if msg.contains("connection") || msg.contains("Connection") || msg.contains("Ws") {
         anyhow::anyhow!("Connection lost while submitting transaction. Check your network and endpoint.\n  Error: {}", decoded_msg)
     } else if msg.contains("Priority is too low") || msg.contains("priority") {

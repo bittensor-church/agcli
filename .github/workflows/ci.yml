@@ -72,7 +72,7 @@ jobs:
             . -> target
             python/agcli-py -> target
       - name: Clippy sdk-only feature
-        run: cargo check -p agcli --lib --no-default-features --features sdk-only
+        run: cargo check --no-default-features --features sdk-only
 
   test:
     name: Test

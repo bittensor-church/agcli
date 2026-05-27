@@ -83,6 +83,11 @@ sdk-only = []
 # Enables Docker / live-chain integration test targets (not run by default `cargo test`).
 e2e = []
 
+[[bin]]
+name = "agcli"
+path = "src/main.rs"
+required-features = ["cli"]
+
 [[test]]
 name = "e2e_test"
 path = "tests/e2e_test.rs"

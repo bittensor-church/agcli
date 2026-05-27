@@ -25,9 +25,8 @@ fn wallet_coldkey_pair(wallet: &agcli::Wallet) -> PyResult<sr25519::Pair> {
 }
 
 fn parse_netuid_u16(value: &Bound<'_, PyAny>, field: &str) -> PyResult<u16> {
-    let netuid = netuid_from_py(value).map_err(|_| {
-        validation_error(format!("{field} must be an integer or NetUid instance"))
-    })?;
+    let netuid = netuid_from_py(value)
+        .map_err(|_| validation_error(format!("{field} must be an integer or NetUid instance")))?;
     Ok(netuid.as_u16())
 }
 
@@ -178,9 +177,9 @@ fn set_mechanism_emission_split<'py>(
 }
 
 fn parse_admin_args(values: Bound<'_, PyAny>) -> PyResult<Vec<Value>> {
-    let list: Vec<Bound<'_, PyAny>> = values
-        .extract()
-        .map_err(|_| validation_error("args must be a sequence of integers, booleans, or strings"))?;
+    let list: Vec<Bound<'_, PyAny>> = values.extract().map_err(|_| {
+        validation_error("args must be a sequence of integers, booleans, or strings")
+    })?;
     let mut out = Vec::with_capacity(list.len());
     for (idx, item) in list.into_iter().enumerate() {
         if let Ok(b) = item.extract::<bool>() {

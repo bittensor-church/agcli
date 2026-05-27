@@ -57,13 +57,7 @@ pub use wallet::Wallet;
 
 pub mod sdk {
     pub use crate::{
-        error,
-        types::chain_data,
-        types::network::NetUid,
-        types::Network,
-        Balance,
-        Client,
-        Config,
+        error, types::chain_data, types::network::NetUid, types::Network, Balance, Client, Config,
         Wallet,
     };
 }
