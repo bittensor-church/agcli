@@ -281,3 +281,30 @@ T…
 [2026-05-27T12:18:29.738Z] fix-chain-queries: unreachable — blocked on audit-wallet (error), audit-delegate (error), audit-proxy (error), audit-contracts (error), audit-config (error). Fix the upstream and rerun, or `kill fix-chain-queries` to abandon.
 [2026-05-27T12:18:29.739Z] fix-chain-extrinsics: unreachable — blocked on audit-wallet (error), audit-delegate (error), audit-proxy (error), audit-contracts (error), audit-config (error). Fix the upstream and rerun, or `kill fix-chain-extrinsics` to abandon.
 [2026-05-27T12:18:29.740Z] fix-scaffold-localnet: unreachable — blocked on audit-wallet (error), audit-delegate (error), audit-proxy (error), audit-contracts (error), audit-config (error). Fix the upstream and rerun, or `kill fix-scaffold-localnet` to abandon.
+[2026-05-27T12:21:28.240Z] bootstrap-env: respawned by self-planner (was error)
+[2026-05-27T12:21:38.509Z] audit-wallet: respawned by self-planner (was error)
+[2026-05-27T12:21:52.119Z] audit-delegate: respawned by self-planner (was error)
+[2026-05-27T12:22:05.142Z] audit-proxy: respawned by self-planner (was error)
+[2026-05-27T12:22:18.393Z] audit-contracts: respawned by self-planner (was error)
+[2026-05-27T12:22:30.624Z] audit-config: respawned by self-planner (was error)
+[2026-05-27T12:22:46.540Z] bootstrap-env: model "claude-sonnet-4-6" not in MODEL_CATALOG (spawning anyway). Run `bun cli.ts models` to see known slugs.
+[2026-05-27T12:23:00.307Z] audit-wallet: model "claude-sonnet-4-6" not in MODEL_CATALOG (spawning anyway). Run `bun cli.ts models` to see known slugs.
+[2026-05-27T12:23:07.871Z] audit-delegate: model "claude-sonnet-4-6" not in MODEL_CATALOG (spawning anyway). Run `bun cli.ts models` to see known slugs.
+[2026-05-27T12:23:14.740Z] audit-proxy: model "claude-sonnet-4-6" not in MODEL_CATALOG (spawning anyway). Run `bun cli.ts models` to see known slugs.
+[2026-05-27T12:23:22.081Z] audit-contracts: model "claude-sonnet-4-6" not in MODEL_CATALOG (spawning anyway). Run `bun cli.ts models` to see known slugs.
+[2026-05-27T12:23:31.009Z] audit-config: model "claude-sonnet-4-6" not in MODEL_CATALOG (spawning anyway). Run `bun cli.ts models` to see known slugs.
+[2026-05-27T12:27:42.408Z] bootstrap-env: verification self-reported (type-check-only)
+[2026-05-27T12:34:38.059Z] audit-delegate: verification self-reported (unit-test-verified)
+[2026-05-27T12:34:53.698Z] audit-config: verification self-reported (unit-test-verified)
+[2026-05-27T12:35:07.991Z] audit-view: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status
+[2026-05-27T12:35:09.477Z] audit-view: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-view.md
+[2026-05-27T12:35:09.480Z] audit-view: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-view-failure.md
+[2026-05-27T12:35:22.629Z] audit-completions-update: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status
+[2026-05-27T12:35:23.924Z] audit-completions-update: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-completions-update.md
+[2026-05-27T12:35:23.925Z] audit-completions-update: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-completions-update-failure.md
+[2026-05-27T12:36:11.369Z] audit-safe-mode: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status
+[2026-05-27T12:36:12.539Z] audit-safe-mode: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-safe-mode.md
+[2026-05-27T12:36:12.540Z] audit-safe-mode: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-safe-mode-failure.md
+[2026-05-27T12:38:00.866Z] audit-swap-keys: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status
+[2026-05-27T12:38:01.945Z] audit-swap-keys: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-swap-keys.md
+[2026-05-27T12:38:01.947Z] audit-swap-keys: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-swap-keys-failure.md
