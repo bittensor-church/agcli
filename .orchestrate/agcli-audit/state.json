@@ -1375,6 +1375,14 @@
     {
       "at": "2026-05-27T11:13:20.169Z",
       "message": "bootstrap-env: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status"
+    },
+    {
+      "at": "2026-05-27T11:13:21.138Z",
+      "message": "bootstrap-env: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/bootstrap-env.md"
+    },
+    {
+      "at": "2026-05-27T11:13:21.139Z",
+      "message": "bootstrap-env: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/bootstrap-env-failure.md"
     }
   ]
 }
