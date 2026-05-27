@@ -1224,12 +1224,12 @@
       "agentId": "bc-daaa9a14-269b-4bac-b6d0-1317f3403fe8",
       "runId": "run-48069901-b395-4051-9d4c-fc3e41ae2ee5",
       "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
-      "status": "running",
-      "resultStatus": null,
-      "handoffPath": null,
+      "status": "handed-off",
+      "resultStatus": "finished",
+      "handoffPath": "handoffs/fix-chain-queries.md",
       "startedAt": "2026-05-27T13:49:37.788Z",
-      "finishedAt": null,
-      "lastUpdate": "2026-05-27T13:49:40.713Z",
+      "finishedAt": "2026-05-27T14:03:21.187Z",
+      "lastUpdate": "2026-05-27T14:03:21.187Z",
       "note": null,
       "attempts": 1,
       "slackTs": null,
@@ -1286,13 +1286,13 @@
       "handoffPath": "handoffs/fix-chain-extrinsics.md",
       "startedAt": "2026-05-27T13:49:40.716Z",
       "finishedAt": "2026-05-27T14:02:57.914Z",
-      "lastUpdate": "2026-05-27T14:02:57.914Z",
+      "lastUpdate": "2026-05-27T14:02:59.008Z",
       "note": null,
       "attempts": 1,
       "slackTs": null,
       "prNumber": null,
       "failureMode": null,
-      "verification": null
+      "verification": "type-check-only"
     },
     {
       "name": "fix-scaffold-localnet",
@@ -2693,6 +2693,10 @@
     {
       "at": "2026-05-27T14:02:22.229Z",
       "message": "fix-error-mapping: verification self-reported (unit-test-verified)"
+    },
+    {
+      "at": "2026-05-27T14:02:59.011Z",
+      "message": "fix-chain-extrinsics: verification self-reported (type-check-only)"
     }
   ]
 }
