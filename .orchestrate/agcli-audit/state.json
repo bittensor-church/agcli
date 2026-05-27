@@ -287,20 +287,20 @@
       "dependsOn": [
         "audit-proxy"
       ],
-      "agentId": null,
-      "runId": null,
+      "agentId": "bc-7ac271d0-07bb-4192-a227-c4726a9b5bc1",
+      "runId": "run-7ff126d3-a54f-4b21-acba-335532c9c298",
       "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
-      "status": "running",
-      "resultStatus": null,
-      "handoffPath": null,
+      "status": "error",
+      "resultStatus": "error",
+      "handoffPath": "handoffs/audit-swap-keys.md",
       "startedAt": "2026-05-27T12:37:25.423Z",
-      "finishedAt": null,
-      "lastUpdate": "2026-05-27T12:37:25.423Z",
+      "finishedAt": "2026-05-27T12:38:00.869Z",
+      "lastUpdate": "2026-05-27T12:38:00.869Z",
       "note": "respawned by self-planner (was error; attempts=2)",
       "attempts": 3,
       "slackTs": null,
       "prNumber": null,
-      "failureMode": null,
+      "failureMode": "unknown",
       "verification": null
     },
     {
@@ -2494,6 +2494,10 @@
     {
       "at": "2026-05-27T12:36:12.540Z",
       "message": "audit-safe-mode: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-safe-mode-failure.md"
+    },
+    {
+      "at": "2026-05-27T12:38:00.866Z",
+      "message": "audit-swap-keys: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status"
     }
   ]
 }
