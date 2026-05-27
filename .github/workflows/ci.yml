@@ -95,3 +95,30 @@ jobs:
         with:
           name: agcli-linux-amd64
           path: target/release/agcli
+
+  python:
+    name: Python bindings
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install maturin
+        run: pip install "maturin>=1.7,<2.0" pytest pytest-asyncio
+      - name: Build extension
+        run: maturin build --manifest-path python/agcli-py/Cargo.toml --out python/dist
+        env:
+          METADATA_CHAIN_ENDPOINT: wss://entrypoint-finney.opentensor.ai:443
+      - name: Install package (editable)
+        working-directory: python
+        run: pip install -e ".[dev]"
+        env:
+          METADATA_CHAIN_ENDPOINT: wss://entrypoint-finney.opentensor.ai:443
+      - name: Run Python tests
+        working-directory: python
+        run: pytest -m "not network"
+        env:
+          METADATA_CHAIN_ENDPOINT: wss://entrypoint-finney.opentensor.ai:443

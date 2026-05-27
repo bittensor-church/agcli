@@ -86,6 +86,50 @@ where
     Err(last_err.unwrap_or_else(|| anyhow::anyhow!("{}: all retries exhausted", label)))
 }
 
+/// Progress UI for extrinsic submission (CLI spinner when available).
+struct SubmitProgress {
+    #[cfg(feature = "cli")]
+    bar: indicatif::ProgressBar,
+}
+
+impl SubmitProgress {
+    fn new(msg: &str) -> Self {
+        #[cfg(feature = "cli")]
+        {
+            Self {
+                bar: crate::cli::helpers::spinner(msg),
+            }
+        }
+        #[cfg(not(feature = "cli"))]
+        {
+            let _ = msg;
+            Self {}
+        }
+    }
+
+    fn set_message(&self, msg: &str) {
+        #[cfg(feature = "cli")]
+        self.bar.set_message(msg.to_string());
+        #[cfg(not(feature = "cli"))]
+        let _ = msg;
+    }
+
+    fn finish_and_clear(&self) {
+        #[cfg(feature = "cli")]
+        self.bar.finish_and_clear();
+    }
+}
+
+#[cfg(feature = "cli")]
+fn print_dry_run_json(info: &serde_json::Value) {
+    crate::cli::helpers::print_json(info);
+}
+
+#[cfg(not(feature = "cli"))]
+fn print_dry_run_json(info: &serde_json::Value) {
+    tracing::info!(dry_run = %info, "dry-run transaction preview");
+}
+
 /// Derive a short cache prefix from a WebSocket URL to namespace disk cache entries.
 /// Recognizes well-known Bittensor endpoints; falls back to host-based prefix.
 fn url_to_cache_prefix(url: &str) -> String {
@@ -178,6 +222,11 @@ pub struct Client {
 }
 
 impl Client {
+    /// WebSocket endpoint URL used for this connection.
+    pub fn url(&self) -> &str {
+        &self.url
+    }
+
     /// Access the runtime metadata from the connected chain.
     pub fn metadata(&self) -> subxt::Metadata {
         self.inner.metadata()
@@ -453,7 +502,7 @@ impl Client {
                 signer_ss58,
                 call_data.len()
             );
-            crate::cli::helpers::print_json(&info);
+            print_dry_run_json(&info);
             return Ok("dry-run".to_string());
         }
 
@@ -462,7 +511,7 @@ impl Client {
         // from submitting with the same nonce (Issue 648).
         let _tx_lock = acquire_tx_lock(pair)?;
         let start = std::time::Instant::now();
-        let spinner = crate::cli::helpers::spinner("Submitting transaction...");
+        let spinner = SubmitProgress::new("Submitting transaction...");
         tracing::debug!(
             finalization_timeout = self.finalization_timeout,
             mortality_blocks = self.mortality_blocks,

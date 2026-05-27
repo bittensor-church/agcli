@@ -2,3 +2,6 @@
 [alias]
 nt = "nextest run"
 nt-ci = "nextest run --lib --test wallet_test --test cli_weights"
+
+[env]
+PYO3_USE_ABI3_FORWARD_COMPATIBILITY = "1"

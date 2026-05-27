@@ -67,6 +67,29 @@ async fn main() -> anyhow::Result<()> {
 }
 ```
 
+## Python SDK
+
+Install the PyO3 extension (Rust SDK underneath) from the repo:
+
+```bash
+cd python
+uv pip install -e ".[dev]"
+```
+
+```python
+import asyncio
+from agcli import AsyncClient, Wallet, Balance, NetUid, Network
+
+async def main() -> None:
+    client = await AsyncClient.connect_network(Network.finney())
+    subnets = await client.get_all_subnets()
+    metagraph = await client.get_metagraph(NetUid(1))
+
+asyncio.run(main())
+```
+
+Wallet operations are synchronous; chain queries use `asyncio`. The native `agcli` CLI binary is installed separately via `cargo install`.
+
 ## Architecture
 
 ```
