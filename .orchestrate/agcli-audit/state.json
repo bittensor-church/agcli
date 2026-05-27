@@ -1167,14 +1167,14 @@
       "agentId": null,
       "runId": null,
       "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
-      "status": "pending",
+      "status": "running",
       "resultStatus": null,
       "handoffPath": null,
-      "startedAt": null,
+      "startedAt": "2026-05-27T13:52:53.254Z",
       "finishedAt": null,
-      "lastUpdate": "2026-05-27T13:52:26.003Z",
+      "lastUpdate": "2026-05-27T13:52:53.254Z",
       "note": "respawned by self-planner (was error; attempts=1)",
-      "attempts": 1,
+      "attempts": 2,
       "slackTs": null,
       "prNumber": null,
       "failureMode": null,
@@ -2665,6 +2665,14 @@
     {
       "at": "2026-05-27T13:52:27.186Z",
       "message": "fix-llm-txt: respawned by self-planner (was error)"
+    },
+    {
+      "at": "2026-05-27T13:52:28.762Z",
+      "message": "fix-scaffold-localnet: respawned by self-planner (was error)"
+    },
+    {
+      "at": "2026-05-27T13:52:53.253Z",
+      "message": "fix-llm-txt: model \"claude-sonnet-4-6\" not in MODEL_CATALOG (spawning anyway). Run `bun cli.ts models` to see known slugs."
     }
   ]
 }
