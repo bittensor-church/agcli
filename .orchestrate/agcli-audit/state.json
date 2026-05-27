@@ -10,17 +10,17 @@
       "agentId": "bc-05e45c90-5c21-4902-b6b9-13281d5bade4",
       "runId": "run-98d0d654-8d69-4721-8667-9df1bb6a0e38",
       "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
-      "status": "running",
-      "resultStatus": null,
-      "handoffPath": null,
+      "status": "error",
+      "resultStatus": "error",
+      "handoffPath": "handoffs/bootstrap-env.md",
       "startedAt": "2026-05-27T11:15:38.024Z",
-      "finishedAt": null,
-      "lastUpdate": "2026-05-27T11:15:41.794Z",
+      "finishedAt": "2026-05-27T11:16:25.775Z",
+      "lastUpdate": "2026-05-27T11:16:25.775Z",
       "note": "respawned by self-planner (was error; attempts=1)",
       "attempts": 2,
       "slackTs": null,
       "prNumber": null,
-      "failureMode": null,
+      "failureMode": "unknown",
       "verification": null
     },
     {
@@ -1334,6 +1334,10 @@
     {
       "at": "2026-05-27T11:15:11.589Z",
       "message": "bootstrap-env: respawned by self-planner (was error)"
+    },
+    {
+      "at": "2026-05-27T11:16:25.773Z",
+      "message": "bootstrap-env: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status"
     }
   ]
 }
