@@ -252,16 +252,16 @@
       "agentId": "bc-a3f7aef5-5f8d-4668-b448-853049c8977a",
       "runId": "run-3a09bd4e-8b84-489e-a63b-2b25b2ef944c",
       "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
-      "status": "running",
-      "resultStatus": null,
-      "handoffPath": null,
+      "status": "error",
+      "resultStatus": "error",
+      "handoffPath": "handoffs/audit-proxy.md",
       "startedAt": "2026-05-27T11:16:12.590Z",
-      "finishedAt": null,
-      "lastUpdate": "2026-05-27T11:16:15.549Z",
+      "finishedAt": "2026-05-27T11:16:58.837Z",
+      "lastUpdate": "2026-05-27T11:16:58.837Z",
       "note": null,
       "slackTs": null,
       "prNumber": null,
-      "failureMode": null,
+      "failureMode": "unknown",
       "verification": null,
       "attempts": 1
     },
@@ -1454,6 +1454,18 @@
     {
       "at": "2026-05-27T11:16:56.769Z",
       "message": "audit-subnet: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status"
+    },
+    {
+      "at": "2026-05-27T11:16:58.233Z",
+      "message": "audit-subnet: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-subnet.md"
+    },
+    {
+      "at": "2026-05-27T11:16:58.234Z",
+      "message": "audit-subnet: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-subnet-failure.md"
+    },
+    {
+      "at": "2026-05-27T11:16:58.836Z",
+      "message": "audit-proxy: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status"
     }
   ]
 }
