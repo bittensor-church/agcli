@@ -359,15 +359,15 @@
       "branch": "orch/agcli-audit/audit-preimage",
       "startingRef": "cursor/agcli-subtensor-audit-e2e7",
       "dependsOn": [],
-      "agentId": null,
-      "runId": null,
-      "parentAgentId": null,
+      "agentId": "bc-3001f981-16b2-401c-9f30-d0c097788355",
+      "runId": "run-d972e1d1-ab20-4ae5-9148-e71812ec7aeb",
+      "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
       "status": "running",
       "resultStatus": null,
       "handoffPath": null,
       "startedAt": "2026-05-27T11:16:27.298Z",
       "finishedAt": null,
-      "lastUpdate": "2026-05-27T11:16:27.298Z",
+      "lastUpdate": "2026-05-27T11:16:30.932Z",
       "note": null,
       "slackTs": null,
       "prNumber": null,
@@ -384,17 +384,18 @@
       "agentId": null,
       "runId": null,
       "parentAgentId": null,
-      "status": "pending",
+      "status": "running",
       "resultStatus": null,
       "handoffPath": null,
-      "startedAt": null,
+      "startedAt": "2026-05-27T11:16:30.933Z",
       "finishedAt": null,
-      "lastUpdate": null,
+      "lastUpdate": "2026-05-27T11:16:30.933Z",
       "note": null,
       "slackTs": null,
       "prNumber": null,
       "failureMode": null,
-      "verification": null
+      "verification": null,
+      "attempts": 1
     },
     {
       "name": "audit-evm",
@@ -1363,6 +1364,14 @@
     {
       "at": "2026-05-27T11:16:29.962Z",
       "message": "audit-stake: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status"
+    },
+    {
+      "at": "2026-05-27T11:16:30.925Z",
+      "message": "audit-stake: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-stake.md"
+    },
+    {
+      "at": "2026-05-27T11:16:30.926Z",
+      "message": "audit-stake: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-stake-failure.md"
     }
   ]
 }
