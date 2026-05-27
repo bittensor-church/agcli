@@ -164,17 +164,17 @@
       "agentId": "bc-3ec513cd-a5b6-4cd4-91c3-3641a30005a9",
       "runId": "run-633dbb5d-581e-412c-bf4e-d1c57aeb1977",
       "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
-      "status": "running",
-      "resultStatus": null,
-      "handoffPath": null,
+      "status": "error",
+      "resultStatus": "error",
+      "handoffPath": "handoffs/audit-delegate.md",
       "startedAt": "2026-05-27T11:33:47.580Z",
-      "finishedAt": null,
-      "lastUpdate": "2026-05-27T11:33:50.334Z",
+      "finishedAt": "2026-05-27T11:34:46.742Z",
+      "lastUpdate": "2026-05-27T11:34:46.742Z",
       "note": "respawned by self-planner (was error; attempts=1)",
       "attempts": 2,
       "slackTs": null,
       "prNumber": null,
-      "failureMode": null,
+      "failureMode": "unknown",
       "verification": null
     },
     {
@@ -1937,6 +1937,10 @@
     {
       "at": "2026-05-27T11:34:42.206Z",
       "message": "audit-root: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-root-failure.md"
+    },
+    {
+      "at": "2026-05-27T11:34:46.740Z",
+      "message": "audit-delegate: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status"
     }
   ]
 }
