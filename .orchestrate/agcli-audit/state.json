@@ -7,19 +7,19 @@
       "branch": "orch/agcli-audit/bootstrap-env",
       "startingRef": "cursor/agcli-subtensor-audit-e2e7",
       "dependsOn": [],
-      "agentId": null,
-      "runId": null,
-      "parentAgentId": null,
-      "status": "running",
-      "resultStatus": null,
-      "handoffPath": null,
+      "agentId": "bc-010abe85-8c77-48b3-bf6a-cc8c439faa7e",
+      "runId": "run-036803b9-ef9e-4d59-8bba-fae26552752a",
+      "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
+      "status": "error",
+      "resultStatus": "error",
+      "handoffPath": "handoffs/bootstrap-env.md",
       "startedAt": "2026-05-27T11:12:27.365Z",
-      "finishedAt": null,
-      "lastUpdate": "2026-05-27T11:12:27.365Z",
+      "finishedAt": "2026-05-27T11:13:20.171Z",
+      "lastUpdate": "2026-05-27T11:13:20.171Z",
       "note": null,
       "slackTs": null,
       "prNumber": null,
-      "failureMode": null,
+      "failureMode": "unknown",
       "verification": null,
       "attempts": 1
     },
@@ -1371,5 +1371,10 @@
       "verification": null
     }
   ],
-  "attention": []
+  "attention": [
+    {
+      "at": "2026-05-27T11:13:20.169Z",
+      "message": "bootstrap-env: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status"
+    }
+  ]
 }
