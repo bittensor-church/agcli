@@ -1172,13 +1172,13 @@
       "handoffPath": "handoffs/fix-llm-txt.md",
       "startedAt": "2026-05-27T13:52:53.254Z",
       "finishedAt": "2026-05-27T14:09:07.072Z",
-      "lastUpdate": "2026-05-27T14:09:07.073Z",
+      "lastUpdate": "2026-05-27T14:09:08.220Z",
       "note": "respawned by self-planner (was error; attempts=1)",
       "attempts": 2,
       "slackTs": null,
       "prNumber": null,
       "failureMode": null,
-      "verification": null
+      "verification": "type-check-only"
     },
     {
       "name": "fix-chain-queries",
@@ -1368,17 +1368,18 @@
       "agentId": null,
       "runId": null,
       "parentAgentId": null,
-      "status": "pending",
+      "status": "running",
       "resultStatus": null,
       "handoffPath": null,
-      "startedAt": null,
+      "startedAt": "2026-05-27T14:09:11.559Z",
       "finishedAt": null,
-      "lastUpdate": null,
+      "lastUpdate": "2026-05-27T14:09:11.559Z",
       "note": null,
       "slackTs": null,
       "prNumber": null,
       "failureMode": null,
-      "verification": null
+      "verification": null,
+      "attempts": 1
     }
   ],
   "attention": [
@@ -2701,6 +2702,10 @@
     {
       "at": "2026-05-27T14:03:22.460Z",
       "message": "fix-chain-queries: verification self-reported (type-check-only)"
+    },
+    {
+      "at": "2026-05-27T14:09:08.223Z",
+      "message": "fix-llm-txt: verification self-reported (type-check-only)"
     }
   ]
 }
