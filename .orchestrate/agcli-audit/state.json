@@ -681,13 +681,13 @@
       "handoffPath": "handoffs/audit-completions-update.md",
       "startedAt": "2026-05-27T12:45:44.091Z",
       "finishedAt": "2026-05-27T13:01:23.541Z",
-      "lastUpdate": "2026-05-27T13:01:23.542Z",
+      "lastUpdate": "2026-05-27T13:01:24.927Z",
       "note": "respawned by self-planner (was error; attempts=3)",
       "attempts": 4,
       "slackTs": null,
       "prNumber": null,
       "failureMode": null,
-      "verification": null
+      "verification": "unit-test-verified"
     },
     {
       "name": "audit-audit-cmd",
@@ -722,14 +722,14 @@
       "agentId": null,
       "runId": null,
       "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
-      "status": "pending",
+      "status": "running",
       "resultStatus": null,
       "handoffPath": null,
-      "startedAt": null,
+      "startedAt": "2026-05-27T13:01:25.118Z",
       "finishedAt": null,
-      "lastUpdate": "2026-05-27T12:09:11.700Z",
+      "lastUpdate": "2026-05-27T13:01:25.118Z",
       "note": "respawned by self-planner (was error; attempts=2)",
-      "attempts": 2,
+      "attempts": 3,
       "slackTs": null,
       "prNumber": null,
       "failureMode": null,
@@ -2554,6 +2554,14 @@
     {
       "at": "2026-05-27T12:59:11.401Z",
       "message": "audit-identity: model \"claude-sonnet-4-6\" not in MODEL_CATALOG (spawning anyway). Run `bun cli.ts models` to see known slugs."
+    },
+    {
+      "at": "2026-05-27T13:01:24.928Z",
+      "message": "audit-completions-update: verification self-reported (unit-test-verified)"
+    },
+    {
+      "at": "2026-05-27T13:01:25.116Z",
+      "message": "audit-batch: model \"claude-sonnet-4-6\" not in MODEL_CATALOG (spawning anyway). Run `bun cli.ts models` to see known slugs."
     }
   ]
 }
