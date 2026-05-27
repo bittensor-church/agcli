@@ -722,8 +722,9 @@ impl Client {
         new_coldkey_ss58: &str,
     ) -> Result<String> {
         let new_id = Self::ss58_to_account_id(new_coldkey_ss58)?;
+        let new_hash = subxt::utils::H256::from(sp_core::hashing::blake2_256(&new_id.0));
         self.sign_submit(
-            &api::tx().subtensor_module().schedule_swap_coldkey(new_id),
+            &api::tx().subtensor_module().announce_coldkey_swap(new_hash),
             pair,
         )
         .await
@@ -791,16 +792,18 @@ impl Client {
     pub async fn set_subnet_identity(
         &self,
         pair: &sr25519::Pair,
-        _netuid: NetUid,
+        netuid: NetUid,
         identity: &SubnetIdentity,
     ) -> Result<String> {
-        let tx = api::tx().subtensor_module().set_identity(
+        let tx = api::tx().subtensor_module().set_subnet_identity(
+            netuid.0,
             identity.subnet_name.as_bytes().to_vec(),
-            identity.subnet_url.as_bytes().to_vec(),
             identity.github_repo.as_bytes().to_vec(),
             identity.subnet_contact.as_bytes().to_vec(),
+            identity.subnet_url.as_bytes().to_vec(),
             identity.discord.as_bytes().to_vec(),
             identity.description.as_bytes().to_vec(),
+            Vec::new(),
             identity.additional.as_bytes().to_vec(),
         );
         self.sign_submit(&tx, pair).await
@@ -1485,6 +1488,7 @@ impl Client {
         let sudo_tx = subxt::dynamic::tx("Sudo", "sudo", vec![inner_value]);
 
         let signer = Self::signer(pair);
+        let _tx_lock = super::acquire_tx_lock(pair)?;
         let progress = self
             .inner
             .tx()
@@ -1492,10 +1496,19 @@ impl Client {
             .await
             .map_err(|e| anyhow::anyhow!("Sudo submission failed: {}", e))?;
 
-        let events = progress
-            .wait_for_finalized_success()
-            .await
-            .map_err(|e| anyhow::anyhow!("Sudo tx dispatch failed: {}", e))?;
+        let events = tokio::time::timeout(
+            std::time::Duration::from_secs(self.finalization_timeout),
+            progress.wait_for_finalized_success(),
+        )
+        .await
+        .map_err(|_| {
+            anyhow::anyhow!(
+                "Sudo transaction timed out after {}s waiting for finalization. \
+                 Increase wait with --finalization-timeout or AGCLI_FINALIZATION_TIMEOUT.",
+                self.finalization_timeout
+            )
+        })?
+        .map_err(|e| anyhow::anyhow!("Sudo tx dispatch failed: {}", e))?;
 
         let hash = format!("{:?}", events.extrinsic_hash());
 
@@ -1849,7 +1862,10 @@ impl Client {
         let tx = subxt::dynamic::tx(
             "Proxy",
             "announce",
-            vec![Value::from_bytes(real_id.0), Value::from_bytes(call_hash)],
+            vec![
+                Value::unnamed_variant("Id", [Value::from_bytes(real_id.0)]),
+                Value::from_bytes(call_hash),
+            ],
         );
         self.sign_submit(&tx, pair).await
     }
@@ -1869,7 +1885,7 @@ impl Client {
         let delegate_id = Self::ss58_to_account_id(delegate_ss58)?;
         let real_id = Self::ss58_to_account_id(real_ss58)?;
         let inner_call = subxt::dynamic::tx(pallet, call, fields);
-        let encoded = self.inner.tx().call_data(&inner_call)?;
+        let inner_value = inner_call.into_value();
         let proxy_type = match force_proxy_type {
             Some(pt) => {
                 Value::unnamed_variant("Some", [Value::unnamed_variant(parse_proxy_type(pt)?, [])])
@@ -1880,10 +1896,10 @@ impl Client {
             "Proxy",
             "proxy_announced",
             vec![
-                Value::from_bytes(delegate_id.0),
-                Value::from_bytes(real_id.0),
+                Value::unnamed_variant("Id", [Value::from_bytes(delegate_id.0)]),
+                Value::unnamed_variant("Id", [Value::from_bytes(real_id.0)]),
                 proxy_type,
-                Value::from_bytes(encoded),
+                inner_value,
             ],
         );
         self.sign_submit(&tx, pair).await
@@ -1902,7 +1918,7 @@ impl Client {
             "Proxy",
             "reject_announcement",
             vec![
-                Value::from_bytes(delegate_id.0),
+                Value::unnamed_variant("Id", [Value::from_bytes(delegate_id.0)]),
                 Value::from_bytes(call_hash),
             ],
         );
@@ -2120,21 +2136,15 @@ impl Client {
     pub async fn safe_mode_force_enter(
         &self,
         pair: &sr25519::Pair,
-        duration: u32,
+        _duration: u32,
     ) -> Result<String> {
-        use subxt::dynamic::Value;
-        self.submit_sudo_raw_call(
-            pair,
-            "SafeMode",
-            "force_enter",
-            vec![Value::u128(duration as u128)],
-        )
-        .await
+        self.submit_sudo_raw_call_checked(pair, "SafeMode", "force_enter", vec![])
+            .await
     }
 
     /// Force exit safe mode (requires privilege) via sudo.
     pub async fn safe_mode_force_exit(&self, pair: &sr25519::Pair) -> Result<String> {
-        self.submit_sudo_raw_call(pair, "SafeMode", "force_exit", vec![])
+        self.submit_sudo_raw_call_checked(pair, "SafeMode", "force_exit", vec![])
             .await
     }
 
@@ -2226,45 +2236,21 @@ impl Client {
         hotkey_ss58: &str,
         identity: &SubnetIdentity,
     ) -> Result<String> {
-        use subxt::dynamic::Value;
         let hk = Self::ss58_to_account_id(hotkey_ss58)?;
-        let ident = Value::named_composite([
-            (
-                "subnet_name",
-                Value::from_bytes(identity.subnet_name.as_bytes()),
-            ),
-            (
-                "github_repo",
-                Value::from_bytes(identity.github_repo.as_bytes()),
-            ),
-            (
-                "subnet_contact",
-                Value::from_bytes(identity.subnet_contact.as_bytes()),
-            ),
-            (
-                "subnet_url",
-                Value::from_bytes(identity.subnet_url.as_bytes()),
-            ),
-            ("discord", Value::from_bytes(identity.discord.as_bytes())),
-            (
-                "description",
-                Value::from_bytes(identity.description.as_bytes()),
-            ),
-            (
-                "additional",
-                Value::from_bytes(identity.additional.as_bytes()),
-            ),
-        ]);
-        self.submit_raw_call(
-            pair,
-            "SubtensorModule",
-            "register_network_with_identity",
-            vec![
-                Value::from_bytes(hk.0),
-                Value::unnamed_variant("Some", [ident]),
-            ],
-        )
-        .await
+        let ident = api::runtime_types::pallet_subtensor::pallet::SubnetIdentityV3 {
+            subnet_name: identity.subnet_name.as_bytes().to_vec(),
+            github_repo: identity.github_repo.as_bytes().to_vec(),
+            subnet_contact: identity.subnet_contact.as_bytes().to_vec(),
+            subnet_url: identity.subnet_url.as_bytes().to_vec(),
+            discord: identity.discord.as_bytes().to_vec(),
+            description: identity.description.as_bytes().to_vec(),
+            logo_url: Vec::new(),
+            additional: identity.additional.as_bytes().to_vec(),
+        };
+        let tx = api::tx()
+            .subtensor_module()
+            .register_network_with_identity(hk, Some(ident));
+        self.sign_submit(&tx, pair).await
     }
 
     /// Associate an EVM key with the signer's SS58 account.
@@ -2275,18 +2261,13 @@ impl Client {
         block_number: u32,
         signature: [u8; 65],
     ) -> Result<String> {
-        use subxt::dynamic::Value;
-        self.submit_raw_call(
-            pair,
-            "SubtensorModule",
-            "associate_evm_key",
-            vec![
-                Value::from_bytes(evm_address),
-                Value::u128(block_number as u128),
-                Value::from_bytes(signature),
-            ],
-        )
-        .await
+        let tx = api::tx().subtensor_module().associate_evm_key(
+            0u16,
+            subxt::utils::H160::from(evm_address),
+            block_number as u64,
+            signature,
+        );
+        self.sign_submit(&tx, pair).await
     }
 
     /// Start call for subnet initialization.
@@ -2461,31 +2442,37 @@ impl Client {
         hotkey_ss58: &str,
         end_block: Option<u32>,
     ) -> Result<String> {
-        use subxt::dynamic::Value;
-        let hk = Self::ss58_to_account_id(hotkey_ss58)?;
-        let end = match end_block {
-            Some(b) => Value::unnamed_variant("Some", [Value::u128(b as u128)]),
-            None => Value::unnamed_variant("None", []),
-        };
-        self.submit_raw_call(
-            pair,
-            "SubtensorModule",
-            "register_leased_network",
-            vec![Value::from_bytes(hk.0), end],
-        )
-        .await
+        // Legacy CLI still resolves a hotkey for this command; validate format even
+        // though the runtime call now takes emissions_share + end_block.
+        let _ = Self::ss58_to_account_id(hotkey_ss58)?;
+        let emissions_share = api::runtime_types::sp_arithmetic::per_things::Percent(100u8);
+        let tx = api::tx()
+            .subtensor_module()
+            .register_leased_network(emissions_share, end_block);
+        self.sign_submit(&tx, pair).await
     }
 
     /// Terminate a subnet lease.
     pub async fn terminate_lease(&self, pair: &sr25519::Pair, netuid: NetUid) -> Result<String> {
-        use subxt::dynamic::Value;
-        self.submit_raw_call(
-            pair,
-            "SubtensorModule",
-            "terminate_lease",
-            vec![Value::u128(netuid.0 as u128)],
-        )
-        .await
+        let lease_id_addr = api::storage()
+            .subtensor_module()
+            .subnet_uid_to_lease_id(netuid.0);
+        let storage = self.inner.storage().at_latest().await?;
+        let lease_id = storage
+            .fetch(&lease_id_addr)
+            .await?
+            .ok_or_else(|| anyhow::anyhow!("No lease found for subnet {}", netuid.0))?;
+
+        let lease_addr = api::storage().subtensor_module().subnet_leases(lease_id);
+        let lease = storage
+            .fetch(&lease_addr)
+            .await?
+            .ok_or_else(|| anyhow::anyhow!("Lease {} does not exist", lease_id))?;
+
+        let tx = api::tx()
+            .subtensor_module()
+            .terminate_lease(lease_id, lease.hotkey);
+        self.sign_submit(&tx, pair).await
     }
 
     // ──────── Balances: transfer_keep_alive ────────
@@ -2583,21 +2570,52 @@ impl Client {
         image: &str,
     ) -> Result<String> {
         use subxt::dynamic::Value;
+        let data_value = |s: &str| -> Value {
+            if s.is_empty() {
+                Value::unnamed_variant("None", [])
+            } else {
+                let bytes = s.as_bytes();
+                let len = bytes.len().min(128);
+                Value::unnamed_variant(format!("Raw{}", len), [Value::from_bytes(&bytes[..len])])
+            }
+        };
+        let additional_entries: Vec<Value> = [("github", github), ("description", description)]
+            .into_iter()
+            .filter(|(_, value)| !value.trim().is_empty())
+            .map(|(key, value)| Value::unnamed_composite([data_value(key), data_value(value)]))
+            .collect();
         let info = Value::named_composite([
-            ("name", Value::from_bytes(name.as_bytes())),
-            ("url", Value::from_bytes(url.as_bytes())),
-            ("description", Value::from_bytes(description.as_bytes())),
-            ("github_repo", Value::from_bytes(github.as_bytes())),
-            ("image", Value::from_bytes(image.as_bytes())),
+            ("additional", Value::unnamed_composite(additional_entries)),
+            ("display", data_value(name)),
+            ("legal", Value::unnamed_variant("None", [])),
+            ("web", data_value(url)),
+            ("riot", Value::unnamed_variant("None", [])),
+            ("email", Value::unnamed_variant("None", [])),
+            ("pgp_fingerprint", Value::unnamed_variant("None", [])),
+            ("image", data_value(image)),
+            ("twitter", Value::unnamed_variant("None", [])),
         ]);
-        self.submit_raw_call(pair, "Registry", "set_identity", vec![info])
-            .await
+        let identified = AccountId::from(pair.public().0);
+        self.submit_raw_call(
+            pair,
+            "Registry",
+            "set_identity",
+            vec![Value::from_bytes(identified.0), info],
+        )
+        .await
     }
 
     /// Clear on-chain identity (Registry pallet).
     pub async fn clear_registry_identity(&self, pair: &sr25519::Pair) -> Result<String> {
-        self.submit_raw_call(pair, "Registry", "clear_identity", vec![])
-            .await
+        use subxt::dynamic::Value;
+        let identified = AccountId::from(pair.public().0);
+        self.submit_raw_call(
+            pair,
+            "Registry",
+            "clear_identity",
+            vec![Value::from_bytes(identified.0)],
+        )
+        .await
     }
 
     // ──────── Utility: batch variants ────────

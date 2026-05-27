@@ -50,18 +50,8 @@ impl Client {
         coldkey_ss58: &str,
         block_hash: subxt::utils::H256,
     ) -> Result<Vec<StakeInfo>> {
-        let account_id = Self::ss58_to_account_id(coldkey_ss58)?;
-        let payload = api::apis()
-            .stake_info_runtime_api()
-            .get_stake_info_for_coldkey(account_id);
-        let result = self
-            .inner
-            .runtime_api()
-            .at(block_hash)
-            .call(payload)
+        self.get_stake_for_coldkey_at_block(coldkey_ss58, block_hash)
             .await
-            .map_err(|e| Self::annotate_at_block_error(e.into(), None))?;
-        Ok(result.into_iter().map(StakeInfo::from).collect())
     }
 
     // ──────── Subnet Queries ────────
@@ -156,8 +146,8 @@ impl Client {
         Ok(result.map(|h| SubnetHyperparameters::from_gen(h, netuid)))
     }
 
-    /// Get info for a specific subnet at a pinned block hash.
-    pub async fn get_subnet_info_pinned(
+    /// Get info for a specific subnet at a specific block hash.
+    pub async fn get_subnet_info_at_block(
         &self,
         netuid: NetUid,
         block_hash: subxt::utils::H256,
@@ -175,8 +165,17 @@ impl Client {
         Ok(result.map(SubnetInfo::from))
     }
 
-    /// Get subnet hyperparameters at a pinned block hash.
-    pub async fn get_subnet_hyperparams_pinned(
+    /// Backward-compatible alias for pinned subnet info reads.
+    pub async fn get_subnet_info_pinned(
+        &self,
+        netuid: NetUid,
+        block_hash: subxt::utils::H256,
+    ) -> Result<Option<SubnetInfo>> {
+        self.get_subnet_info_at_block(netuid, block_hash).await
+    }
+
+    /// Get subnet hyperparameters at a specific block hash.
+    pub async fn get_subnet_hyperparams_at_block(
         &self,
         netuid: NetUid,
         block_hash: subxt::utils::H256,
@@ -192,6 +191,16 @@ impl Client {
             .await
             .map_err(|e| Self::annotate_at_block_error(e.into(), None))?;
         Ok(result.map(|h| SubnetHyperparameters::from_gen(h, netuid)))
+    }
+
+    /// Backward-compatible alias for pinned subnet hyperparameter reads.
+    pub async fn get_subnet_hyperparams_pinned(
+        &self,
+        netuid: NetUid,
+        block_hash: subxt::utils::H256,
+    ) -> Result<Option<SubnetHyperparameters>> {
+        self.get_subnet_hyperparams_at_block(netuid, block_hash)
+            .await
     }
 
     /// Get dynamic info for all subnets (cached for 30s).
@@ -410,20 +419,11 @@ impl Client {
         ss58: &str,
         block_hash: subxt::utils::H256,
     ) -> Result<Option<ChainIdentity>> {
-        let account_id = Self::ss58_to_account_id(ss58)?;
-        let addr = api::storage().registry().identity_of(&account_id);
-        let result = self
-            .inner
-            .storage()
-            .at(block_hash)
-            .fetch(&addr)
-            .await
-            .map_err(|e| Self::annotate_at_block_error(e.into(), None))?;
-        Ok(result.map(|reg| chain_identity_from_registration(reg.info)))
+        self.get_identity_at_block(ss58, block_hash).await
     }
 
-    /// Get subnet identity at a pinned block hash.
-    pub async fn get_subnet_identity_pinned(
+    /// Get subnet identity at a specific block hash.
+    pub async fn get_subnet_identity_at_block(
         &self,
         netuid: NetUid,
         block_hash: subxt::utils::H256,
@@ -448,8 +448,17 @@ impl Client {
         }))
     }
 
-    /// Get delegate info at a pinned block hash.
-    pub async fn get_delegate_pinned(
+    /// Backward-compatible alias for pinned subnet identity reads.
+    pub async fn get_subnet_identity_pinned(
+        &self,
+        netuid: NetUid,
+        block_hash: subxt::utils::H256,
+    ) -> Result<Option<SubnetIdentity>> {
+        self.get_subnet_identity_at_block(netuid, block_hash).await
+    }
+
+    /// Get delegate info at a specific block hash.
+    pub async fn get_delegate_at_block(
         &self,
         hotkey_ss58: &str,
         block_hash: subxt::utils::H256,
@@ -468,8 +477,17 @@ impl Client {
         Ok(result.map(DelegateInfo::from))
     }
 
-    /// List proxy accounts at a pinned block hash.
-    pub async fn list_proxies_pinned(
+    /// Backward-compatible alias for pinned delegate reads.
+    pub async fn get_delegate_pinned(
+        &self,
+        hotkey_ss58: &str,
+        block_hash: subxt::utils::H256,
+    ) -> Result<Option<DelegateInfo>> {
+        self.get_delegate_at_block(hotkey_ss58, block_hash).await
+    }
+
+    /// List proxy accounts at a specific block hash.
+    pub async fn list_proxies_at_block(
         &self,
         ss58: &str,
         block_hash: subxt::utils::H256,
@@ -498,9 +516,18 @@ impl Client {
         }
     }
 
+    /// Backward-compatible alias for pinned proxy reads.
+    pub async fn list_proxies_pinned(
+        &self,
+        ss58: &str,
+        block_hash: subxt::utils::H256,
+    ) -> Result<Vec<(String, String, u32)>> {
+        self.list_proxies_at_block(ss58, block_hash).await
+    }
+
     /// Check if a coldkey has a scheduled swap at a pinned block hash.
     /// Returns execution block and blake2 hash of the announced new coldkey (`0x…` hex).
-    pub async fn get_coldkey_swap_scheduled_pinned(
+    pub async fn get_coldkey_swap_scheduled_at_block(
         &self,
         ss58: &str,
         block_hash: subxt::utils::H256,
@@ -524,8 +551,18 @@ impl Client {
         }))
     }
 
-    /// Get child keys at a pinned block hash.
-    pub async fn get_child_keys_pinned(
+    /// Backward-compatible alias for pinned coldkey swap reads.
+    pub async fn get_coldkey_swap_scheduled_pinned(
+        &self,
+        ss58: &str,
+        block_hash: subxt::utils::H256,
+    ) -> Result<Option<(u32, String)>> {
+        self.get_coldkey_swap_scheduled_at_block(ss58, block_hash)
+            .await
+    }
+
+    /// Get child keys at a specific block hash.
+    pub async fn get_child_keys_at_block(
         &self,
         hotkey_ss58: &str,
         netuid: NetUid,
@@ -553,8 +590,19 @@ impl Client {
             .collect())
     }
 
-    /// Get pending child keys at a pinned block hash.
-    pub async fn get_pending_child_keys_pinned(
+    /// Backward-compatible alias for pinned child key reads.
+    pub async fn get_child_keys_pinned(
+        &self,
+        hotkey_ss58: &str,
+        netuid: NetUid,
+        block_hash: subxt::utils::H256,
+    ) -> Result<Vec<(u64, String)>> {
+        self.get_child_keys_at_block(hotkey_ss58, netuid, block_hash)
+            .await
+    }
+
+    /// Get pending child keys at a specific block hash.
+    pub async fn get_pending_child_keys_at_block(
         &self,
         hotkey_ss58: &str,
         netuid: NetUid,
@@ -582,6 +630,17 @@ impl Client {
                 .collect();
             (children_parsed, cooldown_block)
         }))
+    }
+
+    /// Backward-compatible alias for pinned pending child key reads.
+    pub async fn get_pending_child_keys_pinned(
+        &self,
+        hotkey_ss58: &str,
+        netuid: NetUid,
+        block_hash: subxt::utils::H256,
+    ) -> Result<Option<(Vec<(u64, String)>, u64)>> {
+        self.get_pending_child_keys_at_block(hotkey_ss58, netuid, block_hash)
+            .await
     }
 
     // ──────── Delegation / Nomination Queries ────────
@@ -933,15 +992,22 @@ impl Client {
         &self,
         block_hash: subxt::utils::H256,
     ) -> Result<Vec<SubnetInfo>> {
-        let payload = api::apis().subnet_info_runtime_api().get_subnets_info();
-        let result = self
-            .inner
-            .runtime_api()
-            .at(block_hash)
-            .call(payload)
-            .await
-            .map_err(|e| Self::annotate_at_block_error(e.into(), None))?;
-        Ok(result.into_iter().flatten().map(SubnetInfo::from).collect())
+        let key = block_hash.to_string();
+        let data = self
+            .cache
+            .get_all_subnets_at_block(&key, || async {
+                let payload = api::apis().subnet_info_runtime_api().get_subnets_info();
+                let result = self
+                    .inner
+                    .runtime_api()
+                    .at(block_hash)
+                    .call(payload)
+                    .await
+                    .map_err(|e| Self::annotate_at_block_error(e.into(), None))?;
+                Ok(result.into_iter().flatten().map(SubnetInfo::from).collect())
+            })
+            .await?;
+        Ok((*data).clone())
     }
 
     /// Get all dynamic info at a specific block hash.
@@ -949,19 +1015,26 @@ impl Client {
         &self,
         block_hash: subxt::utils::H256,
     ) -> Result<Vec<DynamicInfo>> {
-        let payload = api::apis().subnet_info_runtime_api().get_all_dynamic_info();
-        let result = self
-            .inner
-            .runtime_api()
-            .at(block_hash)
-            .call(payload)
-            .await
-            .map_err(|e| Self::annotate_at_block_error(e.into(), None))?;
-        Ok(result
-            .into_iter()
-            .flatten()
-            .map(DynamicInfo::from)
-            .collect())
+        let key = block_hash.to_string();
+        let data = self
+            .cache
+            .get_all_dynamic_info_at_block(&key, || async {
+                let payload = api::apis().subnet_info_runtime_api().get_all_dynamic_info();
+                let result = self
+                    .inner
+                    .runtime_api()
+                    .at(block_hash)
+                    .call(payload)
+                    .await
+                    .map_err(|e| Self::annotate_at_block_error(e.into(), None))?;
+                Ok(result
+                    .into_iter()
+                    .flatten()
+                    .map(DynamicInfo::from)
+                    .collect())
+            })
+            .await?;
+        Ok((*data).clone())
     }
 
     /// Get dynamic info for a specific subnet at a block hash.
@@ -989,17 +1062,24 @@ impl Client {
         netuid: NetUid,
         block_hash: subxt::utils::H256,
     ) -> Result<Vec<NeuronInfoLite>> {
-        let payload = api::apis()
-            .neuron_info_runtime_api()
-            .get_neurons_lite(netuid.0);
-        let result = self
-            .inner
-            .runtime_api()
-            .at(block_hash)
-            .call(payload)
-            .await
-            .map_err(|e| Self::annotate_at_block_error(e.into(), None))?;
-        Ok(result.into_iter().map(NeuronInfoLite::from).collect())
+        let key = block_hash.to_string();
+        let data = self
+            .cache
+            .get_neurons_lite_at_block(netuid.0, &key, || async {
+                let payload = api::apis()
+                    .neuron_info_runtime_api()
+                    .get_neurons_lite(netuid.0);
+                let result = self
+                    .inner
+                    .runtime_api()
+                    .at(block_hash)
+                    .call(payload)
+                    .await
+                    .map_err(|e| Self::annotate_at_block_error(e.into(), None))?;
+                Ok(result.into_iter().map(NeuronInfoLite::from).collect())
+            })
+            .await?;
+        Ok((*data).clone())
     }
 
     /// Get full neuron info for a specific UID at a block hash.
@@ -1374,30 +1454,42 @@ impl Client {
                 };
                 let id = u32::from_le_bytes(id_bytes);
 
-                // Try to decode the value
-                if let Ok((
-                    creator_bytes,
-                    deposit,
-                    raised,
-                    cap,
-                    end_block,
-                    _min_contrib,
-                    finalized,
-                    _target,
-                    _call,
-                )) = kv.value.as_type::<(
-                    [u8; 32],
-                    u64,
-                    u64,
-                    u64,
-                    u32,
-                    u64,
-                    bool,
-                    Option<[u8; 32]>,
-                    Option<Vec<u8>>,
-                )>() {
-                    let creator = crate::AccountId::from(creator_bytes).to_string();
-                    results.push((id, creator, deposit, raised, cap, end_block, finalized));
+                if let Ok(dynamic) = kv.value.to_value() {
+                    if let Some(decoded) = decode_crowdloan_info_value(&dynamic) {
+                        results.push((
+                            id,
+                            decoded.creator,
+                            decoded.deposit,
+                            decoded.raised,
+                            decoded.cap,
+                            decoded.end_block,
+                            decoded.finalized,
+                        ));
+                    } else if let Ok((
+                        creator_bytes,
+                        deposit,
+                        raised,
+                        cap,
+                        end_block,
+                        _min_contrib,
+                        finalized,
+                        _target,
+                        _call,
+                    )) = kv.value.as_type::<(
+                        [u8; 32],
+                        u64,
+                        u64,
+                        u64,
+                        u32,
+                        u64,
+                        bool,
+                        Option<[u8; 32]>,
+                        Option<Vec<u8>>,
+                    )>() {
+                        // Backward-compatible fallback for older pallet layouts.
+                        let creator = crate::AccountId::from(creator_bytes).to_string();
+                        results.push((id, creator, deposit, raised, cap, end_block, finalized));
+                    }
                 }
             }
         }
@@ -1430,6 +1522,20 @@ impl Client {
         .await?;
         match result {
             Some(val) => {
+                if let Ok(dynamic) = val.to_value() {
+                    if let Some(decoded) = decode_crowdloan_info_value(&dynamic) {
+                        return Ok(Some((
+                            decoded.creator,
+                            decoded.deposit,
+                            decoded.raised,
+                            decoded.cap,
+                            decoded.end_block,
+                            decoded.min_contribution,
+                            decoded.finalized,
+                            decoded.target,
+                        )));
+                    }
+                }
                 if let Ok((
                     creator_bytes,
                     deposit,
@@ -1482,7 +1588,7 @@ impl Client {
         let mut iter = retry_on_transient("get_crowdloan_contributors", RPC_RETRIES, || async {
             let addr = subxt::dynamic::storage(
                 "Crowdloan",
-                "Contributors",
+                "Contributions",
                 vec![subxt::dynamic::Value::u128(crowdloan_id as u128)],
             );
             let i = inner
@@ -1997,6 +2103,214 @@ fn decode_commitment_data(data: &api::runtime_types::pallet_commitments::types::
         Raw115, Raw116, Raw117, Raw118, Raw119, Raw120, Raw121, Raw122, Raw123, Raw124, Raw125,
         Raw126, Raw127, Raw128
     )
+}
+
+#[derive(Debug)]
+struct DecodedCrowdloanInfo {
+    creator: String,
+    deposit: u64,
+    raised: u64,
+    cap: u64,
+    end_block: u32,
+    min_contribution: u64,
+    finalized: bool,
+    target: Option<String>,
+}
+
+fn decode_crowdloan_info_value<T>(value: &subxt::dynamic::Value<T>) -> Option<DecodedCrowdloanInfo>
+where
+    subxt::dynamic::Value<T>: serde::Serialize,
+{
+    let json = serde_json::to_value(value).ok()?;
+    decode_crowdloan_info_json(&json)
+}
+
+fn decode_crowdloan_info_json(json: &serde_json::Value) -> Option<DecodedCrowdloanInfo> {
+    if let Some(obj) = json.as_object() {
+        let creator = obj
+            .get("creator")
+            .or_else(|| obj.get("depositor"))
+            .or_else(|| obj.get("owner"))
+            .and_then(json_to_ss58_account)?;
+        let deposit = obj.get("deposit").and_then(json_to_u64)?;
+        let raised = obj.get("raised").and_then(json_to_u64)?;
+        let cap = obj.get("cap").and_then(json_to_u64)?;
+        let end_block = obj
+            .get("end")
+            .or_else(|| obj.get("end_block"))
+            .and_then(json_to_u64)
+            .and_then(|n| u32::try_from(n).ok())?;
+        let min_contribution = obj
+            .get("min_contribution")
+            .or_else(|| obj.get("min_contrib"))
+            .and_then(json_to_u64)
+            .unwrap_or(0);
+        let finalized = obj.get("finalized").and_then(json_to_bool).unwrap_or(false);
+        let target = obj
+            .get("target_address")
+            .or_else(|| obj.get("target"))
+            .and_then(json_to_ss58_account);
+        return Some(DecodedCrowdloanInfo {
+            creator,
+            deposit,
+            raised,
+            cap,
+            end_block,
+            min_contribution,
+            finalized,
+            target,
+        });
+    }
+
+    // Fallback for tuple-encoded historical layouts where field names are unavailable.
+    let arr = json.as_array()?;
+    // Legacy layout:
+    // (creator, deposit, raised, cap, end_block, min_contrib, finalized, target, call)
+    let legacy = (
+        arr.first().and_then(json_to_ss58_account),
+        arr.get(1).and_then(json_to_u64),
+        arr.get(2).and_then(json_to_u64),
+        arr.get(3).and_then(json_to_u64),
+        arr.get(4)
+            .and_then(json_to_u64)
+            .and_then(|n| u32::try_from(n).ok()),
+        arr.get(5).and_then(json_to_u64),
+        arr.get(6).and_then(json_to_bool),
+        arr.get(7).and_then(json_to_ss58_account),
+    );
+    if let (
+        Some(creator),
+        Some(deposit),
+        Some(raised),
+        Some(cap),
+        Some(end_block),
+        Some(min_contribution),
+        Some(finalized),
+        target,
+    ) = legacy
+    {
+        return Some(DecodedCrowdloanInfo {
+            creator,
+            deposit,
+            raised,
+            cap,
+            end_block,
+            min_contribution,
+            finalized,
+            target,
+        });
+    }
+
+    // Current crowdloan layout (as documented by runtime and SDK):
+    // (creator, deposit, min_contribution, end, cap, funds_account, raised, target, call, finalized, contributors_count)
+    let current = (
+        arr.first().and_then(json_to_ss58_account),
+        arr.get(1).and_then(json_to_u64),
+        arr.get(2).and_then(json_to_u64),
+        arr.get(3)
+            .and_then(json_to_u64)
+            .and_then(|n| u32::try_from(n).ok()),
+        arr.get(4).and_then(json_to_u64),
+        arr.get(6).and_then(json_to_u64),
+        arr.get(7).and_then(json_to_ss58_account),
+        arr.get(9).and_then(json_to_bool),
+    );
+    if let (
+        Some(creator),
+        Some(deposit),
+        Some(min_contribution),
+        Some(end_block),
+        Some(cap),
+        Some(raised),
+        target,
+        Some(finalized),
+    ) = current
+    {
+        return Some(DecodedCrowdloanInfo {
+            creator,
+            deposit,
+            raised,
+            cap,
+            end_block,
+            min_contribution,
+            finalized,
+            target,
+        });
+    }
+
+    None
+}
+
+fn json_to_u64(value: &serde_json::Value) -> Option<u64> {
+    match value {
+        serde_json::Value::Number(n) => n.as_u64(),
+        serde_json::Value::String(s) => s.parse::<u64>().ok(),
+        serde_json::Value::Object(map) => {
+            for key in ["rao", "raw", "value", "amount", "bits", "inner", "0"] {
+                if let Some(v) = map.get(key).and_then(json_to_u64) {
+                    return Some(v);
+                }
+            }
+            if map.len() == 1 {
+                return map.values().next().and_then(json_to_u64);
+            }
+            None
+        }
+        _ => None,
+    }
+}
+
+fn json_to_bool(value: &serde_json::Value) -> Option<bool> {
+    match value {
+        serde_json::Value::Bool(b) => Some(*b),
+        serde_json::Value::String(s) => match s.as_str() {
+            "true" => Some(true),
+            "false" => Some(false),
+            _ => None,
+        },
+        _ => None,
+    }
+}
+
+fn json_to_ss58_account(value: &serde_json::Value) -> Option<String> {
+    match value {
+        serde_json::Value::String(s) => {
+            if let Ok(pk) = crate::wallet::keypair::from_ss58(s) {
+                return Some(crate::AccountId::from(pk.0).to_string());
+            }
+            let hex_str = s.strip_prefix("0x").unwrap_or(s);
+            if hex_str.len() == 64 {
+                if let Ok(bytes) = hex::decode(hex_str) {
+                    if let Ok(arr) = <[u8; 32]>::try_from(bytes.as_slice()) {
+                        return Some(crate::AccountId::from(arr).to_string());
+                    }
+                }
+            }
+            None
+        }
+        serde_json::Value::Array(items) => {
+            if items.len() != 32 {
+                return None;
+            }
+            let mut out = [0u8; 32];
+            for (idx, v) in items.iter().enumerate() {
+                out[idx] = u8::try_from(v.as_u64()?).ok()?;
+            }
+            Some(crate::AccountId::from(out).to_string())
+        }
+        serde_json::Value::Object(map) => {
+            for key in ["id", "Id", "value", "bytes", "account", "AccountId", "0"] {
+                if let Some(ss58) = map.get(key).and_then(json_to_ss58_account) {
+                    return Some(ss58);
+                }
+            }
+            if map.len() == 1 {
+                return map.values().next().and_then(json_to_ss58_account);
+            }
+            None
+        }
+        _ => None,
+    }
 }
 
 fn decode_identity_data(data: &api::runtime_types::pallet_registry::types::Data) -> String {

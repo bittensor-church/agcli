@@ -10,12 +10,18 @@ use anyhow::Result;
 /// Pins the latest block first, then queries neurons at that exact block
 /// to ensure the block number and neuron data are consistent (Issue 649).
 pub async fn fetch_metagraph(client: &Client, netuid: NetUid) -> Result<Metagraph> {
-    // Pin the latest block to get a consistent (hash, number) pair
-    let block = client.get_block_number().await?;
-    // Fetch neurons — uses the cache (30s TTL). The cached data may be slightly
-    // stale relative to `block`, but the block number we report now accurately
-    // reflects the chain tip at query time rather than a parallel race.
-    let neurons_arc = client.get_neurons_lite(netuid).await?;
+    // Pin the latest block to keep all reads on the same chain state.
+    let block_hash = client.pin_latest_block().await?;
+    let block = client.get_block_number_at(block_hash).await?;
+
+    // Reuse immutable disk snapshot if this exact block was already fetched.
+    if let Some(cached) = crate::queries::cache::load_block(netuid.0, block)? {
+        return Ok(cached);
+    }
+
+    // Read neurons at the pinned block hash (not the latest TTL cache).
+    let neurons = client.get_neurons_lite_at_block(netuid, block_hash).await?;
+    let neurons_arc = std::sync::Arc::new(neurons);
     let n: u16 = neurons_arc.len().try_into().map_err(|_| {
         anyhow::anyhow!(
             "Subnet has {} neurons, exceeding u16::MAX ({})",
@@ -55,8 +61,7 @@ pub async fn fetch_metagraph(client: &Client, netuid: NetUid) -> Result<Metagrap
 
     // Unwrap Arc if we're the only holder; otherwise clone
     let neurons = std::sync::Arc::try_unwrap(neurons_arc).unwrap_or_else(|arc| (*arc).clone());
-
-    Ok(Metagraph {
+    let metagraph = Metagraph {
         netuid,
         n,
         block,
@@ -73,7 +78,13 @@ pub async fn fetch_metagraph(client: &Client, netuid: NetUid) -> Result<Metagrap
         active,
         last_update,
         neurons,
-    })
+    };
+
+    if let Err(e) = crate::queries::cache::save(&metagraph) {
+        tracing::debug!(netuid = netuid.0, block, error = %e, "metagraph snapshot cache write failed");
+    }
+
+    Ok(metagraph)
 }
 
 #[cfg(test)]

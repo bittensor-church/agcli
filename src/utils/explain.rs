@@ -9,7 +9,7 @@ pub fn explain(topic: &str) -> Option<&'static str> {
         "ratelimit" | "ratelimits" | "weightsratelimit" => Some(RATE_LIMITS),
         "weights" | "settingweights" | "setweights" | "weightsetting" => Some(WEIGHTS),
         "stakeweight" | "stakeweightminimum" | "1000" => Some(STAKE_WEIGHT),
-        "amm" | "dynamictao" | "dtao" | "pool" => Some(AMM),
+        "amm" | "dynamictao" | "dtao" | "pool" | "dynamic" => Some(AMM),
         "bootstrap" => Some(BOOTSTRAP),
         "alpha" | "alphatoken" => Some(ALPHA),
         "emission" | "emissions" => Some(EMISSION),
@@ -22,6 +22,16 @@ pub fn explain(topic: &str) -> Option<&'static str> {
         "childkey" | "childkeys" => Some(CHILDKEYS),
         "root" | "rootnetwork" => Some(ROOT_NETWORK),
         "proxy" => Some(PROXY),
+        "multisig" | "multisignature" | "asmulti" => Some(MULTISIG),
+        "scheduler" | "scheduledcalls" | "schedule" => Some(SCHEDULER),
+        "drand" | "randomness" | "beacon" => Some(DRAND),
+        "safemode" | "safe" | "safeoperations" => Some(SAFE_MODE),
+        "swap" | "swaps" | "keyswap" | "hotkeyswap" => Some(SWAP),
+        "evm" | "evmbridge" | "bridge" => Some(EVM_BRIDGE),
+        "contracts" | "contract" | "smartcontracts" => Some(CONTRACTS),
+        "ss58vsevmh160" | "ss58evm" | "h160" | "evmh160" | "addressformats" => {
+            Some(SS58_VS_EVM_H160)
+        }
         "coldkeyswap" | "coldkey" | "ckswap" => Some(COLDKEY_SWAP),
         "governance" | "gov" | "proposals" => Some(GOVERNANCE),
         "senate" | "triumvirate" => Some(SENATE),
@@ -74,6 +84,20 @@ pub fn list_topics() -> Vec<(&'static str, &'static str)> {
         ("childkeys", "Childkey take and delegation within subnets"),
         ("root", "Root network (SN0) and root weights"),
         ("proxy", "Proxy accounts for delegated signing"),
+        ("multisig", "Threshold approvals and delayed execution flow"),
+        ("scheduler", "Schedule/cancel delayed runtime calls"),
+        ("drand", "Distributed randomness pulses and commit timing"),
+        (
+            "safe-mode",
+            "Emergency chain protection mode, deposits, and exits",
+        ),
+        ("swap", "Hotkey/coldkey/EVM-key swap and rotation flows"),
+        ("evm", "EVM bridge calls, withdrawals, and H160 account flow"),
+        ("contracts", "Upload/instantiate/call smart contracts"),
+        (
+            "ss58-vs-evm-h160",
+            "Address-format differences and conversion safety rules",
+        ),
         ("coldkey-swap", "Coldkey swap scheduling and security"),
         ("governance", "On-chain governance and proposals"),
         ("senate", "Senate / triumvirate governance body"),
@@ -563,6 +587,143 @@ Why use proxies:
 
 List proxies: `agcli proxy list`
 Remove proxy: `agcli proxy remove <delegate_ss58>`";
+
+const MULTISIG: &str = "\
+MULTISIG
+========
+Multisig accounts require M-of-N signatories to approve sensitive calls.
+
+Core flow:
+1. Compute deterministic multisig account:
+   agcli multisig address --threshold 2 --signatories \"5A...,5B...\"
+2. Submit first approval (stores call hash):
+   agcli multisig submit --threshold 2 --to 5F... --amount 1
+3. Other signers approve:
+   agcli multisig approve --threshold 2 --call-hash 0x...
+4. Execute once threshold is reached:
+   agcli multisig execute --threshold 2 --to 5F... --amount 1 --call-hash 0x...
+
+Operational notes:
+- Threshold controls how many signatures are required.
+- Timepoint identifies the existing multisig entry for subsequent approvals.
+- Use multisig for treasury, subnet-owner, and high-value wallet operations.";
+
+const SCHEDULER: &str = "\
+SCHEDULER
+=========
+The scheduler pallet queues calls for execution at a future block.
+
+Typical use:
+- Schedule: `agcli scheduler schedule --when <block> --call-file call.json`
+- Named schedule: `agcli scheduler schedule-named --id task-1 --when <block> --call-file call.json`
+- Cancel: `agcli scheduler cancel --when <block> --index <i>`
+- Cancel named: `agcli scheduler cancel-named --id task-1`
+
+Why it matters:
+- Defers maintenance or governance actions to known block heights.
+- Supports repeatable ops workflows with deterministic named IDs.
+- Most scheduler actions are privileged on production networks.";
+
+const DRAND: &str = "\
+DRAND RANDOMNESS
+================
+Drand provides distributed randomness pulses that runtime logic can consume.
+
+Concepts:
+- Each pulse has a round number, payload, and signature.
+- Runtime stores recent rounds and can gate timing-sensitive operations.
+- Timelocked weight flows rely on synchronized randomness rounds.
+
+CLI surface:
+- `agcli drand write-pulse --round <R> --payload-file pulse.json --signature-file sig.bin`
+
+Use cases:
+- Randomized protocol behavior without single-operator trust.
+- Coordinated commit windows and anti-manipulation timing anchors.";
+
+const SAFE_MODE: &str = "\
+SAFE MODE
+=========
+Safe mode is an emergency state that restricts normal chain operations.
+
+Core actions:
+- Enter: `agcli safe-mode enter --duration <blocks>`
+- Extend: `agcli safe-mode extend --duration <blocks>`
+- Force-enter / force-exit: privileged emergency controls.
+
+Operational model:
+- Enter/extend can require a temporary deposit that is released later.
+- Runtime stores an `entered_until` block height for enforcement.
+- Use during incident response to pause risky state transitions.";
+
+const SWAP: &str = "\
+SWAP OPERATIONS
+===============
+Swap commands rotate key ownership and account-control bindings.
+
+Current flows:
+- Hotkey rotation: `agcli swap hotkey --new-hotkey <SS58>`
+- Coldkey migration: `agcli swap coldkey --new-coldkey <SS58>`
+- EVM key association: `agcli swap evm-key --evm-address 0x... --block-number N --signature 0x...`
+
+Why it matters:
+- Rotates compromised keys without losing chain state.
+- Separates signer identity changes from staking/emission state.
+- Requires careful verification of destination keys before submission.";
+
+const EVM_BRIDGE: &str = "\
+EVM BRIDGE
+==========
+The EVM bridge connects Substrate accounts with EVM execution semantics.
+
+Main capabilities:
+- Call EVM contracts from agcli:
+  `agcli evm call --to 0x... --data 0x... --value 0`
+- Withdraw value between account domains:
+  `agcli evm withdraw --to 5F... --amount 1`
+
+Bridge concepts:
+- EVM addresses are 20-byte H160 values.
+- Substrate keys are 32-byte AccountId values (typically shown as SS58).
+- Signature domain and nonce handling differ between native and EVM calls.";
+
+const CONTRACTS: &str = "\
+CONTRACTS
+=========
+Contracts commands manage WASM smart-contract lifecycle on-chain.
+
+Core lifecycle:
+1. Upload code:
+   `agcli contracts upload --wasm contract.wasm`
+2. Instantiate from code hash:
+   `agcli contracts instantiate --code-hash 0x... --constructor new --args '[...]'`
+3. Call deployed contract:
+   `agcli contracts call --contract 5F... --message do_work --args '[...]'`
+4. Remove unused code:
+   `agcli contracts remove-code --code-hash 0x...`
+
+Practical note:
+- Gas/weight limits and storage deposits must be planned per call.";
+
+const SS58_VS_EVM_H160: &str = "\
+SS58 vs EVM-H160
+================
+agcli can operate with two address families:
+
+1) SS58 (Substrate account)
+- Encodes a 32-byte AccountId plus network prefix.
+- Example shape: `5F3sa2TJ...`
+- Used by most wallet, stake, subnet, and transfer commands.
+
+2) EVM H160
+- 20-byte hex address, usually `0x` prefixed.
+- Example shape: `0x742d35Cc6634C0532925a3b844Bc454e4438f44e`
+- Used by EVM and key-association flows.
+
+Safety rules:
+- Do not pass H160 where SS58 is required (or vice versa).
+- Verify command flags: `--address` is often SS58; EVM commands use explicit `0x...` args.
+- For cross-domain operations, validate both source and destination format before signing.";
 
 const COLDKEY_SWAP: &str = "\
 COLDKEY SWAP
@@ -1231,6 +1392,46 @@ mod tests {
     }
 
     #[test]
+    fn known_topic_multisig() {
+        assert!(explain("multisig").is_some());
+    }
+
+    #[test]
+    fn known_topic_scheduler() {
+        assert!(explain("scheduler").is_some());
+    }
+
+    #[test]
+    fn known_topic_drand() {
+        assert!(explain("drand").is_some());
+    }
+
+    #[test]
+    fn known_topic_safe_mode() {
+        assert!(explain("safe-mode").is_some());
+    }
+
+    #[test]
+    fn known_topic_swap() {
+        assert!(explain("swap").is_some());
+    }
+
+    #[test]
+    fn known_topic_evm() {
+        assert!(explain("evm").is_some());
+    }
+
+    #[test]
+    fn known_topic_contracts() {
+        assert!(explain("contracts").is_some());
+    }
+
+    #[test]
+    fn known_topic_ss58_vs_evm_h160() {
+        assert!(explain("ss58-vs-evm-h160").is_some());
+    }
+
+    #[test]
     fn known_topic_governance() {
         assert!(explain("governance").is_some());
     }
@@ -1453,6 +1654,11 @@ mod tests {
     }
 
     #[test]
+    fn alias_evm_h160_for_ss58_vs_evm_h160() {
+        assert_eq!(explain("evm-h160"), explain("ss58-vs-evm-h160"));
+    }
+
+    #[test]
     fn alias_subnet_owner_for_owner_workflow() {
         assert_eq!(explain("subnet-owner"), explain("ow"));
     }
@@ -1574,6 +1780,16 @@ mod tests {
     #[test]
     fn strip_hyphens_archive_node() {
         assert_eq!(explain("archive-node"), explain("archivenode"));
+    }
+
+    #[test]
+    fn strip_hyphens_safe_mode() {
+        assert_eq!(explain("safe-mode"), explain("safemode"));
+    }
+
+    #[test]
+    fn strip_hyphens_ss58_vs_evm_h160() {
+        assert_eq!(explain("ss58-vs-evm-h160"), explain("ss58vsevmh160"));
     }
 
     #[test]
