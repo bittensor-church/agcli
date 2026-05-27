@@ -447,15 +447,15 @@
       "branch": "orch/agcli-audit/audit-drand",
       "startingRef": "cursor/agcli-subtensor-audit-e2e7",
       "dependsOn": [],
-      "agentId": null,
-      "runId": null,
-      "parentAgentId": null,
+      "agentId": "bc-98722f59-b5d7-442e-866b-e2f2681a6399",
+      "runId": "run-99b63d90-05ad-4706-9e24-e0cf28afb143",
+      "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
       "status": "running",
       "resultStatus": null,
       "handoffPath": null,
       "startedAt": "2026-05-27T11:16:39.719Z",
       "finishedAt": null,
-      "lastUpdate": "2026-05-27T11:16:39.719Z",
+      "lastUpdate": "2026-05-27T11:16:42.832Z",
       "note": null,
       "slackTs": null,
       "prNumber": null,
@@ -472,17 +472,18 @@
       "agentId": null,
       "runId": null,
       "parentAgentId": null,
-      "status": "pending",
+      "status": "running",
       "resultStatus": null,
       "handoffPath": null,
-      "startedAt": null,
+      "startedAt": "2026-05-27T11:16:42.833Z",
       "finishedAt": null,
-      "lastUpdate": null,
+      "lastUpdate": "2026-05-27T11:16:42.833Z",
       "note": null,
       "slackTs": null,
       "prNumber": null,
       "failureMode": null,
-      "verification": null
+      "verification": null,
+      "attempts": 1
     },
     {
       "name": "audit-liquidity",
@@ -1403,6 +1404,14 @@
     {
       "at": "2026-05-27T11:16:41.531Z",
       "message": "audit-wallet: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status"
+    },
+    {
+      "at": "2026-05-27T11:16:42.511Z",
+      "message": "audit-wallet: run ended with status=error; see /workspace/.orchestrate/agcli-audit/handoffs/audit-wallet.md"
+    },
+    {
+      "at": "2026-05-27T11:16:42.511Z",
+      "message": "audit-wallet: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/audit-wallet-failure.md"
     }
   ]
 }
