@@ -1,0 +1,2302 @@
+{
+  "$schema": "https://cursor/orchestrate/plan.schema.json",
+  "goal": "agcli-subtensor-audit: agcli is a full SDK and CLI tooling for agents to do everything that can be done on the subtensor blockchain (in this repo under subtensor). There are a large number of commands that can be called that perform operations on that chain and agcli is meant to be the interface for an agent to 1) learn how all of them work 2) get outputs from the chain in a consistent and understandable way 3) get docs from the chain when it is confused. Any operation that you can perceive is possible on subtensor should be possible through agcli without error. It must also be available for perfect use to sign operations with wallets, create hotkeys, register subnets, set hyperparams, set weights, register miners, etc. All of this can be enumerated by reading the code and IMPORTANTLY: understanding the code. Break this task up into 100s of independently running agents which mine agcli + subtensor to find discrepancies, badly displayed information, non-usable functions, ill-documented functions, things that are done wrong (i.e. not formatted semantically), failing tests, missed arguments, missed functions. Each agent will break down a section of the code, find the corresponding agcli input, think about how it can be used, think about how to document it, test it, run a green path for it, ensure that it works on a subtensor localnet clone. Each agent should make heavy use of running a mock local chain (see scaffold), creating state on the chain, then testing their specific operations to make sure that agcli is working as expected. Run this with maximum parallelism.",
+  "summary": "audit agcli against every subtensor extrinsic; ~32 workers, one per command group + cross-cutting module, each producing docs + green-path tests + findings",
+  "rootSlug": "agcli-audit",
+  "baseBranch": "cursor/agcli-subtensor-audit-e2e7",
+  "repoUrl": "https://github.com/unarbos/agcli",
+  "selfAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
+  "syncStateToGit": true,
+  "acceptanceCriteria": [
+    "Every CLI command group has an audit handoff with concrete findings.",
+    "Every CLI command group has a tests/audit_<group>.rs file that at minimum compiles and asserts the clap parse surface.",
+    "Every docs/commands/<group>.md file accurately describes every subcommand it covers.",
+    "Verifier handoffs confirm `cargo check --bin agcli` and `cargo build --bin agcli` succeed on each merged batch."
+  ],
+  "tasks": [
+    {
+      "name": "bootstrap-env",
+      "type": "worker",
+      "scopedGoal": "Bootstrap the orchestrate workspace's environment and validate the audit baseline. Before anything else, read .orchestrate/agcli-audit/discovery.md.\n\nConcretely:\n1. Run `rustup install stable && rustup default stable` (Cargo.toml needs >= 1.89). Capture `rustc --version` in the handoff.\n2. Initialize the subtensor submodule (`git submodule update --init --depth=1 -- subtensor`).\n3. Install Docker (`sudo apt-get install -y docker.io`), write /etc/docker/daemon.json with vfs storage driver + containerd-snapshotter:false, start `sudo dockerd > /tmp/dockerd.log 2>&1 &`. Verify `sudo docker run --rm hello-world` works. Record the working command sequence in .orchestrate/agcli-audit/discovery.md as the canonical environment recipe.\n4. Run `SKIP_METADATA_FETCH=1 cargo check --bin agcli` and confirm it succeeds.\n5. Pull `ghcr.io/opentensor/subtensor-localnet:devnet-ready` and start it with `agcli localnet start --output json` (build the binary first with `cargo build --release --bin agcli`). Confirm the chain produces blocks with `agcli localnet status --output json`. Stop it with `agcli localnet stop` after verification.\n6. Print the chain RPC metadata (`subxt metadata` or just `agcli doctor --network local`). Save the raw output under .orchestrate/agcli-audit/baseline-doctor.json so siblings can read it.\n\nAcceptance: handoff confirms each step's result with exact commands run. Update discovery.md with anything you learned.",
+      "pathsAllowed": [
+        ".orchestrate/agcli-audit/discovery.md",
+        ".orchestrate/agcli-audit/baseline-doctor.json",
+        ".orchestrate/agcli-audit/baseline-build.log",
+        ".orchestrate/agcli-audit/handoffs/**"
+      ],
+      "pathsForbidden": [
+        "src/**",
+        "docs/**",
+        "tests/**",
+        "Cargo.toml",
+        "Cargo.lock",
+        "build.rs",
+        "subtensor/**"
+      ],
+      "acceptance": [
+        "rustc >= 1.89.",
+        "Docker running with vfs storage driver and `sudo docker run --rm hello-world` succeeds.",
+        "`cargo check --bin agcli` succeeds.",
+        "`agcli localnet start` brings up a chain that produces blocks; `agcli localnet stop` cleans up.",
+        "discovery.md is updated with the verified environment recipe.",
+        "baseline-doctor.json exists with `agcli doctor --network local --output json` output."
+      ],
+      "model": "gpt-5.3-codex-high-fast",
+      "maxAttempts": 3
+    },
+    {
+      "name": "audit-wallet",
+      "type": "worker",
+      "scopedGoal": "Audit the agcli wallet command group end-to-end, refresh its docs, and add a green-path integration test file at tests/audit_wallet.rs.\n\nRead .orchestrate/agcli-audit/discovery.md FIRST. Then:\n\n1. Enumerate every subcommand in WalletCommands (src/cli/mod.rs around line 460); handlers in src/cli/wallet_cmds.rs and src/cli/commands.rs (AssociateHotkey/CheckSwap). For each one: open its handler and trace the call to subxt — verify pallet, dispatchable name, and argument SCALE encoding match what the chain expects (cross-reference subtensor/pallets/subtensor (wallet uses local SecretBox; on-chain associate_hotkey/swap_hotkey live in subtensor pallet)).\n2. Compile-test the green-path with `cargo check --all-targets` (do NOT touch shared source files; only modify the two pathsAllowed entries and the orchestrate handoff).\n3. Update docs/commands/wallet.md so every subcommand under wallet is documented with: clap flags + types, exit codes (compare to src/error.rs), output JSON schema, pallet ref + storage key (from subtensor/pallets/), and on-chain events emitted (from subtensor/pallets/subtensor (wallet uses local SecretBox; on-chain associate_hotkey/swap_hotkey live in subtensor pallet)).\n4. Create tests/audit_wallet.rs containing at minimum (a) a parse-surface test calling `agcli::cli::Cli::try_parse_from` for every subcommand with realistic args, (b) one `#[ignore]` integration test that talks to a local chain (gated; ok to leave ignored if Docker/localnet are unavailable in this VM).\n5. Submit a handoff whose ## Findings section lists concrete drift between code and docs, missing args, ill-formatted output, panicking paths, mismatched exit codes, and any pallet dispatchable in scope that has no agcli surface. The audit value is in this Findings section.\n\nDo NOT modify any source file in src/. If you find source-level bugs, list them as Suggested follow-ups for the planner to triage.",
+      "pathsAllowed": [
+        "tests/audit_wallet.rs",
+        "docs/commands/wallet.md"
+      ],
+      "pathsForbidden": [
+        "src/error.rs",
+        "src/events.rs",
+        "src/scaffold.rs",
+        "src/localnet.rs",
+        "src/main.rs",
+        "src/lib.rs",
+        "src/cli/mod.rs",
+        "src/cli/commands.rs",
+        "src/cli/network_cmds.rs",
+        "src/cli/system_cmds.rs",
+        "src/chain/**",
+        "src/wallet/**",
+        "src/extrinsics/**",
+        "src/queries/**",
+        "src/types/**",
+        "src/utils/**",
+        "subtensor/**",
+        "Cargo.toml",
+        "Cargo.lock",
+        "build.rs",
+        "docs/llm.txt",
+        "docs/hyperparameters.md",
+        "docs/why-agcli.md",
+        "docs/philosophy.md",
+        "docs/faq.md",
+        "docs/tutorials/**",
+        ".orchestrate/**"
+      ],
+      "acceptance": [
+        "tests/audit_wallet.rs exists and compiles under `cargo check --all-targets`.",
+        "docs/commands/wallet.md mentions every subcommand under wallet.",
+        "Handoff Findings section lists at least 3 concrete audit observations (or explains why fewer apply)."
+      ],
+      "verify": "Run on the worker branch: `cargo check --all-targets` (must succeed). Then `cargo test --no-run --test audit_wallet` (must compile). The Findings section in the handoff is the substantive deliverable.",
+      "model": "gpt-5.3-codex-high-fast",
+      "maxAttempts": 2,
+      "dependsOn": [
+        "bootstrap-env"
+      ]
+    },
+    {
+      "name": "audit-balance-transfer",
+      "type": "worker",
+      "scopedGoal": "Audit the agcli balance/transfer/transfer-all/transfer-keep-alive command group end-to-end, refresh its docs, and add a green-path integration test file at tests/audit_balance_transfer.rs.\n\nRead .orchestrate/agcli-audit/discovery.md FIRST. Then:\n\n1. Enumerate every subcommand in Commands::Balance/Transfer/TransferAll/TransferKeepAlive in src/cli/mod.rs and src/cli/commands.rs. For each one: open its handler and trace the call to subxt — verify pallet, dispatchable name, and argument SCALE encoding match what the chain expects (cross-reference subtensor/pallets/balances pallet (frame_support balances)).\n2. Compile-test the green-path with `cargo check --all-targets` (do NOT touch shared source files; only modify the two pathsAllowed entries and the orchestrate handoff).\n3. Update docs/commands/transfer.md so every subcommand under balance/transfer/transfer-all/transfer-keep-alive is documented with: clap flags + types, exit codes (compare to src/error.rs), output JSON schema, pallet ref + storage key (from subtensor/pallets/), and on-chain events emitted (from subtensor/pallets/balances pallet (frame_support balances)).\n4. Create tests/audit_balance_transfer.rs containing at minimum (a) a parse-surface test calling `agcli::cli::Cli::try_parse_from` for every subcommand with realistic args, (b) one `#[ignore]` integration test that talks to a local chain (gated; ok to leave ignored if Docker/localnet are unavailable in this VM).\n5. Submit a handoff whose ## Findings section lists concrete drift between code and docs, missing args, ill-formatted output, panicking paths, mismatched exit codes, and any pallet dispatchable in scope that has no agcli surface. The audit value is in this Findings section.\n\nDo NOT modify any source file in src/. If you find source-level bugs, list them as Suggested follow-ups for the planner to triage.",
+      "pathsAllowed": [
+        "tests/audit_balance_transfer.rs",
+        "docs/commands/transfer.md"
+      ],
+      "pathsForbidden": [
+        "src/error.rs",
+        "src/events.rs",
+        "src/scaffold.rs",
+        "src/localnet.rs",
+        "src/main.rs",
+        "src/lib.rs",
+        "src/cli/mod.rs",
+        "src/cli/commands.rs",
+        "src/cli/network_cmds.rs",
+        "src/cli/system_cmds.rs",
+        "src/chain/**",
+        "src/wallet/**",
+        "src/extrinsics/**",
+        "src/queries/**",
+        "src/types/**",
+        "src/utils/**",
+        "subtensor/**",
+        "Cargo.toml",
+        "Cargo.lock",
+        "build.rs",
+        "docs/llm.txt",
+        "docs/hyperparameters.md",
+        "docs/why-agcli.md",
+        "docs/philosophy.md",
+        "docs/faq.md",
+        "docs/tutorials/**",
+        ".orchestrate/**"
+      ],
+      "acceptance": [
+        "tests/audit_balance_transfer.rs exists and compiles under `cargo check --all-targets`.",
+        "docs/commands/transfer.md mentions every subcommand under balance/transfer/transfer-all/transfer-keep-alive.",
+        "Handoff Findings section lists at least 3 concrete audit observations (or explains why fewer apply)."
+      ],
+      "verify": "Run on the worker branch: `cargo check --all-targets` (must succeed). Then `cargo test --no-run --test audit_balance_transfer` (must compile). The Findings section in the handoff is the substantive deliverable.",
+      "model": "gpt-5.3-codex-high-fast",
+      "maxAttempts": 2,
+      "dependsOn": [
+        "bootstrap-env"
+      ]
+    },
+    {
+      "name": "audit-stake",
+      "type": "worker",
+      "scopedGoal": "Audit the agcli stake command group end-to-end, refresh its docs, and add a green-path integration test file at tests/audit_stake.rs.\n\nRead .orchestrate/agcli-audit/discovery.md FIRST. Then:\n\n1. Enumerate every subcommand in StakeCommands; handlers in src/cli/stake_cmds.rs. For each one: open its handler and trace the call to subxt — verify pallet, dispatchable name, and argument SCALE encoding match what the chain expects (cross-reference subtensor/pallets/subtensor (add_stake/remove_stake/add_stake_limit/remove_stake_limit/move_stake/swap_stake/transfer_stake/unstake_all/unstake_all_alpha/recycle_alpha/burn_alpha/claim_root/set_childkey_take/set_children/set_coldkey_auto_stake_hotkey/swap_stake_limit)).\n2. Compile-test the green-path with `cargo check --all-targets` (do NOT touch shared source files; only modify the two pathsAllowed entries and the orchestrate handoff).\n3. Update docs/commands/stake.md so every subcommand under stake is documented with: clap flags + types, exit codes (compare to src/error.rs), output JSON schema, pallet ref + storage key (from subtensor/pallets/), and on-chain events emitted (from subtensor/pallets/subtensor (add_stake/remove_stake/add_stake_limit/remove_stake_limit/move_stake/swap_stake/transfer_stake/unstake_all/unstake_all_alpha/recycle_alpha/burn_alpha/claim_root/set_childkey_take/set_children/set_coldkey_auto_stake_hotkey/swap_stake_limit)).\n4. Create tests/audit_stake.rs containing at minimum (a) a parse-surface test calling `agcli::cli::Cli::try_parse_from` for every subcommand with realistic args, (b) one `#[ignore]` integration test that talks to a local chain (gated; ok to leave ignored if Docker/localnet are unavailable in this VM).\n5. Submit a handoff whose ## Findings section lists concrete drift between code and docs, missing args, ill-formatted output, panicking paths, mismatched exit codes, and any pallet dispatchable in scope that has no agcli surface. The audit value is in this Findings section.\n\nDo NOT modify any source file in src/. If you find source-level bugs, list them as Suggested follow-ups for the planner to triage.",
+      "pathsAllowed": [
+        "tests/audit_stake.rs",
+        "docs/commands/stake.md"
+      ],
+      "pathsForbidden": [
+        "src/error.rs",
+        "src/events.rs",
+        "src/scaffold.rs",
+        "src/localnet.rs",
+        "src/main.rs",
+        "src/lib.rs",
+        "src/cli/mod.rs",
+        "src/cli/commands.rs",
+        "src/cli/network_cmds.rs",
+        "src/cli/system_cmds.rs",
+        "src/chain/**",
+        "src/wallet/**",
+        "src/extrinsics/**",
+        "src/queries/**",
+        "src/types/**",
+        "src/utils/**",
+        "subtensor/**",
+        "Cargo.toml",
+        "Cargo.lock",
+        "build.rs",
+        "docs/llm.txt",
+        "docs/hyperparameters.md",
+        "docs/why-agcli.md",
+        "docs/philosophy.md",
+        "docs/faq.md",
+        "docs/tutorials/**",
+        ".orchestrate/**"
+      ],
+      "acceptance": [
+        "tests/audit_stake.rs exists and compiles under `cargo check --all-targets`.",
+        "docs/commands/stake.md mentions every subcommand under stake.",
+        "Handoff Findings section lists at least 3 concrete audit observations (or explains why fewer apply)."
+      ],
+      "verify": "Run on the worker branch: `cargo check --all-targets` (must succeed). Then `cargo test --no-run --test audit_stake` (must compile). The Findings section in the handoff is the substantive deliverable.",
+      "model": "gpt-5.3-codex-high-fast",
+      "maxAttempts": 2,
+      "dependsOn": [
+        "bootstrap-env"
+      ]
+    },
+    {
+      "name": "audit-subnet",
+      "type": "worker",
+      "scopedGoal": "Audit the agcli subnet command group end-to-end, refresh its docs, and add a green-path integration test file at tests/audit_subnet.rs.\n\nRead .orchestrate/agcli-audit/discovery.md FIRST. Then:\n\n1. Enumerate every subcommand in SubnetCommands; handlers in src/cli/subnet_cmds.rs. For each one: open its handler and trace the call to subxt — verify pallet, dispatchable name, and argument SCALE encoding match what the chain expects (cross-reference subtensor/pallets/subtensor (register_network/register_network_with_identity/dissolve_network/start_call/set_subnet_identity/update_symbol/register/burned_register/register_limit/register_leased_network/terminate_lease + admin-utils for hyperparams)).\n2. Compile-test the green-path with `cargo check --all-targets` (do NOT touch shared source files; only modify the two pathsAllowed entries and the orchestrate handoff).\n3. Update docs/commands/subnet.md so every subcommand under subnet is documented with: clap flags + types, exit codes (compare to src/error.rs), output JSON schema, pallet ref + storage key (from subtensor/pallets/), and on-chain events emitted (from subtensor/pallets/subtensor (register_network/register_network_with_identity/dissolve_network/start_call/set_subnet_identity/update_symbol/register/burned_register/register_limit/register_leased_network/terminate_lease + admin-utils for hyperparams)).\n4. Create tests/audit_subnet.rs containing at minimum (a) a parse-surface test calling `agcli::cli::Cli::try_parse_from` for every subcommand with realistic args, (b) one `#[ignore]` integration test that talks to a local chain (gated; ok to leave ignored if Docker/localnet are unavailable in this VM).\n5. Submit a handoff whose ## Findings section lists concrete drift between code and docs, missing args, ill-formatted output, panicking paths, mismatched exit codes, and any pallet dispatchable in scope that has no agcli surface. The audit value is in this Findings section.\n\nDo NOT modify any source file in src/. If you find source-level bugs, list them as Suggested follow-ups for the planner to triage.",
+      "pathsAllowed": [
+        "tests/audit_subnet.rs",
+        "docs/commands/subnet.md"
+      ],
+      "pathsForbidden": [
+        "src/error.rs",
+        "src/events.rs",
+        "src/scaffold.rs",
+        "src/localnet.rs",
+        "src/main.rs",
+        "src/lib.rs",
+        "src/cli/mod.rs",
+        "src/cli/commands.rs",
+        "src/cli/network_cmds.rs",
+        "src/cli/system_cmds.rs",
+        "src/chain/**",
+        "src/wallet/**",
+        "src/extrinsics/**",
+        "src/queries/**",
+        "src/types/**",
+        "src/utils/**",
+        "subtensor/**",
+        "Cargo.toml",
+        "Cargo.lock",
+        "build.rs",
+        "docs/llm.txt",
+        "docs/hyperparameters.md",
+        "docs/why-agcli.md",
+        "docs/philosophy.md",
+        "docs/faq.md",
+        "docs/tutorials/**",
+        ".orchestrate/**"
+      ],
+      "acceptance": [
+        "tests/audit_subnet.rs exists and compiles under `cargo check --all-targets`.",
+        "docs/commands/subnet.md mentions every subcommand under subnet.",
+        "Handoff Findings section lists at least 3 concrete audit observations (or explains why fewer apply)."
+      ],
+      "verify": "Run on the worker branch: `cargo check --all-targets` (must succeed). Then `cargo test --no-run --test audit_subnet` (must compile). The Findings section in the handoff is the substantive deliverable.",
+      "model": "gpt-5.3-codex-high-fast",
+      "maxAttempts": 2,
+      "dependsOn": [
+        "bootstrap-env"
+      ]
+    },
+    {
+      "name": "audit-weights",
+      "type": "worker",
+      "scopedGoal": "Audit the agcli weights command group end-to-end, refresh its docs, and add a green-path integration test file at tests/audit_weights.rs.\n\nRead .orchestrate/agcli-audit/discovery.md FIRST. Then:\n\n1. Enumerate every subcommand in WeightCommands; handlers in src/cli/weights_cmds.rs. For each one: open its handler and trace the call to subxt — verify pallet, dispatchable name, and argument SCALE encoding match what the chain expects (cross-reference subtensor/pallets/subtensor (set_weights/commit_weights/reveal_weights/batch_set_weights/batch_commit_weights/batch_reveal_weights/commit_timelocked_weights/commit_mechanism_weights/reveal_mechanism_weights/set_mechanism_weights/commit_crv3_mechanism_weights)).\n2. Compile-test the green-path with `cargo check --all-targets` (do NOT touch shared source files; only modify the two pathsAllowed entries and the orchestrate handoff).\n3. Update docs/commands/weights.md so every subcommand under weights is documented with: clap flags + types, exit codes (compare to src/error.rs), output JSON schema, pallet ref + storage key (from subtensor/pallets/), and on-chain events emitted (from subtensor/pallets/subtensor (set_weights/commit_weights/reveal_weights/batch_set_weights/batch_commit_weights/batch_reveal_weights/commit_timelocked_weights/commit_mechanism_weights/reveal_mechanism_weights/set_mechanism_weights/commit_crv3_mechanism_weights)).\n4. Create tests/audit_weights.rs containing at minimum (a) a parse-surface test calling `agcli::cli::Cli::try_parse_from` for every subcommand with realistic args, (b) one `#[ignore]` integration test that talks to a local chain (gated; ok to leave ignored if Docker/localnet are unavailable in this VM).\n5. Submit a handoff whose ## Findings section lists concrete drift between code and docs, missing args, ill-formatted output, panicking paths, mismatched exit codes, and any pallet dispatchable in scope that has no agcli surface. The audit value is in this Findings section.\n\nDo NOT modify any source file in src/. If you find source-level bugs, list them as Suggested follow-ups for the planner to triage.",
+      "pathsAllowed": [
+        "tests/audit_weights.rs",
+        "docs/commands/weights.md"
+      ],
+      "pathsForbidden": [
+        "src/error.rs",
+        "src/events.rs",
+        "src/scaffold.rs",
+        "src/localnet.rs",
+        "src/main.rs",
+        "src/lib.rs",
+        "src/cli/mod.rs",
+        "src/cli/commands.rs",
+        "src/cli/network_cmds.rs",
+        "src/cli/system_cmds.rs",
+        "src/chain/**",
+        "src/wallet/**",
+        "src/extrinsics/**",
+        "src/queries/**",
+        "src/types/**",
+        "src/utils/**",
+        "subtensor/**",
+        "Cargo.toml",
+        "Cargo.lock",
+        "build.rs",
+        "docs/llm.txt",
+        "docs/hyperparameters.md",
+        "docs/why-agcli.md",
+        "docs/philosophy.md",
+        "docs/faq.md",
+        "docs/tutorials/**",
+        ".orchestrate/**"
+      ],
+      "acceptance": [
+        "tests/audit_weights.rs exists and compiles under `cargo check --all-targets`.",
+        "docs/commands/weights.md mentions every subcommand under weights.",
+        "Handoff Findings section lists at least 3 concrete audit observations (or explains why fewer apply)."
+      ],
+      "verify": "Run on the worker branch: `cargo check --all-targets` (must succeed). Then `cargo test --no-run --test audit_weights` (must compile). The Findings section in the handoff is the substantive deliverable.",
+      "model": "gpt-5.3-codex-high-fast",
+      "maxAttempts": 2,
+      "dependsOn": [
+        "bootstrap-env"
+      ]
+    },
+    {
+      "name": "audit-root",
+      "type": "worker",
+      "scopedGoal": "Audit the agcli root command group end-to-end, refresh its docs, and add a green-path integration test file at tests/audit_root.rs.\n\nRead .orchestrate/agcli-audit/discovery.md FIRST. Then:\n\n1. Enumerate every subcommand in RootCommands; handler at src/cli/network_cmds.rs handle_root. For each one: open its handler and trace the call to subxt — verify pallet, dispatchable name, and argument SCALE encoding match what the chain expects (cross-reference subtensor/pallets/subtensor (root_register/claim_root/root_dissolve_network)).\n2. Compile-test the green-path with `cargo check --all-targets` (do NOT touch shared source files; only modify the two pathsAllowed entries and the orchestrate handoff).\n3. Update docs/commands/root.md so every subcommand under root is documented with: clap flags + types, exit codes (compare to src/error.rs), output JSON schema, pallet ref + storage key (from subtensor/pallets/), and on-chain events emitted (from subtensor/pallets/subtensor (root_register/claim_root/root_dissolve_network)).\n4. Create tests/audit_root.rs containing at minimum (a) a parse-surface test calling `agcli::cli::Cli::try_parse_from` for every subcommand with realistic args, (b) one `#[ignore]` integration test that talks to a local chain (gated; ok to leave ignored if Docker/localnet are unavailable in this VM).\n5. Submit a handoff whose ## Findings section lists concrete drift between code and docs, missing args, ill-formatted output, panicking paths, mismatched exit codes, and any pallet dispatchable in scope that has no agcli surface. The audit value is in this Findings section.\n\nDo NOT modify any source file in src/. If you find source-level bugs, list them as Suggested follow-ups for the planner to triage.",
+      "pathsAllowed": [
+        "tests/audit_root.rs",
+        "docs/commands/root.md"
+      ],
+      "pathsForbidden": [
+        "src/error.rs",
+        "src/events.rs",
+        "src/scaffold.rs",
+        "src/localnet.rs",
+        "src/main.rs",
+        "src/lib.rs",
+        "src/cli/mod.rs",
+        "src/cli/commands.rs",
+        "src/cli/network_cmds.rs",
+        "src/cli/system_cmds.rs",
+        "src/chain/**",
+        "src/wallet/**",
+        "src/extrinsics/**",
+        "src/queries/**",
+        "src/types/**",
+        "src/utils/**",
+        "subtensor/**",
+        "Cargo.toml",
+        "Cargo.lock",
+        "build.rs",
+        "docs/llm.txt",
+        "docs/hyperparameters.md",
+        "docs/why-agcli.md",
+        "docs/philosophy.md",
+        "docs/faq.md",
+        "docs/tutorials/**",
+        ".orchestrate/**"
+      ],
+      "acceptance": [
+        "tests/audit_root.rs exists and compiles under `cargo check --all-targets`.",
+        "docs/commands/root.md mentions every subcommand under root.",
+        "Handoff Findings section lists at least 3 concrete audit observations (or explains why fewer apply)."
+      ],
+      "verify": "Run on the worker branch: `cargo check --all-targets` (must succeed). Then `cargo test --no-run --test audit_root` (must compile). The Findings section in the handoff is the substantive deliverable.",
+      "model": "gpt-5.3-codex-high-fast",
+      "maxAttempts": 2,
+      "dependsOn": [
+        "bootstrap-env"
+      ]
+    },
+    {
+      "name": "audit-delegate",
+      "type": "worker",
+      "scopedGoal": "Audit the agcli delegate command group end-to-end, refresh its docs, and add a green-path integration test file at tests/audit_delegate.rs.\n\nRead .orchestrate/agcli-audit/discovery.md FIRST. Then:\n\n1. Enumerate every subcommand in DelegateCommands; handler at src/cli/network_cmds.rs handle_delegate. For each one: open its handler and trace the call to subxt — verify pallet, dispatchable name, and argument SCALE encoding match what the chain expects (cross-reference subtensor/pallets/subtensor (decrease_take/increase_take + nominator_min_required_stake admin-utils)).\n2. Compile-test the green-path with `cargo check --all-targets` (do NOT touch shared source files; only modify the two pathsAllowed entries and the orchestrate handoff).\n3. Update docs/commands/delegate.md so every subcommand under delegate is documented with: clap flags + types, exit codes (compare to src/error.rs), output JSON schema, pallet ref + storage key (from subtensor/pallets/), and on-chain events emitted (from subtensor/pallets/subtensor (decrease_take/increase_take + nominator_min_required_stake admin-utils)).\n4. Create tests/audit_delegate.rs containing at minimum (a) a parse-surface test calling `agcli::cli::Cli::try_parse_from` for every subcommand with realistic args, (b) one `#[ignore]` integration test that talks to a local chain (gated; ok to leave ignored if Docker/localnet are unavailable in this VM).\n5. Submit a handoff whose ## Findings section lists concrete drift between code and docs, missing args, ill-formatted output, panicking paths, mismatched exit codes, and any pallet dispatchable in scope that has no agcli surface. The audit value is in this Findings section.\n\nDo NOT modify any source file in src/. If you find source-level bugs, list them as Suggested follow-ups for the planner to triage.",
+      "pathsAllowed": [
+        "tests/audit_delegate.rs",
+        "docs/commands/delegate.md"
+      ],
+      "pathsForbidden": [
+        "src/error.rs",
+        "src/events.rs",
+        "src/scaffold.rs",
+        "src/localnet.rs",
+        "src/main.rs",
+        "src/lib.rs",
+        "src/cli/mod.rs",
+        "src/cli/commands.rs",
+        "src/cli/network_cmds.rs",
+        "src/cli/system_cmds.rs",
+        "src/chain/**",
+        "src/wallet/**",
+        "src/extrinsics/**",
+        "src/queries/**",
+        "src/types/**",
+        "src/utils/**",
+        "subtensor/**",
+        "Cargo.toml",
+        "Cargo.lock",
+        "build.rs",
+        "docs/llm.txt",
+        "docs/hyperparameters.md",
+        "docs/why-agcli.md",
+        "docs/philosophy.md",
+        "docs/faq.md",
+        "docs/tutorials/**",
+        ".orchestrate/**"
+      ],
+      "acceptance": [
+        "tests/audit_delegate.rs exists and compiles under `cargo check --all-targets`.",
+        "docs/commands/delegate.md mentions every subcommand under delegate.",
+        "Handoff Findings section lists at least 3 concrete audit observations (or explains why fewer apply)."
+      ],
+      "verify": "Run on the worker branch: `cargo check --all-targets` (must succeed). Then `cargo test --no-run --test audit_delegate` (must compile). The Findings section in the handoff is the substantive deliverable.",
+      "model": "gpt-5.3-codex-high-fast",
+      "maxAttempts": 2,
+      "dependsOn": [
+        "bootstrap-env"
+      ]
+    },
+    {
+      "name": "audit-view",
+      "type": "worker",
+      "scopedGoal": "Audit the agcli view command group end-to-end, refresh its docs, and add a green-path integration test file at tests/audit_view.rs.\n\nRead .orchestrate/agcli-audit/discovery.md FIRST. Then:\n\n1. Enumerate every subcommand in ViewCommands; handlers in src/cli/view_cmds.rs. For each one: open its handler and trace the call to subxt — verify pallet, dispatchable name, and argument SCALE encoding match what the chain expects (cross-reference subtensor/pallets/subtensor (read-only metagraph + dynamic info storage and runtime APIs)).\n2. Compile-test the green-path with `cargo check --all-targets` (do NOT touch shared source files; only modify the two pathsAllowed entries and the orchestrate handoff).\n3. Update docs/commands/view.md so every subcommand under view is documented with: clap flags + types, exit codes (compare to src/error.rs), output JSON schema, pallet ref + storage key (from subtensor/pallets/), and on-chain events emitted (from subtensor/pallets/subtensor (read-only metagraph + dynamic info storage and runtime APIs)).\n4. Create tests/audit_view.rs containing at minimum (a) a parse-surface test calling `agcli::cli::Cli::try_parse_from` for every subcommand with realistic args, (b) one `#[ignore]` integration test that talks to a local chain (gated; ok to leave ignored if Docker/localnet are unavailable in this VM).\n5. Submit a handoff whose ## Findings section lists concrete drift between code and docs, missing args, ill-formatted output, panicking paths, mismatched exit codes, and any pallet dispatchable in scope that has no agcli surface. The audit value is in this Findings section.\n\nDo NOT modify any source file in src/. If you find source-level bugs, list them as Suggested follow-ups for the planner to triage.",
+      "pathsAllowed": [
+        "tests/audit_view.rs",
+        "docs/commands/view.md"
+      ],
+      "pathsForbidden": [
+        "src/error.rs",
+        "src/events.rs",
+        "src/scaffold.rs",
+        "src/localnet.rs",
+        "src/main.rs",
+        "src/lib.rs",
+        "src/cli/mod.rs",
+        "src/cli/commands.rs",
+        "src/cli/network_cmds.rs",
+        "src/cli/system_cmds.rs",
+        "src/chain/**",
+        "src/wallet/**",
+        "src/extrinsics/**",
+        "src/queries/**",
+        "src/types/**",
+        "src/utils/**",
+        "subtensor/**",
+        "Cargo.toml",
+        "Cargo.lock",
+        "build.rs",
+        "docs/llm.txt",
+        "docs/hyperparameters.md",
+        "docs/why-agcli.md",
+        "docs/philosophy.md",
+        "docs/faq.md",
+        "docs/tutorials/**",
+        ".orchestrate/**"
+      ],
+      "acceptance": [
+        "tests/audit_view.rs exists and compiles under `cargo check --all-targets`.",
+        "docs/commands/view.md mentions every subcommand under view.",
+        "Handoff Findings section lists at least 3 concrete audit observations (or explains why fewer apply)."
+      ],
+      "verify": "Run on the worker branch: `cargo check --all-targets` (must succeed). Then `cargo test --no-run --test audit_view` (must compile). The Findings section in the handoff is the substantive deliverable.",
+      "model": "gpt-5.3-codex-high-fast",
+      "maxAttempts": 2,
+      "dependsOn": [
+        "bootstrap-env"
+      ]
+    },
+    {
+      "name": "audit-identity",
+      "type": "worker",
+      "scopedGoal": "Audit the agcli identity command group end-to-end, refresh its docs, and add a green-path integration test file at tests/audit_identity.rs.\n\nRead .orchestrate/agcli-audit/discovery.md FIRST. Then:\n\n1. Enumerate every subcommand in IdentityCommands; handler at src/cli/network_cmds.rs handle_identity. For each one: open its handler and trace the call to subxt — verify pallet, dispatchable name, and argument SCALE encoding match what the chain expects (cross-reference subtensor/pallets/subtensor (set_identity, set_subnet_identity) and registry pallet).\n2. Compile-test the green-path with `cargo check --all-targets` (do NOT touch shared source files; only modify the two pathsAllowed entries and the orchestrate handoff).\n3. Update docs/commands/identity.md so every subcommand under identity is documented with: clap flags + types, exit codes (compare to src/error.rs), output JSON schema, pallet ref + storage key (from subtensor/pallets/), and on-chain events emitted (from subtensor/pallets/subtensor (set_identity, set_subnet_identity) and registry pallet).\n4. Create tests/audit_identity.rs containing at minimum (a) a parse-surface test calling `agcli::cli::Cli::try_parse_from` for every subcommand with realistic args, (b) one `#[ignore]` integration test that talks to a local chain (gated; ok to leave ignored if Docker/localnet are unavailable in this VM).\n5. Submit a handoff whose ## Findings section lists concrete drift between code and docs, missing args, ill-formatted output, panicking paths, mismatched exit codes, and any pallet dispatchable in scope that has no agcli surface. The audit value is in this Findings section.\n\nDo NOT modify any source file in src/. If you find source-level bugs, list them as Suggested follow-ups for the planner to triage.",
+      "pathsAllowed": [
+        "tests/audit_identity.rs",
+        "docs/commands/identity.md"
+      ],
+      "pathsForbidden": [
+        "src/error.rs",
+        "src/events.rs",
+        "src/scaffold.rs",
+        "src/localnet.rs",
+        "src/main.rs",
+        "src/lib.rs",
+        "src/cli/mod.rs",
+        "src/cli/commands.rs",
+        "src/cli/network_cmds.rs",
+        "src/cli/system_cmds.rs",
+        "src/chain/**",
+        "src/wallet/**",
+        "src/extrinsics/**",
+        "src/queries/**",
+        "src/types/**",
+        "src/utils/**",
+        "subtensor/**",
+        "Cargo.toml",
+        "Cargo.lock",
+        "build.rs",
+        "docs/llm.txt",
+        "docs/hyperparameters.md",
+        "docs/why-agcli.md",
+        "docs/philosophy.md",
+        "docs/faq.md",
+        "docs/tutorials/**",
+        ".orchestrate/**"
+      ],
+      "acceptance": [
+        "tests/audit_identity.rs exists and compiles under `cargo check --all-targets`.",
+        "docs/commands/identity.md mentions every subcommand under identity.",
+        "Handoff Findings section lists at least 3 concrete audit observations (or explains why fewer apply)."
+      ],
+      "verify": "Run on the worker branch: `cargo check --all-targets` (must succeed). Then `cargo test --no-run --test audit_identity` (must compile). The Findings section in the handoff is the substantive deliverable.",
+      "model": "gpt-5.3-codex-high-fast",
+      "maxAttempts": 2,
+      "dependsOn": [
+        "bootstrap-env"
+      ]
+    },
+    {
+      "name": "audit-serve",
+      "type": "worker",
+      "scopedGoal": "Audit the agcli serve command group end-to-end, refresh its docs, and add a green-path integration test file at tests/audit_serve.rs.\n\nRead .orchestrate/agcli-audit/discovery.md FIRST. Then:\n\n1. Enumerate every subcommand in ServeCommands; handler at src/cli/network_cmds.rs handle_serve. For each one: open its handler and trace the call to subxt — verify pallet, dispatchable name, and argument SCALE encoding match what the chain expects (cross-reference subtensor/pallets/subtensor (serve_axon/serve_axon_tls/serve_prometheus)).\n2. Compile-test the green-path with `cargo check --all-targets` (do NOT touch shared source files; only modify the two pathsAllowed entries and the orchestrate handoff).\n3. Update docs/commands/serve.md so every subcommand under serve is documented with: clap flags + types, exit codes (compare to src/error.rs), output JSON schema, pallet ref + storage key (from subtensor/pallets/), and on-chain events emitted (from subtensor/pallets/subtensor (serve_axon/serve_axon_tls/serve_prometheus)).\n4. Create tests/audit_serve.rs containing at minimum (a) a parse-surface test calling `agcli::cli::Cli::try_parse_from` for every subcommand with realistic args, (b) one `#[ignore]` integration test that talks to a local chain (gated; ok to leave ignored if Docker/localnet are unavailable in this VM).\n5. Submit a handoff whose ## Findings section lists concrete drift between code and docs, missing args, ill-formatted output, panicking paths, mismatched exit codes, and any pallet dispatchable in scope that has no agcli surface. The audit value is in this Findings section.\n\nDo NOT modify any source file in src/. If you find source-level bugs, list them as Suggested follow-ups for the planner to triage.",
+      "pathsAllowed": [
+        "tests/audit_serve.rs",
+        "docs/commands/serve.md"
+      ],
+      "pathsForbidden": [
+        "src/error.rs",
+        "src/events.rs",
+        "src/scaffold.rs",
+        "src/localnet.rs",
+        "src/main.rs",
+        "src/lib.rs",
+        "src/cli/mod.rs",
+        "src/cli/commands.rs",
+        "src/cli/network_cmds.rs",
+        "src/cli/system_cmds.rs",
+        "src/chain/**",
+        "src/wallet/**",
+        "src/extrinsics/**",
+        "src/queries/**",
+        "src/types/**",
+        "src/utils/**",
+        "subtensor/**",
+        "Cargo.toml",
+        "Cargo.lock",
+        "build.rs",
+        "docs/llm.txt",
+        "docs/hyperparameters.md",
+        "docs/why-agcli.md",
+        "docs/philosophy.md",
+        "docs/faq.md",
+        "docs/tutorials/**",
+        ".orchestrate/**"
+      ],
+      "acceptance": [
+        "tests/audit_serve.rs exists and compiles under `cargo check --all-targets`.",
+        "docs/commands/serve.md mentions every subcommand under serve.",
+        "Handoff Findings section lists at least 3 concrete audit observations (or explains why fewer apply)."
+      ],
+      "verify": "Run on the worker branch: `cargo check --all-targets` (must succeed). Then `cargo test --no-run --test audit_serve` (must compile). The Findings section in the handoff is the substantive deliverable.",
+      "model": "gpt-5.3-codex-high-fast",
+      "maxAttempts": 2,
+      "dependsOn": [
+        "bootstrap-env"
+      ]
+    },
+    {
+      "name": "audit-proxy",
+      "type": "worker",
+      "scopedGoal": "Audit the agcli proxy command group end-to-end, refresh its docs, and add a green-path integration test file at tests/audit_proxy.rs.\n\nRead .orchestrate/agcli-audit/discovery.md FIRST. Then:\n\n1. Enumerate every subcommand in ProxyCommands; handler at src/cli/network_cmds.rs handle_proxy. For each one: open its handler and trace the call to subxt — verify pallet, dispatchable name, and argument SCALE encoding match what the chain expects (cross-reference subtensor/pallets/proxy pallet (proxy/add_proxy/remove_proxy/remove_proxies/create_pure/kill_pure/announce/remove_announcement/reject_announcement/proxy_announced/poke_deposit/set_real_pays_fee)).\n2. Compile-test the green-path with `cargo check --all-targets` (do NOT touch shared source files; only modify the two pathsAllowed entries and the orchestrate handoff).\n3. Update docs/commands/proxy.md so every subcommand under proxy is documented with: clap flags + types, exit codes (compare to src/error.rs), output JSON schema, pallet ref + storage key (from subtensor/pallets/), and on-chain events emitted (from subtensor/pallets/proxy pallet (proxy/add_proxy/remove_proxy/remove_proxies/create_pure/kill_pure/announce/remove_announcement/reject_announcement/proxy_announced/poke_deposit/set_real_pays_fee)).\n4. Create tests/audit_proxy.rs containing at minimum (a) a parse-surface test calling `agcli::cli::Cli::try_parse_from` for every subcommand with realistic args, (b) one `#[ignore]` integration test that talks to a local chain (gated; ok to leave ignored if Docker/localnet are unavailable in this VM).\n5. Submit a handoff whose ## Findings section lists concrete drift between code and docs, missing args, ill-formatted output, panicking paths, mismatched exit codes, and any pallet dispatchable in scope that has no agcli surface. The audit value is in this Findings section.\n\nDo NOT modify any source file in src/. If you find source-level bugs, list them as Suggested follow-ups for the planner to triage.",
+      "pathsAllowed": [
+        "tests/audit_proxy.rs",
+        "docs/commands/proxy.md"
+      ],
+      "pathsForbidden": [
+        "src/error.rs",
+        "src/events.rs",
+        "src/scaffold.rs",
+        "src/localnet.rs",
+        "src/main.rs",
+        "src/lib.rs",
+        "src/cli/mod.rs",
+        "src/cli/commands.rs",
+        "src/cli/network_cmds.rs",
+        "src/cli/system_cmds.rs",
+        "src/chain/**",
+        "src/wallet/**",
+        "src/extrinsics/**",
+        "src/queries/**",
+        "src/types/**",
+        "src/utils/**",
+        "subtensor/**",
+        "Cargo.toml",
+        "Cargo.lock",
+        "build.rs",
+        "docs/llm.txt",
+        "docs/hyperparameters.md",
+        "docs/why-agcli.md",
+        "docs/philosophy.md",
+        "docs/faq.md",
+        "docs/tutorials/**",
+        ".orchestrate/**"
+      ],
+      "acceptance": [
+        "tests/audit_proxy.rs exists and compiles under `cargo check --all-targets`.",
+        "docs/commands/proxy.md mentions every subcommand under proxy.",
+        "Handoff Findings section lists at least 3 concrete audit observations (or explains why fewer apply)."
+      ],
+      "verify": "Run on the worker branch: `cargo check --all-targets` (must succeed). Then `cargo test --no-run --test audit_proxy` (must compile). The Findings section in the handoff is the substantive deliverable.",
+      "model": "gpt-5.3-codex-high-fast",
+      "maxAttempts": 2,
+      "dependsOn": [
+        "bootstrap-env"
+      ]
+    },
+    {
+      "name": "audit-swap-keys",
+      "type": "worker",
+      "scopedGoal": "Audit the agcli swap (key rotation) command group end-to-end, refresh its docs, and add a green-path integration test file at tests/audit_swap_keys.rs.\n\nRead .orchestrate/agcli-audit/discovery.md FIRST. Then:\n\n1. Enumerate every subcommand in SwapCommands; handler at src/cli/network_cmds.rs handle_swap. For each one: open its handler and trace the call to subxt — verify pallet, dispatchable name, and argument SCALE encoding match what the chain expects (cross-reference subtensor/pallets/subtensor (swap_hotkey/swap_hotkey_v2/swap_coldkey/schedule_swap_coldkey/announce_coldkey_swap/swap_coldkey_announced/clear_coldkey_swap_announcement/dispute_coldkey_swap/reset_coldkey_swap)).\n2. Compile-test the green-path with `cargo check --all-targets` (do NOT touch shared source files; only modify the two pathsAllowed entries and the orchestrate handoff).\n3. Update docs/commands/swap.md so every subcommand under swap (key rotation) is documented with: clap flags + types, exit codes (compare to src/error.rs), output JSON schema, pallet ref + storage key (from subtensor/pallets/), and on-chain events emitted (from subtensor/pallets/subtensor (swap_hotkey/swap_hotkey_v2/swap_coldkey/schedule_swap_coldkey/announce_coldkey_swap/swap_coldkey_announced/clear_coldkey_swap_announcement/dispute_coldkey_swap/reset_coldkey_swap)).\n4. Create tests/audit_swap_keys.rs containing at minimum (a) a parse-surface test calling `agcli::cli::Cli::try_parse_from` for every subcommand with realistic args, (b) one `#[ignore]` integration test that talks to a local chain (gated; ok to leave ignored if Docker/localnet are unavailable in this VM).\n5. Submit a handoff whose ## Findings section lists concrete drift between code and docs, missing args, ill-formatted output, panicking paths, mismatched exit codes, and any pallet dispatchable in scope that has no agcli surface. The audit value is in this Findings section.\n\nDo NOT modify any source file in src/. If you find source-level bugs, list them as Suggested follow-ups for the planner to triage.",
+      "pathsAllowed": [
+        "tests/audit_swap_keys.rs",
+        "docs/commands/swap.md"
+      ],
+      "pathsForbidden": [
+        "src/error.rs",
+        "src/events.rs",
+        "src/scaffold.rs",
+        "src/localnet.rs",
+        "src/main.rs",
+        "src/lib.rs",
+        "src/cli/mod.rs",
+        "src/cli/commands.rs",
+        "src/cli/network_cmds.rs",
+        "src/cli/system_cmds.rs",
+        "src/chain/**",
+        "src/wallet/**",
+        "src/extrinsics/**",
+        "src/queries/**",
+        "src/types/**",
+        "src/utils/**",
+        "subtensor/**",
+        "Cargo.toml",
+        "Cargo.lock",
+        "build.rs",
+        "docs/llm.txt",
+        "docs/hyperparameters.md",
+        "docs/why-agcli.md",
+        "docs/philosophy.md",
+        "docs/faq.md",
+        "docs/tutorials/**",
+        ".orchestrate/**"
+      ],
+      "acceptance": [
+        "tests/audit_swap_keys.rs exists and compiles under `cargo check --all-targets`.",
+        "docs/commands/swap.md mentions every subcommand under swap (key rotation).",
+        "Handoff Findings section lists at least 3 concrete audit observations (or explains why fewer apply)."
+      ],
+      "verify": "Run on the worker branch: `cargo check --all-targets` (must succeed). Then `cargo test --no-run --test audit_swap_keys` (must compile). The Findings section in the handoff is the substantive deliverable.",
+      "model": "gpt-5.3-codex-high-fast",
+      "maxAttempts": 2,
+      "dependsOn": [
+        "bootstrap-env"
+      ]
+    },
+    {
+      "name": "audit-subscribe",
+      "type": "worker",
+      "scopedGoal": "Audit the agcli subscribe command group end-to-end, refresh its docs, and add a green-path integration test file at tests/audit_subscribe.rs.\n\nRead .orchestrate/agcli-audit/discovery.md FIRST. Then:\n\n1. Enumerate every subcommand in SubscribeCommands; handler at src/cli/network_cmds.rs handle_subscribe and src/events.rs filter taxonomy. For each one: open its handler and trace the call to subxt — verify pallet, dispatchable name, and argument SCALE encoding match what the chain expects (cross-reference subtensor/pallets/all pallets — events streamed via subxt).\n2. Compile-test the green-path with `cargo check --all-targets` (do NOT touch shared source files; only modify the two pathsAllowed entries and the orchestrate handoff).\n3. Update docs/commands/subscribe.md so every subcommand under subscribe is documented with: clap flags + types, exit codes (compare to src/error.rs), output JSON schema, pallet ref + storage key (from subtensor/pallets/), and on-chain events emitted (from subtensor/pallets/all pallets — events streamed via subxt).\n4. Create tests/audit_subscribe.rs containing at minimum (a) a parse-surface test calling `agcli::cli::Cli::try_parse_from` for every subcommand with realistic args, (b) one `#[ignore]` integration test that talks to a local chain (gated; ok to leave ignored if Docker/localnet are unavailable in this VM).\n5. Submit a handoff whose ## Findings section lists concrete drift between code and docs, missing args, ill-formatted output, panicking paths, mismatched exit codes, and any pallet dispatchable in scope that has no agcli surface. The audit value is in this Findings section.\n\nDo NOT modify any source file in src/. If you find source-level bugs, list them as Suggested follow-ups for the planner to triage.",
+      "pathsAllowed": [
+        "tests/audit_subscribe.rs",
+        "docs/commands/subscribe.md"
+      ],
+      "pathsForbidden": [
+        "src/error.rs",
+        "src/events.rs",
+        "src/scaffold.rs",
+        "src/localnet.rs",
+        "src/main.rs",
+        "src/lib.rs",
+        "src/cli/mod.rs",
+        "src/cli/commands.rs",
+        "src/cli/network_cmds.rs",
+        "src/cli/system_cmds.rs",
+        "src/chain/**",
+        "src/wallet/**",
+        "src/extrinsics/**",
+        "src/queries/**",
+        "src/types/**",
+        "src/utils/**",
+        "subtensor/**",
+        "Cargo.toml",
+        "Cargo.lock",
+        "build.rs",
+        "docs/llm.txt",
+        "docs/hyperparameters.md",
+        "docs/why-agcli.md",
+        "docs/philosophy.md",
+        "docs/faq.md",
+        "docs/tutorials/**",
+        ".orchestrate/**"
+      ],
+      "acceptance": [
+        "tests/audit_subscribe.rs exists and compiles under `cargo check --all-targets`.",
+        "docs/commands/subscribe.md mentions every subcommand under subscribe.",
+        "Handoff Findings section lists at least 3 concrete audit observations (or explains why fewer apply)."
+      ],
+      "verify": "Run on the worker branch: `cargo check --all-targets` (must succeed). Then `cargo test --no-run --test audit_subscribe` (must compile). The Findings section in the handoff is the substantive deliverable.",
+      "model": "gpt-5.3-codex-high-fast",
+      "maxAttempts": 2,
+      "dependsOn": [
+        "bootstrap-env"
+      ]
+    },
+    {
+      "name": "audit-multisig",
+      "type": "worker",
+      "scopedGoal": "Audit the agcli multisig command group end-to-end, refresh its docs, and add a green-path integration test file at tests/audit_multisig.rs.\n\nRead .orchestrate/agcli-audit/discovery.md FIRST. Then:\n\n1. Enumerate every subcommand in MultisigCommands; handler at src/cli/network_cmds.rs handle_multisig. For each one: open its handler and trace the call to subxt — verify pallet, dispatchable name, and argument SCALE encoding match what the chain expects (cross-reference subtensor/pallets/multisig pallet (as_multi/approve_as_multi/cancel_as_multi)).\n2. Compile-test the green-path with `cargo check --all-targets` (do NOT touch shared source files; only modify the two pathsAllowed entries and the orchestrate handoff).\n3. Update docs/commands/multisig.md so every subcommand under multisig is documented with: clap flags + types, exit codes (compare to src/error.rs), output JSON schema, pallet ref + storage key (from subtensor/pallets/), and on-chain events emitted (from subtensor/pallets/multisig pallet (as_multi/approve_as_multi/cancel_as_multi)).\n4. Create tests/audit_multisig.rs containing at minimum (a) a parse-surface test calling `agcli::cli::Cli::try_parse_from` for every subcommand with realistic args, (b) one `#[ignore]` integration test that talks to a local chain (gated; ok to leave ignored if Docker/localnet are unavailable in this VM).\n5. Submit a handoff whose ## Findings section lists concrete drift between code and docs, missing args, ill-formatted output, panicking paths, mismatched exit codes, and any pallet dispatchable in scope that has no agcli surface. The audit value is in this Findings section.\n\nDo NOT modify any source file in src/. If you find source-level bugs, list them as Suggested follow-ups for the planner to triage.",
+      "pathsAllowed": [
+        "tests/audit_multisig.rs",
+        "docs/commands/multisig.md"
+      ],
+      "pathsForbidden": [
+        "src/error.rs",
+        "src/events.rs",
+        "src/scaffold.rs",
+        "src/localnet.rs",
+        "src/main.rs",
+        "src/lib.rs",
+        "src/cli/mod.rs",
+        "src/cli/commands.rs",
+        "src/cli/network_cmds.rs",
+        "src/cli/system_cmds.rs",
+        "src/chain/**",
+        "src/wallet/**",
+        "src/extrinsics/**",
+        "src/queries/**",
+        "src/types/**",
+        "src/utils/**",
+        "subtensor/**",
+        "Cargo.toml",
+        "Cargo.lock",
+        "build.rs",
+        "docs/llm.txt",
+        "docs/hyperparameters.md",
+        "docs/why-agcli.md",
+        "docs/philosophy.md",
+        "docs/faq.md",
+        "docs/tutorials/**",
+        ".orchestrate/**"
+      ],
+      "acceptance": [
+        "tests/audit_multisig.rs exists and compiles under `cargo check --all-targets`.",
+        "docs/commands/multisig.md mentions every subcommand under multisig.",
+        "Handoff Findings section lists at least 3 concrete audit observations (or explains why fewer apply)."
+      ],
+      "verify": "Run on the worker branch: `cargo check --all-targets` (must succeed). Then `cargo test --no-run --test audit_multisig` (must compile). The Findings section in the handoff is the substantive deliverable.",
+      "model": "gpt-5.3-codex-high-fast",
+      "maxAttempts": 2,
+      "dependsOn": [
+        "bootstrap-env"
+      ]
+    },
+    {
+      "name": "audit-scheduler",
+      "type": "worker",
+      "scopedGoal": "Audit the agcli scheduler command group end-to-end, refresh its docs, and add a green-path integration test file at tests/audit_scheduler.rs.\n\nRead .orchestrate/agcli-audit/discovery.md FIRST. Then:\n\n1. Enumerate every subcommand in SchedulerCommands; handler at src/cli/network_cmds.rs handle_scheduler. For each one: open its handler and trace the call to subxt — verify pallet, dispatchable name, and argument SCALE encoding match what the chain expects (cross-reference subtensor/pallets/scheduler pallet (schedule/schedule_after/schedule_named/schedule_named_after/cancel/cancel_named)).\n2. Compile-test the green-path with `cargo check --all-targets` (do NOT touch shared source files; only modify the two pathsAllowed entries and the orchestrate handoff).\n3. Update docs/commands/scheduler.md so every subcommand under scheduler is documented with: clap flags + types, exit codes (compare to src/error.rs), output JSON schema, pallet ref + storage key (from subtensor/pallets/), and on-chain events emitted (from subtensor/pallets/scheduler pallet (schedule/schedule_after/schedule_named/schedule_named_after/cancel/cancel_named)).\n4. Create tests/audit_scheduler.rs containing at minimum (a) a parse-surface test calling `agcli::cli::Cli::try_parse_from` for every subcommand with realistic args, (b) one `#[ignore]` integration test that talks to a local chain (gated; ok to leave ignored if Docker/localnet are unavailable in this VM).\n5. Submit a handoff whose ## Findings section lists concrete drift between code and docs, missing args, ill-formatted output, panicking paths, mismatched exit codes, and any pallet dispatchable in scope that has no agcli surface. The audit value is in this Findings section.\n\nDo NOT modify any source file in src/. If you find source-level bugs, list them as Suggested follow-ups for the planner to triage.",
+      "pathsAllowed": [
+        "tests/audit_scheduler.rs",
+        "docs/commands/scheduler.md"
+      ],
+      "pathsForbidden": [
+        "src/error.rs",
+        "src/events.rs",
+        "src/scaffold.rs",
+        "src/localnet.rs",
+        "src/main.rs",
+        "src/lib.rs",
+        "src/cli/mod.rs",
+        "src/cli/commands.rs",
+        "src/cli/network_cmds.rs",
+        "src/cli/system_cmds.rs",
+        "src/chain/**",
+        "src/wallet/**",
+        "src/extrinsics/**",
+        "src/queries/**",
+        "src/types/**",
+        "src/utils/**",
+        "subtensor/**",
+        "Cargo.toml",
+        "Cargo.lock",
+        "build.rs",
+        "docs/llm.txt",
+        "docs/hyperparameters.md",
+        "docs/why-agcli.md",
+        "docs/philosophy.md",
+        "docs/faq.md",
+        "docs/tutorials/**",
+        ".orchestrate/**"
+      ],
+      "acceptance": [
+        "tests/audit_scheduler.rs exists and compiles under `cargo check --all-targets`.",
+        "docs/commands/scheduler.md mentions every subcommand under scheduler.",
+        "Handoff Findings section lists at least 3 concrete audit observations (or explains why fewer apply)."
+      ],
+      "verify": "Run on the worker branch: `cargo check --all-targets` (must succeed). Then `cargo test --no-run --test audit_scheduler` (must compile). The Findings section in the handoff is the substantive deliverable.",
+      "model": "gpt-5.3-codex-high-fast",
+      "maxAttempts": 2,
+      "dependsOn": [
+        "bootstrap-env"
+      ]
+    },
+    {
+      "name": "audit-preimage",
+      "type": "worker",
+      "scopedGoal": "Audit the agcli preimage command group end-to-end, refresh its docs, and add a green-path integration test file at tests/audit_preimage.rs.\n\nRead .orchestrate/agcli-audit/discovery.md FIRST. Then:\n\n1. Enumerate every subcommand in PreimageCommands; handler at src/cli/network_cmds.rs handle_preimage. For each one: open its handler and trace the call to subxt — verify pallet, dispatchable name, and argument SCALE encoding match what the chain expects (cross-reference subtensor/pallets/preimage pallet (note_preimage/unnote_preimage/request_preimage/unrequest_preimage)).\n2. Compile-test the green-path with `cargo check --all-targets` (do NOT touch shared source files; only modify the two pathsAllowed entries and the orchestrate handoff).\n3. Update docs/commands/preimage.md so every subcommand under preimage is documented with: clap flags + types, exit codes (compare to src/error.rs), output JSON schema, pallet ref + storage key (from subtensor/pallets/), and on-chain events emitted (from subtensor/pallets/preimage pallet (note_preimage/unnote_preimage/request_preimage/unrequest_preimage)).\n4. Create tests/audit_preimage.rs containing at minimum (a) a parse-surface test calling `agcli::cli::Cli::try_parse_from` for every subcommand with realistic args, (b) one `#[ignore]` integration test that talks to a local chain (gated; ok to leave ignored if Docker/localnet are unavailable in this VM).\n5. Submit a handoff whose ## Findings section lists concrete drift between code and docs, missing args, ill-formatted output, panicking paths, mismatched exit codes, and any pallet dispatchable in scope that has no agcli surface. The audit value is in this Findings section.\n\nDo NOT modify any source file in src/. If you find source-level bugs, list them as Suggested follow-ups for the planner to triage.",
+      "pathsAllowed": [
+        "tests/audit_preimage.rs",
+        "docs/commands/preimage.md"
+      ],
+      "pathsForbidden": [
+        "src/error.rs",
+        "src/events.rs",
+        "src/scaffold.rs",
+        "src/localnet.rs",
+        "src/main.rs",
+        "src/lib.rs",
+        "src/cli/mod.rs",
+        "src/cli/commands.rs",
+        "src/cli/network_cmds.rs",
+        "src/cli/system_cmds.rs",
+        "src/chain/**",
+        "src/wallet/**",
+        "src/extrinsics/**",
+        "src/queries/**",
+        "src/types/**",
+        "src/utils/**",
+        "subtensor/**",
+        "Cargo.toml",
+        "Cargo.lock",
+        "build.rs",
+        "docs/llm.txt",
+        "docs/hyperparameters.md",
+        "docs/why-agcli.md",
+        "docs/philosophy.md",
+        "docs/faq.md",
+        "docs/tutorials/**",
+        ".orchestrate/**"
+      ],
+      "acceptance": [
+        "tests/audit_preimage.rs exists and compiles under `cargo check --all-targets`.",
+        "docs/commands/preimage.md mentions every subcommand under preimage.",
+        "Handoff Findings section lists at least 3 concrete audit observations (or explains why fewer apply)."
+      ],
+      "verify": "Run on the worker branch: `cargo check --all-targets` (must succeed). Then `cargo test --no-run --test audit_preimage` (must compile). The Findings section in the handoff is the substantive deliverable.",
+      "model": "gpt-5.3-codex-high-fast",
+      "maxAttempts": 2,
+      "dependsOn": [
+        "bootstrap-env"
+      ]
+    },
+    {
+      "name": "audit-contracts",
+      "type": "worker",
+      "scopedGoal": "Audit the agcli contracts command group end-to-end, refresh its docs, and add a green-path integration test file at tests/audit_contracts.rs.\n\nRead .orchestrate/agcli-audit/discovery.md FIRST. Then:\n\n1. Enumerate every subcommand in ContractsCommands; handler at src/cli/network_cmds.rs handle_contracts. For each one: open its handler and trace the call to subxt — verify pallet, dispatchable name, and argument SCALE encoding match what the chain expects (cross-reference subtensor/pallets/pallet-contracts (upload_code/instantiate_with_code/instantiate/call/remove_code)).\n2. Compile-test the green-path with `cargo check --all-targets` (do NOT touch shared source files; only modify the two pathsAllowed entries and the orchestrate handoff).\n3. Update docs/commands/contracts.md so every subcommand under contracts is documented with: clap flags + types, exit codes (compare to src/error.rs), output JSON schema, pallet ref + storage key (from subtensor/pallets/), and on-chain events emitted (from subtensor/pallets/pallet-contracts (upload_code/instantiate_with_code/instantiate/call/remove_code)).\n4. Create tests/audit_contracts.rs containing at minimum (a) a parse-surface test calling `agcli::cli::Cli::try_parse_from` for every subcommand with realistic args, (b) one `#[ignore]` integration test that talks to a local chain (gated; ok to leave ignored if Docker/localnet are unavailable in this VM).\n5. Submit a handoff whose ## Findings section lists concrete drift between code and docs, missing args, ill-formatted output, panicking paths, mismatched exit codes, and any pallet dispatchable in scope that has no agcli surface. The audit value is in this Findings section.\n\nDo NOT modify any source file in src/. If you find source-level bugs, list them as Suggested follow-ups for the planner to triage.",
+      "pathsAllowed": [
+        "tests/audit_contracts.rs",
+        "docs/commands/contracts.md"
+      ],
+      "pathsForbidden": [
+        "src/error.rs",
+        "src/events.rs",
+        "src/scaffold.rs",
+        "src/localnet.rs",
+        "src/main.rs",
+        "src/lib.rs",
+        "src/cli/mod.rs",
+        "src/cli/commands.rs",
+        "src/cli/network_cmds.rs",
+        "src/cli/system_cmds.rs",
+        "src/chain/**",
+        "src/wallet/**",
+        "src/extrinsics/**",
+        "src/queries/**",
+        "src/types/**",
+        "src/utils/**",
+        "subtensor/**",
+        "Cargo.toml",
+        "Cargo.lock",
+        "build.rs",
+        "docs/llm.txt",
+        "docs/hyperparameters.md",
+        "docs/why-agcli.md",
+        "docs/philosophy.md",
+        "docs/faq.md",
+        "docs/tutorials/**",
+        ".orchestrate/**"
+      ],
+      "acceptance": [
+        "tests/audit_contracts.rs exists and compiles under `cargo check --all-targets`.",
+        "docs/commands/contracts.md mentions every subcommand under contracts.",
+        "Handoff Findings section lists at least 3 concrete audit observations (or explains why fewer apply)."
+      ],
+      "verify": "Run on the worker branch: `cargo check --all-targets` (must succeed). Then `cargo test --no-run --test audit_contracts` (must compile). The Findings section in the handoff is the substantive deliverable.",
+      "model": "gpt-5.3-codex-high-fast",
+      "maxAttempts": 2,
+      "dependsOn": [
+        "bootstrap-env"
+      ]
+    },
+    {
+      "name": "audit-evm",
+      "type": "worker",
+      "scopedGoal": "Audit the agcli evm command group end-to-end, refresh its docs, and add a green-path integration test file at tests/audit_evm.rs.\n\nRead .orchestrate/agcli-audit/discovery.md FIRST. Then:\n\n1. Enumerate every subcommand in EvmCommands; handler at src/cli/network_cmds.rs handle_evm. For each one: open its handler and trace the call to subxt — verify pallet, dispatchable name, and argument SCALE encoding match what the chain expects (cross-reference subtensor/pallets/pallet-evm (call/withdraw/create/create2)).\n2. Compile-test the green-path with `cargo check --all-targets` (do NOT touch shared source files; only modify the two pathsAllowed entries and the orchestrate handoff).\n3. Update docs/commands/evm.md so every subcommand under evm is documented with: clap flags + types, exit codes (compare to src/error.rs), output JSON schema, pallet ref + storage key (from subtensor/pallets/), and on-chain events emitted (from subtensor/pallets/pallet-evm (call/withdraw/create/create2)).\n4. Create tests/audit_evm.rs containing at minimum (a) a parse-surface test calling `agcli::cli::Cli::try_parse_from` for every subcommand with realistic args, (b) one `#[ignore]` integration test that talks to a local chain (gated; ok to leave ignored if Docker/localnet are unavailable in this VM).\n5. Submit a handoff whose ## Findings section lists concrete drift between code and docs, missing args, ill-formatted output, panicking paths, mismatched exit codes, and any pallet dispatchable in scope that has no agcli surface. The audit value is in this Findings section.\n\nDo NOT modify any source file in src/. If you find source-level bugs, list them as Suggested follow-ups for the planner to triage.",
+      "pathsAllowed": [
+        "tests/audit_evm.rs",
+        "docs/commands/evm.md"
+      ],
+      "pathsForbidden": [
+        "src/error.rs",
+        "src/events.rs",
+        "src/scaffold.rs",
+        "src/localnet.rs",
+        "src/main.rs",
+        "src/lib.rs",
+        "src/cli/mod.rs",
+        "src/cli/commands.rs",
+        "src/cli/network_cmds.rs",
+        "src/cli/system_cmds.rs",
+        "src/chain/**",
+        "src/wallet/**",
+        "src/extrinsics/**",
+        "src/queries/**",
+        "src/types/**",
+        "src/utils/**",
+        "subtensor/**",
+        "Cargo.toml",
+        "Cargo.lock",
+        "build.rs",
+        "docs/llm.txt",
+        "docs/hyperparameters.md",
+        "docs/why-agcli.md",
+        "docs/philosophy.md",
+        "docs/faq.md",
+        "docs/tutorials/**",
+        ".orchestrate/**"
+      ],
+      "acceptance": [
+        "tests/audit_evm.rs exists and compiles under `cargo check --all-targets`.",
+        "docs/commands/evm.md mentions every subcommand under evm.",
+        "Handoff Findings section lists at least 3 concrete audit observations (or explains why fewer apply)."
+      ],
+      "verify": "Run on the worker branch: `cargo check --all-targets` (must succeed). Then `cargo test --no-run --test audit_evm` (must compile). The Findings section in the handoff is the substantive deliverable.",
+      "model": "gpt-5.3-codex-high-fast",
+      "maxAttempts": 2,
+      "dependsOn": [
+        "bootstrap-env"
+      ]
+    },
+    {
+      "name": "audit-safe-mode",
+      "type": "worker",
+      "scopedGoal": "Audit the agcli safe-mode command group end-to-end, refresh its docs, and add a green-path integration test file at tests/audit_safe_mode.rs.\n\nRead .orchestrate/agcli-audit/discovery.md FIRST. Then:\n\n1. Enumerate every subcommand in SafeModeCommands; handler at src/cli/network_cmds.rs handle_safe_mode. For each one: open its handler and trace the call to subxt — verify pallet, dispatchable name, and argument SCALE encoding match what the chain expects (cross-reference subtensor/pallets/pallet-safe-mode (enter/extend/force_enter/force_exit/release_deposit)).\n2. Compile-test the green-path with `cargo check --all-targets` (do NOT touch shared source files; only modify the two pathsAllowed entries and the orchestrate handoff).\n3. Update docs/commands/safe-mode.md so every subcommand under safe-mode is documented with: clap flags + types, exit codes (compare to src/error.rs), output JSON schema, pallet ref + storage key (from subtensor/pallets/), and on-chain events emitted (from subtensor/pallets/pallet-safe-mode (enter/extend/force_enter/force_exit/release_deposit)).\n4. Create tests/audit_safe_mode.rs containing at minimum (a) a parse-surface test calling `agcli::cli::Cli::try_parse_from` for every subcommand with realistic args, (b) one `#[ignore]` integration test that talks to a local chain (gated; ok to leave ignored if Docker/localnet are unavailable in this VM).\n5. Submit a handoff whose ## Findings section lists concrete drift between code and docs, missing args, ill-formatted output, panicking paths, mismatched exit codes, and any pallet dispatchable in scope that has no agcli surface. The audit value is in this Findings section.\n\nDo NOT modify any source file in src/. If you find source-level bugs, list them as Suggested follow-ups for the planner to triage.",
+      "pathsAllowed": [
+        "tests/audit_safe_mode.rs",
+        "docs/commands/safe-mode.md"
+      ],
+      "pathsForbidden": [
+        "src/error.rs",
+        "src/events.rs",
+        "src/scaffold.rs",
+        "src/localnet.rs",
+        "src/main.rs",
+        "src/lib.rs",
+        "src/cli/mod.rs",
+        "src/cli/commands.rs",
+        "src/cli/network_cmds.rs",
+        "src/cli/system_cmds.rs",
+        "src/chain/**",
+        "src/wallet/**",
+        "src/extrinsics/**",
+        "src/queries/**",
+        "src/types/**",
+        "src/utils/**",
+        "subtensor/**",
+        "Cargo.toml",
+        "Cargo.lock",
+        "build.rs",
+        "docs/llm.txt",
+        "docs/hyperparameters.md",
+        "docs/why-agcli.md",
+        "docs/philosophy.md",
+        "docs/faq.md",
+        "docs/tutorials/**",
+        ".orchestrate/**"
+      ],
+      "acceptance": [
+        "tests/audit_safe_mode.rs exists and compiles under `cargo check --all-targets`.",
+        "docs/commands/safe-mode.md mentions every subcommand under safe-mode.",
+        "Handoff Findings section lists at least 3 concrete audit observations (or explains why fewer apply)."
+      ],
+      "verify": "Run on the worker branch: `cargo check --all-targets` (must succeed). Then `cargo test --no-run --test audit_safe_mode` (must compile). The Findings section in the handoff is the substantive deliverable.",
+      "model": "gpt-5.3-codex-high-fast",
+      "maxAttempts": 2,
+      "dependsOn": [
+        "bootstrap-env"
+      ]
+    },
+    {
+      "name": "audit-drand",
+      "type": "worker",
+      "scopedGoal": "Audit the agcli drand command group end-to-end, refresh its docs, and add a green-path integration test file at tests/audit_drand.rs.\n\nRead .orchestrate/agcli-audit/discovery.md FIRST. Then:\n\n1. Enumerate every subcommand in DrandCommands; handler at src/cli/network_cmds.rs handle_drand. For each one: open its handler and trace the call to subxt — verify pallet, dispatchable name, and argument SCALE encoding match what the chain expects (cross-reference subtensor/pallets/drand pallet (write_pulse/set_beacon_config/set_oldest_stored_round/random_at)).\n2. Compile-test the green-path with `cargo check --all-targets` (do NOT touch shared source files; only modify the two pathsAllowed entries and the orchestrate handoff).\n3. Update docs/commands/drand.md so every subcommand under drand is documented with: clap flags + types, exit codes (compare to src/error.rs), output JSON schema, pallet ref + storage key (from subtensor/pallets/), and on-chain events emitted (from subtensor/pallets/drand pallet (write_pulse/set_beacon_config/set_oldest_stored_round/random_at)).\n4. Create tests/audit_drand.rs containing at minimum (a) a parse-surface test calling `agcli::cli::Cli::try_parse_from` for every subcommand with realistic args, (b) one `#[ignore]` integration test that talks to a local chain (gated; ok to leave ignored if Docker/localnet are unavailable in this VM).\n5. Submit a handoff whose ## Findings section lists concrete drift between code and docs, missing args, ill-formatted output, panicking paths, mismatched exit codes, and any pallet dispatchable in scope that has no agcli surface. The audit value is in this Findings section.\n\nDo NOT modify any source file in src/. If you find source-level bugs, list them as Suggested follow-ups for the planner to triage.",
+      "pathsAllowed": [
+        "tests/audit_drand.rs",
+        "docs/commands/drand.md"
+      ],
+      "pathsForbidden": [
+        "src/error.rs",
+        "src/events.rs",
+        "src/scaffold.rs",
+        "src/localnet.rs",
+        "src/main.rs",
+        "src/lib.rs",
+        "src/cli/mod.rs",
+        "src/cli/commands.rs",
+        "src/cli/network_cmds.rs",
+        "src/cli/system_cmds.rs",
+        "src/chain/**",
+        "src/wallet/**",
+        "src/extrinsics/**",
+        "src/queries/**",
+        "src/types/**",
+        "src/utils/**",
+        "subtensor/**",
+        "Cargo.toml",
+        "Cargo.lock",
+        "build.rs",
+        "docs/llm.txt",
+        "docs/hyperparameters.md",
+        "docs/why-agcli.md",
+        "docs/philosophy.md",
+        "docs/faq.md",
+        "docs/tutorials/**",
+        ".orchestrate/**"
+      ],
+      "acceptance": [
+        "tests/audit_drand.rs exists and compiles under `cargo check --all-targets`.",
+        "docs/commands/drand.md mentions every subcommand under drand.",
+        "Handoff Findings section lists at least 3 concrete audit observations (or explains why fewer apply)."
+      ],
+      "verify": "Run on the worker branch: `cargo check --all-targets` (must succeed). Then `cargo test --no-run --test audit_drand` (must compile). The Findings section in the handoff is the substantive deliverable.",
+      "model": "gpt-5.3-codex-high-fast",
+      "maxAttempts": 2,
+      "dependsOn": [
+        "bootstrap-env"
+      ]
+    },
+    {
+      "name": "audit-crowdloan",
+      "type": "worker",
+      "scopedGoal": "Audit the agcli crowdloan command group end-to-end, refresh its docs, and add a green-path integration test file at tests/audit_crowdloan.rs.\n\nRead .orchestrate/agcli-audit/discovery.md FIRST. Then:\n\n1. Enumerate every subcommand in CrowdloanCommands; handler at src/cli/network_cmds.rs handle_crowdloan. For each one: open its handler and trace the call to subxt — verify pallet, dispatchable name, and argument SCALE encoding match what the chain expects (cross-reference subtensor/pallets/crowdloan pallet (create/contribute/withdraw/finalize/refund/dissolve/update_min_contribution/update_end/update_cap)).\n2. Compile-test the green-path with `cargo check --all-targets` (do NOT touch shared source files; only modify the two pathsAllowed entries and the orchestrate handoff).\n3. Update docs/commands/crowdloan.md so every subcommand under crowdloan is documented with: clap flags + types, exit codes (compare to src/error.rs), output JSON schema, pallet ref + storage key (from subtensor/pallets/), and on-chain events emitted (from subtensor/pallets/crowdloan pallet (create/contribute/withdraw/finalize/refund/dissolve/update_min_contribution/update_end/update_cap)).\n4. Create tests/audit_crowdloan.rs containing at minimum (a) a parse-surface test calling `agcli::cli::Cli::try_parse_from` for every subcommand with realistic args, (b) one `#[ignore]` integration test that talks to a local chain (gated; ok to leave ignored if Docker/localnet are unavailable in this VM).\n5. Submit a handoff whose ## Findings section lists concrete drift between code and docs, missing args, ill-formatted output, panicking paths, mismatched exit codes, and any pallet dispatchable in scope that has no agcli surface. The audit value is in this Findings section.\n\nDo NOT modify any source file in src/. If you find source-level bugs, list them as Suggested follow-ups for the planner to triage.",
+      "pathsAllowed": [
+        "tests/audit_crowdloan.rs",
+        "docs/commands/crowdloan.md"
+      ],
+      "pathsForbidden": [
+        "src/error.rs",
+        "src/events.rs",
+        "src/scaffold.rs",
+        "src/localnet.rs",
+        "src/main.rs",
+        "src/lib.rs",
+        "src/cli/mod.rs",
+        "src/cli/commands.rs",
+        "src/cli/network_cmds.rs",
+        "src/cli/system_cmds.rs",
+        "src/chain/**",
+        "src/wallet/**",
+        "src/extrinsics/**",
+        "src/queries/**",
+        "src/types/**",
+        "src/utils/**",
+        "subtensor/**",
+        "Cargo.toml",
+        "Cargo.lock",
+        "build.rs",
+        "docs/llm.txt",
+        "docs/hyperparameters.md",
+        "docs/why-agcli.md",
+        "docs/philosophy.md",
+        "docs/faq.md",
+        "docs/tutorials/**",
+        ".orchestrate/**"
+      ],
+      "acceptance": [
+        "tests/audit_crowdloan.rs exists and compiles under `cargo check --all-targets`.",
+        "docs/commands/crowdloan.md mentions every subcommand under crowdloan.",
+        "Handoff Findings section lists at least 3 concrete audit observations (or explains why fewer apply)."
+      ],
+      "verify": "Run on the worker branch: `cargo check --all-targets` (must succeed). Then `cargo test --no-run --test audit_crowdloan` (must compile). The Findings section in the handoff is the substantive deliverable.",
+      "model": "gpt-5.3-codex-high-fast",
+      "maxAttempts": 2,
+      "dependsOn": [
+        "bootstrap-env"
+      ]
+    },
+    {
+      "name": "audit-liquidity",
+      "type": "worker",
+      "scopedGoal": "Audit the agcli liquidity command group end-to-end, refresh its docs, and add a green-path integration test file at tests/audit_liquidity.rs.\n\nRead .orchestrate/agcli-audit/discovery.md FIRST. Then:\n\n1. Enumerate every subcommand in LiquidityCommands; handler at src/cli/network_cmds.rs handle_liquidity. For each one: open its handler and trace the call to subxt — verify pallet, dispatchable name, and argument SCALE encoding match what the chain expects (cross-reference subtensor/pallets/swap pallet (set_fee_rate/toggle_user_liquidity/add_liquidity/remove_liquidity/modify_position/disable_lp)).\n2. Compile-test the green-path with `cargo check --all-targets` (do NOT touch shared source files; only modify the two pathsAllowed entries and the orchestrate handoff).\n3. Update docs/commands/swap.md so every subcommand under liquidity is documented with: clap flags + types, exit codes (compare to src/error.rs), output JSON schema, pallet ref + storage key (from subtensor/pallets/), and on-chain events emitted (from subtensor/pallets/swap pallet (set_fee_rate/toggle_user_liquidity/add_liquidity/remove_liquidity/modify_position/disable_lp)).\n4. Create tests/audit_liquidity.rs containing at minimum (a) a parse-surface test calling `agcli::cli::Cli::try_parse_from` for every subcommand with realistic args, (b) one `#[ignore]` integration test that talks to a local chain (gated; ok to leave ignored if Docker/localnet are unavailable in this VM).\n5. Submit a handoff whose ## Findings section lists concrete drift between code and docs, missing args, ill-formatted output, panicking paths, mismatched exit codes, and any pallet dispatchable in scope that has no agcli surface. The audit value is in this Findings section.\n\nDo NOT modify any source file in src/. If you find source-level bugs, list them as Suggested follow-ups for the planner to triage.",
+      "pathsAllowed": [
+        "tests/audit_liquidity.rs",
+        "docs/commands/swap.md"
+      ],
+      "pathsForbidden": [
+        "src/error.rs",
+        "src/events.rs",
+        "src/scaffold.rs",
+        "src/localnet.rs",
+        "src/main.rs",
+        "src/lib.rs",
+        "src/cli/mod.rs",
+        "src/cli/commands.rs",
+        "src/cli/network_cmds.rs",
+        "src/cli/system_cmds.rs",
+        "src/chain/**",
+        "src/wallet/**",
+        "src/extrinsics/**",
+        "src/queries/**",
+        "src/types/**",
+        "src/utils/**",
+        "subtensor/**",
+        "Cargo.toml",
+        "Cargo.lock",
+        "build.rs",
+        "docs/llm.txt",
+        "docs/hyperparameters.md",
+        "docs/why-agcli.md",
+        "docs/philosophy.md",
+        "docs/faq.md",
+        "docs/tutorials/**",
+        ".orchestrate/**"
+      ],
+      "acceptance": [
+        "tests/audit_liquidity.rs exists and compiles under `cargo check --all-targets`.",
+        "docs/commands/swap.md mentions every subcommand under liquidity.",
+        "Handoff Findings section lists at least 3 concrete audit observations (or explains why fewer apply)."
+      ],
+      "verify": "Run on the worker branch: `cargo check --all-targets` (must succeed). Then `cargo test --no-run --test audit_liquidity` (must compile). The Findings section in the handoff is the substantive deliverable.",
+      "model": "gpt-5.3-codex-high-fast",
+      "maxAttempts": 2,
+      "dependsOn": [
+        "bootstrap-env"
+      ]
+    },
+    {
+      "name": "audit-commitment",
+      "type": "worker",
+      "scopedGoal": "Audit the agcli commitment command group end-to-end, refresh its docs, and add a green-path integration test file at tests/audit_commitment.rs.\n\nRead .orchestrate/agcli-audit/discovery.md FIRST. Then:\n\n1. Enumerate every subcommand in CommitmentCommands; handler at src/cli/network_cmds.rs handle_commitment. For each one: open its handler and trace the call to subxt — verify pallet, dispatchable name, and argument SCALE encoding match what the chain expects (cross-reference subtensor/pallets/commitments pallet (set_commitment/set_max_space/reveal_timelocked_commitments/get_commitments/purge_netuid)).\n2. Compile-test the green-path with `cargo check --all-targets` (do NOT touch shared source files; only modify the two pathsAllowed entries and the orchestrate handoff).\n3. Update docs/commands/commitment.md so every subcommand under commitment is documented with: clap flags + types, exit codes (compare to src/error.rs), output JSON schema, pallet ref + storage key (from subtensor/pallets/), and on-chain events emitted (from subtensor/pallets/commitments pallet (set_commitment/set_max_space/reveal_timelocked_commitments/get_commitments/purge_netuid)).\n4. Create tests/audit_commitment.rs containing at minimum (a) a parse-surface test calling `agcli::cli::Cli::try_parse_from` for every subcommand with realistic args, (b) one `#[ignore]` integration test that talks to a local chain (gated; ok to leave ignored if Docker/localnet are unavailable in this VM).\n5. Submit a handoff whose ## Findings section lists concrete drift between code and docs, missing args, ill-formatted output, panicking paths, mismatched exit codes, and any pallet dispatchable in scope that has no agcli surface. The audit value is in this Findings section.\n\nDo NOT modify any source file in src/. If you find source-level bugs, list them as Suggested follow-ups for the planner to triage.",
+      "pathsAllowed": [
+        "tests/audit_commitment.rs",
+        "docs/commands/commitment.md"
+      ],
+      "pathsForbidden": [
+        "src/error.rs",
+        "src/events.rs",
+        "src/scaffold.rs",
+        "src/localnet.rs",
+        "src/main.rs",
+        "src/lib.rs",
+        "src/cli/mod.rs",
+        "src/cli/commands.rs",
+        "src/cli/network_cmds.rs",
+        "src/cli/system_cmds.rs",
+        "src/chain/**",
+        "src/wallet/**",
+        "src/extrinsics/**",
+        "src/queries/**",
+        "src/types/**",
+        "src/utils/**",
+        "subtensor/**",
+        "Cargo.toml",
+        "Cargo.lock",
+        "build.rs",
+        "docs/llm.txt",
+        "docs/hyperparameters.md",
+        "docs/why-agcli.md",
+        "docs/philosophy.md",
+        "docs/faq.md",
+        "docs/tutorials/**",
+        ".orchestrate/**"
+      ],
+      "acceptance": [
+        "tests/audit_commitment.rs exists and compiles under `cargo check --all-targets`.",
+        "docs/commands/commitment.md mentions every subcommand under commitment.",
+        "Handoff Findings section lists at least 3 concrete audit observations (or explains why fewer apply)."
+      ],
+      "verify": "Run on the worker branch: `cargo check --all-targets` (must succeed). Then `cargo test --no-run --test audit_commitment` (must compile). The Findings section in the handoff is the substantive deliverable.",
+      "model": "gpt-5.3-codex-high-fast",
+      "maxAttempts": 2,
+      "dependsOn": [
+        "bootstrap-env"
+      ]
+    },
+    {
+      "name": "audit-block",
+      "type": "worker",
+      "scopedGoal": "Audit the agcli block command group end-to-end, refresh its docs, and add a green-path integration test file at tests/audit_block.rs.\n\nRead .orchestrate/agcli-audit/discovery.md FIRST. Then:\n\n1. Enumerate every subcommand in BlockCommands; handlers in src/cli/block_cmds.rs. For each one: open its handler and trace the call to subxt — verify pallet, dispatchable name, and argument SCALE encoding match what the chain expects (cross-reference subtensor/pallets/system pallet (header reads, BlockHash storage)).\n2. Compile-test the green-path with `cargo check --all-targets` (do NOT touch shared source files; only modify the two pathsAllowed entries and the orchestrate handoff).\n3. Update docs/commands/block.md so every subcommand under block is documented with: clap flags + types, exit codes (compare to src/error.rs), output JSON schema, pallet ref + storage key (from subtensor/pallets/), and on-chain events emitted (from subtensor/pallets/system pallet (header reads, BlockHash storage)).\n4. Create tests/audit_block.rs containing at minimum (a) a parse-surface test calling `agcli::cli::Cli::try_parse_from` for every subcommand with realistic args, (b) one `#[ignore]` integration test that talks to a local chain (gated; ok to leave ignored if Docker/localnet are unavailable in this VM).\n5. Submit a handoff whose ## Findings section lists concrete drift between code and docs, missing args, ill-formatted output, panicking paths, mismatched exit codes, and any pallet dispatchable in scope that has no agcli surface. The audit value is in this Findings section.\n\nDo NOT modify any source file in src/. If you find source-level bugs, list them as Suggested follow-ups for the planner to triage.",
+      "pathsAllowed": [
+        "tests/audit_block.rs",
+        "docs/commands/block.md"
+      ],
+      "pathsForbidden": [
+        "src/error.rs",
+        "src/events.rs",
+        "src/scaffold.rs",
+        "src/localnet.rs",
+        "src/main.rs",
+        "src/lib.rs",
+        "src/cli/mod.rs",
+        "src/cli/commands.rs",
+        "src/cli/network_cmds.rs",
+        "src/cli/system_cmds.rs",
+        "src/chain/**",
+        "src/wallet/**",
+        "src/extrinsics/**",
+        "src/queries/**",
+        "src/types/**",
+        "src/utils/**",
+        "subtensor/**",
+        "Cargo.toml",
+        "Cargo.lock",
+        "build.rs",
+        "docs/llm.txt",
+        "docs/hyperparameters.md",
+        "docs/why-agcli.md",
+        "docs/philosophy.md",
+        "docs/faq.md",
+        "docs/tutorials/**",
+        ".orchestrate/**"
+      ],
+      "acceptance": [
+        "tests/audit_block.rs exists and compiles under `cargo check --all-targets`.",
+        "docs/commands/block.md mentions every subcommand under block.",
+        "Handoff Findings section lists at least 3 concrete audit observations (or explains why fewer apply)."
+      ],
+      "verify": "Run on the worker branch: `cargo check --all-targets` (must succeed). Then `cargo test --no-run --test audit_block` (must compile). The Findings section in the handoff is the substantive deliverable.",
+      "model": "gpt-5.3-codex-high-fast",
+      "maxAttempts": 2,
+      "dependsOn": [
+        "bootstrap-env"
+      ]
+    },
+    {
+      "name": "audit-diff",
+      "type": "worker",
+      "scopedGoal": "Audit the agcli diff command group end-to-end, refresh its docs, and add a green-path integration test file at tests/audit_diff.rs.\n\nRead .orchestrate/agcli-audit/discovery.md FIRST. Then:\n\n1. Enumerate every subcommand in DiffCommands; handler in src/cli/block_cmds.rs handle_diff. For each one: open its handler and trace the call to subxt — verify pallet, dispatchable name, and argument SCALE encoding match what the chain expects (cross-reference subtensor/pallets/all pallets read-only at two block heights).\n2. Compile-test the green-path with `cargo check --all-targets` (do NOT touch shared source files; only modify the two pathsAllowed entries and the orchestrate handoff).\n3. Update docs/commands/diff.md so every subcommand under diff is documented with: clap flags + types, exit codes (compare to src/error.rs), output JSON schema, pallet ref + storage key (from subtensor/pallets/), and on-chain events emitted (from subtensor/pallets/all pallets read-only at two block heights).\n4. Create tests/audit_diff.rs containing at minimum (a) a parse-surface test calling `agcli::cli::Cli::try_parse_from` for every subcommand with realistic args, (b) one `#[ignore]` integration test that talks to a local chain (gated; ok to leave ignored if Docker/localnet are unavailable in this VM).\n5. Submit a handoff whose ## Findings section lists concrete drift between code and docs, missing args, ill-formatted output, panicking paths, mismatched exit codes, and any pallet dispatchable in scope that has no agcli surface. The audit value is in this Findings section.\n\nDo NOT modify any source file in src/. If you find source-level bugs, list them as Suggested follow-ups for the planner to triage.",
+      "pathsAllowed": [
+        "tests/audit_diff.rs",
+        "docs/commands/diff.md"
+      ],
+      "pathsForbidden": [
+        "src/error.rs",
+        "src/events.rs",
+        "src/scaffold.rs",
+        "src/localnet.rs",
+        "src/main.rs",
+        "src/lib.rs",
+        "src/cli/mod.rs",
+        "src/cli/commands.rs",
+        "src/cli/network_cmds.rs",
+        "src/cli/system_cmds.rs",
+        "src/chain/**",
+        "src/wallet/**",
+        "src/extrinsics/**",
+        "src/queries/**",
+        "src/types/**",
+        "src/utils/**",
+        "subtensor/**",
+        "Cargo.toml",
+        "Cargo.lock",
+        "build.rs",
+        "docs/llm.txt",
+        "docs/hyperparameters.md",
+        "docs/why-agcli.md",
+        "docs/philosophy.md",
+        "docs/faq.md",
+        "docs/tutorials/**",
+        ".orchestrate/**"
+      ],
+      "acceptance": [
+        "tests/audit_diff.rs exists and compiles under `cargo check --all-targets`.",
+        "docs/commands/diff.md mentions every subcommand under diff.",
+        "Handoff Findings section lists at least 3 concrete audit observations (or explains why fewer apply)."
+      ],
+      "verify": "Run on the worker branch: `cargo check --all-targets` (must succeed). Then `cargo test --no-run --test audit_diff` (must compile). The Findings section in the handoff is the substantive deliverable.",
+      "model": "gpt-5.3-codex-high-fast",
+      "maxAttempts": 2,
+      "dependsOn": [
+        "bootstrap-env"
+      ]
+    },
+    {
+      "name": "audit-config",
+      "type": "worker",
+      "scopedGoal": "Audit the agcli config command group end-to-end, refresh its docs, and add a green-path integration test file at tests/audit_config.rs.\n\nRead .orchestrate/agcli-audit/discovery.md FIRST. Then:\n\n1. Enumerate every subcommand in ConfigCommands; handler in src/cli/system_cmds.rs handle_config. For each one: open its handler and trace the call to subxt — verify pallet, dispatchable name, and argument SCALE encoding match what the chain expects (cross-reference subtensor/pallets/n/a (local config in ~/.agcli/config.toml)).\n2. Compile-test the green-path with `cargo check --all-targets` (do NOT touch shared source files; only modify the two pathsAllowed entries and the orchestrate handoff).\n3. Update docs/commands/config.md so every subcommand under config is documented with: clap flags + types, exit codes (compare to src/error.rs), output JSON schema, pallet ref + storage key (from subtensor/pallets/), and on-chain events emitted (from subtensor/pallets/n/a (local config in ~/.agcli/config.toml)).\n4. Create tests/audit_config.rs containing at minimum (a) a parse-surface test calling `agcli::cli::Cli::try_parse_from` for every subcommand with realistic args, (b) one `#[ignore]` integration test that talks to a local chain (gated; ok to leave ignored if Docker/localnet are unavailable in this VM).\n5. Submit a handoff whose ## Findings section lists concrete drift between code and docs, missing args, ill-formatted output, panicking paths, mismatched exit codes, and any pallet dispatchable in scope that has no agcli surface. The audit value is in this Findings section.\n\nDo NOT modify any source file in src/. If you find source-level bugs, list them as Suggested follow-ups for the planner to triage.",
+      "pathsAllowed": [
+        "tests/audit_config.rs",
+        "docs/commands/config.md"
+      ],
+      "pathsForbidden": [
+        "src/error.rs",
+        "src/events.rs",
+        "src/scaffold.rs",
+        "src/localnet.rs",
+        "src/main.rs",
+        "src/lib.rs",
+        "src/cli/mod.rs",
+        "src/cli/commands.rs",
+        "src/cli/network_cmds.rs",
+        "src/cli/system_cmds.rs",
+        "src/chain/**",
+        "src/wallet/**",
+        "src/extrinsics/**",
+        "src/queries/**",
+        "src/types/**",
+        "src/utils/**",
+        "subtensor/**",
+        "Cargo.toml",
+        "Cargo.lock",
+        "build.rs",
+        "docs/llm.txt",
+        "docs/hyperparameters.md",
+        "docs/why-agcli.md",
+        "docs/philosophy.md",
+        "docs/faq.md",
+        "docs/tutorials/**",
+        ".orchestrate/**"
+      ],
+      "acceptance": [
+        "tests/audit_config.rs exists and compiles under `cargo check --all-targets`.",
+        "docs/commands/config.md mentions every subcommand under config.",
+        "Handoff Findings section lists at least 3 concrete audit observations (or explains why fewer apply)."
+      ],
+      "verify": "Run on the worker branch: `cargo check --all-targets` (must succeed). Then `cargo test --no-run --test audit_config` (must compile). The Findings section in the handoff is the substantive deliverable.",
+      "model": "gpt-5.3-codex-high-fast",
+      "maxAttempts": 2,
+      "dependsOn": [
+        "bootstrap-env"
+      ]
+    },
+    {
+      "name": "audit-doctor",
+      "type": "worker",
+      "scopedGoal": "Audit the agcli doctor command group end-to-end, refresh its docs, and add a green-path integration test file at tests/audit_doctor.rs.\n\nRead .orchestrate/agcli-audit/discovery.md FIRST. Then:\n\n1. Enumerate every subcommand in Commands::Doctor inline in src/cli/commands.rs and src/cli/system_cmds.rs handle_doctor. For each one: open its handler and trace the call to subxt — verify pallet, dispatchable name, and argument SCALE encoding match what the chain expects (cross-reference subtensor/pallets/RPC + system_chain/system_version + storage probes).\n2. Compile-test the green-path with `cargo check --all-targets` (do NOT touch shared source files; only modify the two pathsAllowed entries and the orchestrate handoff).\n3. Update docs/commands/doctor.md so every subcommand under doctor is documented with: clap flags + types, exit codes (compare to src/error.rs), output JSON schema, pallet ref + storage key (from subtensor/pallets/), and on-chain events emitted (from subtensor/pallets/RPC + system_chain/system_version + storage probes).\n4. Create tests/audit_doctor.rs containing at minimum (a) a parse-surface test calling `agcli::cli::Cli::try_parse_from` for every subcommand with realistic args, (b) one `#[ignore]` integration test that talks to a local chain (gated; ok to leave ignored if Docker/localnet are unavailable in this VM).\n5. Submit a handoff whose ## Findings section lists concrete drift between code and docs, missing args, ill-formatted output, panicking paths, mismatched exit codes, and any pallet dispatchable in scope that has no agcli surface. The audit value is in this Findings section.\n\nDo NOT modify any source file in src/. If you find source-level bugs, list them as Suggested follow-ups for the planner to triage.",
+      "pathsAllowed": [
+        "tests/audit_doctor.rs",
+        "docs/commands/doctor.md"
+      ],
+      "pathsForbidden": [
+        "src/error.rs",
+        "src/events.rs",
+        "src/scaffold.rs",
+        "src/localnet.rs",
+        "src/main.rs",
+        "src/lib.rs",
+        "src/cli/mod.rs",
+        "src/cli/commands.rs",
+        "src/cli/network_cmds.rs",
+        "src/cli/system_cmds.rs",
+        "src/chain/**",
+        "src/wallet/**",
+        "src/extrinsics/**",
+        "src/queries/**",
+        "src/types/**",
+        "src/utils/**",
+        "subtensor/**",
+        "Cargo.toml",
+        "Cargo.lock",
+        "build.rs",
+        "docs/llm.txt",
+        "docs/hyperparameters.md",
+        "docs/why-agcli.md",
+        "docs/philosophy.md",
+        "docs/faq.md",
+        "docs/tutorials/**",
+        ".orchestrate/**"
+      ],
+      "acceptance": [
+        "tests/audit_doctor.rs exists and compiles under `cargo check --all-targets`.",
+        "docs/commands/doctor.md mentions every subcommand under doctor.",
+        "Handoff Findings section lists at least 3 concrete audit observations (or explains why fewer apply)."
+      ],
+      "verify": "Run on the worker branch: `cargo check --all-targets` (must succeed). Then `cargo test --no-run --test audit_doctor` (must compile). The Findings section in the handoff is the substantive deliverable.",
+      "model": "gpt-5.3-codex-high-fast",
+      "maxAttempts": 2,
+      "dependsOn": [
+        "bootstrap-env"
+      ]
+    },
+    {
+      "name": "audit-explain",
+      "type": "worker",
+      "scopedGoal": "Audit the agcli explain command group end-to-end, refresh its docs, and add a green-path integration test file at tests/audit_explain.rs.\n\nRead .orchestrate/agcli-audit/discovery.md FIRST. Then:\n\n1. Enumerate every subcommand in Commands::Explain in src/cli/commands.rs and src/utils/explain.rs. For each one: open its handler and trace the call to subxt — verify pallet, dispatchable name, and argument SCALE encoding match what the chain expects (cross-reference subtensor/pallets/n/a (built-in concept reference)).\n2. Compile-test the green-path with `cargo check --all-targets` (do NOT touch shared source files; only modify the two pathsAllowed entries and the orchestrate handoff).\n3. Update docs/commands/explain.md so every subcommand under explain is documented with: clap flags + types, exit codes (compare to src/error.rs), output JSON schema, pallet ref + storage key (from subtensor/pallets/), and on-chain events emitted (from subtensor/pallets/n/a (built-in concept reference)).\n4. Create tests/audit_explain.rs containing at minimum (a) a parse-surface test calling `agcli::cli::Cli::try_parse_from` for every subcommand with realistic args, (b) one `#[ignore]` integration test that talks to a local chain (gated; ok to leave ignored if Docker/localnet are unavailable in this VM).\n5. Submit a handoff whose ## Findings section lists concrete drift between code and docs, missing args, ill-formatted output, panicking paths, mismatched exit codes, and any pallet dispatchable in scope that has no agcli surface. The audit value is in this Findings section.\n\nDo NOT modify any source file in src/. If you find source-level bugs, list them as Suggested follow-ups for the planner to triage.",
+      "pathsAllowed": [
+        "tests/audit_explain.rs",
+        "docs/commands/explain.md"
+      ],
+      "pathsForbidden": [
+        "src/error.rs",
+        "src/events.rs",
+        "src/scaffold.rs",
+        "src/localnet.rs",
+        "src/main.rs",
+        "src/lib.rs",
+        "src/cli/mod.rs",
+        "src/cli/commands.rs",
+        "src/cli/network_cmds.rs",
+        "src/cli/system_cmds.rs",
+        "src/chain/**",
+        "src/wallet/**",
+        "src/extrinsics/**",
+        "src/queries/**",
+        "src/types/**",
+        "src/utils/**",
+        "subtensor/**",
+        "Cargo.toml",
+        "Cargo.lock",
+        "build.rs",
+        "docs/llm.txt",
+        "docs/hyperparameters.md",
+        "docs/why-agcli.md",
+        "docs/philosophy.md",
+        "docs/faq.md",
+        "docs/tutorials/**",
+        ".orchestrate/**"
+      ],
+      "acceptance": [
+        "tests/audit_explain.rs exists and compiles under `cargo check --all-targets`.",
+        "docs/commands/explain.md mentions every subcommand under explain.",
+        "Handoff Findings section lists at least 3 concrete audit observations (or explains why fewer apply)."
+      ],
+      "verify": "Run on the worker branch: `cargo check --all-targets` (must succeed). Then `cargo test --no-run --test audit_explain` (must compile). The Findings section in the handoff is the substantive deliverable.",
+      "model": "gpt-5.3-codex-high-fast",
+      "maxAttempts": 2,
+      "dependsOn": [
+        "bootstrap-env"
+      ]
+    },
+    {
+      "name": "audit-completions-update",
+      "type": "worker",
+      "scopedGoal": "Audit the agcli completions/update command group end-to-end, refresh its docs, and add a green-path integration test file at tests/audit_completions_update.rs.\n\nRead .orchestrate/agcli-audit/discovery.md FIRST. Then:\n\n1. Enumerate every subcommand in Commands::Completions and Commands::Update handlers in src/cli/commands.rs and src/cli/system_cmds.rs. For each one: open its handler and trace the call to subxt — verify pallet, dispatchable name, and argument SCALE encoding match what the chain expects (cross-reference subtensor/pallets/n/a (shell completions + self-update from GitHub)).\n2. Compile-test the green-path with `cargo check --all-targets` (do NOT touch shared source files; only modify the two pathsAllowed entries and the orchestrate handoff).\n3. Update docs/commands/utils.md so every subcommand under completions/update is documented with: clap flags + types, exit codes (compare to src/error.rs), output JSON schema, pallet ref + storage key (from subtensor/pallets/), and on-chain events emitted (from subtensor/pallets/n/a (shell completions + self-update from GitHub)).\n4. Create tests/audit_completions_update.rs containing at minimum (a) a parse-surface test calling `agcli::cli::Cli::try_parse_from` for every subcommand with realistic args, (b) one `#[ignore]` integration test that talks to a local chain (gated; ok to leave ignored if Docker/localnet are unavailable in this VM).\n5. Submit a handoff whose ## Findings section lists concrete drift between code and docs, missing args, ill-formatted output, panicking paths, mismatched exit codes, and any pallet dispatchable in scope that has no agcli surface. The audit value is in this Findings section.\n\nDo NOT modify any source file in src/. If you find source-level bugs, list them as Suggested follow-ups for the planner to triage.",
+      "pathsAllowed": [
+        "tests/audit_completions_update.rs",
+        "docs/commands/utils.md"
+      ],
+      "pathsForbidden": [
+        "src/error.rs",
+        "src/events.rs",
+        "src/scaffold.rs",
+        "src/localnet.rs",
+        "src/main.rs",
+        "src/lib.rs",
+        "src/cli/mod.rs",
+        "src/cli/commands.rs",
+        "src/cli/network_cmds.rs",
+        "src/cli/system_cmds.rs",
+        "src/chain/**",
+        "src/wallet/**",
+        "src/extrinsics/**",
+        "src/queries/**",
+        "src/types/**",
+        "src/utils/**",
+        "subtensor/**",
+        "Cargo.toml",
+        "Cargo.lock",
+        "build.rs",
+        "docs/llm.txt",
+        "docs/hyperparameters.md",
+        "docs/why-agcli.md",
+        "docs/philosophy.md",
+        "docs/faq.md",
+        "docs/tutorials/**",
+        ".orchestrate/**"
+      ],
+      "acceptance": [
+        "tests/audit_completions_update.rs exists and compiles under `cargo check --all-targets`.",
+        "docs/commands/utils.md mentions every subcommand under completions/update.",
+        "Handoff Findings section lists at least 3 concrete audit observations (or explains why fewer apply)."
+      ],
+      "verify": "Run on the worker branch: `cargo check --all-targets` (must succeed). Then `cargo test --no-run --test audit_completions_update` (must compile). The Findings section in the handoff is the substantive deliverable.",
+      "model": "gpt-5.3-codex-high-fast",
+      "maxAttempts": 2,
+      "dependsOn": [
+        "bootstrap-env"
+      ]
+    },
+    {
+      "name": "audit-audit-cmd",
+      "type": "worker",
+      "scopedGoal": "Audit the agcli audit (security audit subcommand) command group end-to-end, refresh its docs, and add a green-path integration test file at tests/audit_audit_cmd.rs.\n\nRead .orchestrate/agcli-audit/discovery.md FIRST. Then:\n\n1. Enumerate every subcommand in Commands::Audit; handler at src/cli/view_cmds.rs handle_audit. For each one: open its handler and trace the call to subxt — verify pallet, dispatchable name, and argument SCALE encoding match what the chain expects (cross-reference subtensor/pallets/subtensor + proxy + delegate read-only summary).\n2. Compile-test the green-path with `cargo check --all-targets` (do NOT touch shared source files; only modify the two pathsAllowed entries and the orchestrate handoff).\n3. Update docs/commands/view.md so every subcommand under audit (security audit subcommand) is documented with: clap flags + types, exit codes (compare to src/error.rs), output JSON schema, pallet ref + storage key (from subtensor/pallets/), and on-chain events emitted (from subtensor/pallets/subtensor + proxy + delegate read-only summary).\n4. Create tests/audit_audit_cmd.rs containing at minimum (a) a parse-surface test calling `agcli::cli::Cli::try_parse_from` for every subcommand with realistic args, (b) one `#[ignore]` integration test that talks to a local chain (gated; ok to leave ignored if Docker/localnet are unavailable in this VM).\n5. Submit a handoff whose ## Findings section lists concrete drift between code and docs, missing args, ill-formatted output, panicking paths, mismatched exit codes, and any pallet dispatchable in scope that has no agcli surface. The audit value is in this Findings section.\n\nDo NOT modify any source file in src/. If you find source-level bugs, list them as Suggested follow-ups for the planner to triage.",
+      "pathsAllowed": [
+        "tests/audit_audit_cmd.rs",
+        "docs/commands/view.md"
+      ],
+      "pathsForbidden": [
+        "src/error.rs",
+        "src/events.rs",
+        "src/scaffold.rs",
+        "src/localnet.rs",
+        "src/main.rs",
+        "src/lib.rs",
+        "src/cli/mod.rs",
+        "src/cli/commands.rs",
+        "src/cli/network_cmds.rs",
+        "src/cli/system_cmds.rs",
+        "src/chain/**",
+        "src/wallet/**",
+        "src/extrinsics/**",
+        "src/queries/**",
+        "src/types/**",
+        "src/utils/**",
+        "subtensor/**",
+        "Cargo.toml",
+        "Cargo.lock",
+        "build.rs",
+        "docs/llm.txt",
+        "docs/hyperparameters.md",
+        "docs/why-agcli.md",
+        "docs/philosophy.md",
+        "docs/faq.md",
+        "docs/tutorials/**",
+        ".orchestrate/**"
+      ],
+      "acceptance": [
+        "tests/audit_audit_cmd.rs exists and compiles under `cargo check --all-targets`.",
+        "docs/commands/view.md mentions every subcommand under audit (security audit subcommand).",
+        "Handoff Findings section lists at least 3 concrete audit observations (or explains why fewer apply)."
+      ],
+      "verify": "Run on the worker branch: `cargo check --all-targets` (must succeed). Then `cargo test --no-run --test audit_audit_cmd` (must compile). The Findings section in the handoff is the substantive deliverable.",
+      "model": "gpt-5.3-codex-high-fast",
+      "maxAttempts": 2,
+      "dependsOn": [
+        "bootstrap-env"
+      ]
+    },
+    {
+      "name": "audit-batch",
+      "type": "worker",
+      "scopedGoal": "Audit the agcli batch (utility.batch_all extrinsic from JSON file) command group end-to-end, refresh its docs, and add a green-path integration test file at tests/audit_batch.rs.\n\nRead .orchestrate/agcli-audit/discovery.md FIRST. Then:\n\n1. Enumerate every subcommand in Commands::Batch in src/cli/commands.rs and src/cli/system_cmds.rs handle_batch. For each one: open its handler and trace the call to subxt — verify pallet, dispatchable name, and argument SCALE encoding match what the chain expects (cross-reference subtensor/pallets/utility pallet (batch/batch_all/force_batch/dispatch_as)).\n2. Compile-test the green-path with `cargo check --all-targets` (do NOT touch shared source files; only modify the two pathsAllowed entries and the orchestrate handoff).\n3. Update docs/commands/batch.md so every subcommand under batch (utility.batch_all extrinsic from JSON file) is documented with: clap flags + types, exit codes (compare to src/error.rs), output JSON schema, pallet ref + storage key (from subtensor/pallets/), and on-chain events emitted (from subtensor/pallets/utility pallet (batch/batch_all/force_batch/dispatch_as)).\n4. Create tests/audit_batch.rs containing at minimum (a) a parse-surface test calling `agcli::cli::Cli::try_parse_from` for every subcommand with realistic args, (b) one `#[ignore]` integration test that talks to a local chain (gated; ok to leave ignored if Docker/localnet are unavailable in this VM).\n5. Submit a handoff whose ## Findings section lists concrete drift between code and docs, missing args, ill-formatted output, panicking paths, mismatched exit codes, and any pallet dispatchable in scope that has no agcli surface. The audit value is in this Findings section.\n\nDo NOT modify any source file in src/. If you find source-level bugs, list them as Suggested follow-ups for the planner to triage.",
+      "pathsAllowed": [
+        "tests/audit_batch.rs",
+        "docs/commands/batch.md"
+      ],
+      "pathsForbidden": [
+        "src/error.rs",
+        "src/events.rs",
+        "src/scaffold.rs",
+        "src/localnet.rs",
+        "src/main.rs",
+        "src/lib.rs",
+        "src/cli/mod.rs",
+        "src/cli/commands.rs",
+        "src/cli/network_cmds.rs",
+        "src/cli/system_cmds.rs",
+        "src/chain/**",
+        "src/wallet/**",
+        "src/extrinsics/**",
+        "src/queries/**",
+        "src/types/**",
+        "src/utils/**",
+        "subtensor/**",
+        "Cargo.toml",
+        "Cargo.lock",
+        "build.rs",
+        "docs/llm.txt",
+        "docs/hyperparameters.md",
+        "docs/why-agcli.md",
+        "docs/philosophy.md",
+        "docs/faq.md",
+        "docs/tutorials/**",
+        ".orchestrate/**"
+      ],
+      "acceptance": [
+        "tests/audit_batch.rs exists and compiles under `cargo check --all-targets`.",
+        "docs/commands/batch.md mentions every subcommand under batch (utility.batch_all extrinsic from JSON file).",
+        "Handoff Findings section lists at least 3 concrete audit observations (or explains why fewer apply)."
+      ],
+      "verify": "Run on the worker branch: `cargo check --all-targets` (must succeed). Then `cargo test --no-run --test audit_batch` (must compile). The Findings section in the handoff is the substantive deliverable.",
+      "model": "gpt-5.3-codex-high-fast",
+      "maxAttempts": 2,
+      "dependsOn": [
+        "bootstrap-env"
+      ]
+    },
+    {
+      "name": "audit-utils-cli",
+      "type": "worker",
+      "scopedGoal": "Audit the agcli utils (convert/latency) command group end-to-end, refresh its docs, and add a green-path integration test file at tests/audit_utils_cli.rs.\n\nRead .orchestrate/agcli-audit/discovery.md FIRST. Then:\n\n1. Enumerate every subcommand in UtilsCommands; handler in src/cli/system_cmds.rs handle_utils. For each one: open its handler and trace the call to subxt — verify pallet, dispatchable name, and argument SCALE encoding match what the chain expects (cross-reference subtensor/pallets/n/a (alpha-tao math + endpoint latency)).\n2. Compile-test the green-path with `cargo check --all-targets` (do NOT touch shared source files; only modify the two pathsAllowed entries and the orchestrate handoff).\n3. Update docs/commands/utils.md so every subcommand under utils (convert/latency) is documented with: clap flags + types, exit codes (compare to src/error.rs), output JSON schema, pallet ref + storage key (from subtensor/pallets/), and on-chain events emitted (from subtensor/pallets/n/a (alpha-tao math + endpoint latency)).\n4. Create tests/audit_utils_cli.rs containing at minimum (a) a parse-surface test calling `agcli::cli::Cli::try_parse_from` for every subcommand with realistic args, (b) one `#[ignore]` integration test that talks to a local chain (gated; ok to leave ignored if Docker/localnet are unavailable in this VM).\n5. Submit a handoff whose ## Findings section lists concrete drift between code and docs, missing args, ill-formatted output, panicking paths, mismatched exit codes, and any pallet dispatchable in scope that has no agcli surface. The audit value is in this Findings section.\n\nDo NOT modify any source file in src/. If you find source-level bugs, list them as Suggested follow-ups for the planner to triage.",
+      "pathsAllowed": [
+        "tests/audit_utils_cli.rs",
+        "docs/commands/utils.md"
+      ],
+      "pathsForbidden": [
+        "src/error.rs",
+        "src/events.rs",
+        "src/scaffold.rs",
+        "src/localnet.rs",
+        "src/main.rs",
+        "src/lib.rs",
+        "src/cli/mod.rs",
+        "src/cli/commands.rs",
+        "src/cli/network_cmds.rs",
+        "src/cli/system_cmds.rs",
+        "src/chain/**",
+        "src/wallet/**",
+        "src/extrinsics/**",
+        "src/queries/**",
+        "src/types/**",
+        "src/utils/**",
+        "subtensor/**",
+        "Cargo.toml",
+        "Cargo.lock",
+        "build.rs",
+        "docs/llm.txt",
+        "docs/hyperparameters.md",
+        "docs/why-agcli.md",
+        "docs/philosophy.md",
+        "docs/faq.md",
+        "docs/tutorials/**",
+        ".orchestrate/**"
+      ],
+      "acceptance": [
+        "tests/audit_utils_cli.rs exists and compiles under `cargo check --all-targets`.",
+        "docs/commands/utils.md mentions every subcommand under utils (convert/latency).",
+        "Handoff Findings section lists at least 3 concrete audit observations (or explains why fewer apply)."
+      ],
+      "verify": "Run on the worker branch: `cargo check --all-targets` (must succeed). Then `cargo test --no-run --test audit_utils_cli` (must compile). The Findings section in the handoff is the substantive deliverable.",
+      "model": "gpt-5.3-codex-high-fast",
+      "maxAttempts": 2,
+      "dependsOn": [
+        "bootstrap-env"
+      ]
+    },
+    {
+      "name": "audit-admin",
+      "type": "worker",
+      "scopedGoal": "Audit the agcli admin (sudo subnet hyperparameter setters) command group end-to-end, refresh its docs, and add a green-path integration test file at tests/audit_admin.rs.\n\nRead .orchestrate/agcli-audit/discovery.md FIRST. Then:\n\n1. Enumerate every subcommand in AdminCommands; handlers in src/cli/admin_cmds.rs. For each one: open its handler and trace the call to subxt — verify pallet, dispatchable name, and argument SCALE encoding match what the chain expects (cross-reference subtensor/pallets/admin-utils pallet (~75 sudo_set_* dispatchables)).\n2. Compile-test the green-path with `cargo check --all-targets` (do NOT touch shared source files; only modify the two pathsAllowed entries and the orchestrate handoff).\n3. Update docs/commands/admin.md so every subcommand under admin (sudo subnet hyperparameter setters) is documented with: clap flags + types, exit codes (compare to src/error.rs), output JSON schema, pallet ref + storage key (from subtensor/pallets/), and on-chain events emitted (from subtensor/pallets/admin-utils pallet (~75 sudo_set_* dispatchables)).\n4. Create tests/audit_admin.rs containing at minimum (a) a parse-surface test calling `agcli::cli::Cli::try_parse_from` for every subcommand with realistic args, (b) one `#[ignore]` integration test that talks to a local chain (gated; ok to leave ignored if Docker/localnet are unavailable in this VM).\n5. Submit a handoff whose ## Findings section lists concrete drift between code and docs, missing args, ill-formatted output, panicking paths, mismatched exit codes, and any pallet dispatchable in scope that has no agcli surface. The audit value is in this Findings section.\n\nDo NOT modify any source file in src/. If you find source-level bugs, list them as Suggested follow-ups for the planner to triage.",
+      "pathsAllowed": [
+        "tests/audit_admin.rs",
+        "docs/commands/admin.md"
+      ],
+      "pathsForbidden": [
+        "src/error.rs",
+        "src/events.rs",
+        "src/scaffold.rs",
+        "src/localnet.rs",
+        "src/main.rs",
+        "src/lib.rs",
+        "src/cli/mod.rs",
+        "src/cli/commands.rs",
+        "src/cli/network_cmds.rs",
+        "src/cli/system_cmds.rs",
+        "src/chain/**",
+        "src/wallet/**",
+        "src/extrinsics/**",
+        "src/queries/**",
+        "src/types/**",
+        "src/utils/**",
+        "subtensor/**",
+        "Cargo.toml",
+        "Cargo.lock",
+        "build.rs",
+        "docs/llm.txt",
+        "docs/hyperparameters.md",
+        "docs/why-agcli.md",
+        "docs/philosophy.md",
+        "docs/faq.md",
+        "docs/tutorials/**",
+        ".orchestrate/**"
+      ],
+      "acceptance": [
+        "tests/audit_admin.rs exists and compiles under `cargo check --all-targets`.",
+        "docs/commands/admin.md mentions every subcommand under admin (sudo subnet hyperparameter setters).",
+        "Handoff Findings section lists at least 3 concrete audit observations (or explains why fewer apply)."
+      ],
+      "verify": "Run on the worker branch: `cargo check --all-targets` (must succeed). Then `cargo test --no-run --test audit_admin` (must compile). The Findings section in the handoff is the substantive deliverable.",
+      "model": "gpt-5.3-codex-high-fast",
+      "maxAttempts": 2,
+      "dependsOn": [
+        "bootstrap-env"
+      ]
+    },
+    {
+      "name": "audit-localnet",
+      "type": "worker",
+      "scopedGoal": "Audit the agcli localnet (Docker subtensor management) command group end-to-end, refresh its docs, and add a green-path integration test file at tests/audit_localnet.rs.\n\nRead .orchestrate/agcli-audit/discovery.md FIRST. Then:\n\n1. Enumerate every subcommand in LocalnetCommands; handlers in src/cli/localnet_cmds.rs and src/localnet.rs / src/scaffold.rs. For each one: open its handler and trace the call to subxt — verify pallet, dispatchable name, and argument SCALE encoding match what the chain expects (cross-reference subtensor/pallets/n/a (Docker container management; chain bootstraps reuse subtensor genesis)).\n2. Compile-test the green-path with `cargo check --all-targets` (do NOT touch shared source files; only modify the two pathsAllowed entries and the orchestrate handoff).\n3. Update docs/commands/localnet.md so every subcommand under localnet (Docker subtensor management) is documented with: clap flags + types, exit codes (compare to src/error.rs), output JSON schema, pallet ref + storage key (from subtensor/pallets/), and on-chain events emitted (from subtensor/pallets/n/a (Docker container management; chain bootstraps reuse subtensor genesis)).\n4. Create tests/audit_localnet.rs containing at minimum (a) a parse-surface test calling `agcli::cli::Cli::try_parse_from` for every subcommand with realistic args, (b) one `#[ignore]` integration test that talks to a local chain (gated; ok to leave ignored if Docker/localnet are unavailable in this VM).\n5. Submit a handoff whose ## Findings section lists concrete drift between code and docs, missing args, ill-formatted output, panicking paths, mismatched exit codes, and any pallet dispatchable in scope that has no agcli surface. The audit value is in this Findings section.\n\nDo NOT modify any source file in src/. If you find source-level bugs, list them as Suggested follow-ups for the planner to triage.",
+      "pathsAllowed": [
+        "tests/audit_localnet.rs",
+        "docs/commands/localnet.md"
+      ],
+      "pathsForbidden": [
+        "src/error.rs",
+        "src/events.rs",
+        "src/scaffold.rs",
+        "src/localnet.rs",
+        "src/main.rs",
+        "src/lib.rs",
+        "src/cli/mod.rs",
+        "src/cli/commands.rs",
+        "src/cli/network_cmds.rs",
+        "src/cli/system_cmds.rs",
+        "src/chain/**",
+        "src/wallet/**",
+        "src/extrinsics/**",
+        "src/queries/**",
+        "src/types/**",
+        "src/utils/**",
+        "subtensor/**",
+        "Cargo.toml",
+        "Cargo.lock",
+        "build.rs",
+        "docs/llm.txt",
+        "docs/hyperparameters.md",
+        "docs/why-agcli.md",
+        "docs/philosophy.md",
+        "docs/faq.md",
+        "docs/tutorials/**",
+        ".orchestrate/**"
+      ],
+      "acceptance": [
+        "tests/audit_localnet.rs exists and compiles under `cargo check --all-targets`.",
+        "docs/commands/localnet.md mentions every subcommand under localnet (Docker subtensor management).",
+        "Handoff Findings section lists at least 3 concrete audit observations (or explains why fewer apply)."
+      ],
+      "verify": "Run on the worker branch: `cargo check --all-targets` (must succeed). Then `cargo test --no-run --test audit_localnet` (must compile). The Findings section in the handoff is the substantive deliverable.",
+      "model": "gpt-5.3-codex-high-fast",
+      "maxAttempts": 2,
+      "dependsOn": [
+        "bootstrap-env"
+      ]
+    },
+    {
+      "name": "verify-write-batch",
+      "type": "verifier",
+      "verifies": "audit-wallet",
+      "scopedGoal": "Verifier for the verify-write-batch batch. Confirm that, on a merged synthetic branch combining the worker outputs of [audit-wallet, audit-balance-transfer, audit-stake, audit-subnet, audit-weights, audit-root, audit-delegate], the project still:\n\n1. Compiles: `cargo check --all-targets` succeeds.\n2. Builds: `cargo build --bin agcli` succeeds.\n3. Tests compile: `cargo test --no-run --workspace` succeeds.\n4. Each docs/commands/<group>.md the workers touched correctly enumerates every subcommand by inspecting the corresponding *Commands enum in src/cli/mod.rs (regex match the variant names against the markdown headings).\n5. Each tests/audit_<group>.rs file at least parses every subcommand variant via Cli::try_parse_from.\n\nRead each worker's handoff under .orchestrate/agcli-audit/handoffs/audit-<name>.md and consolidate the findings into one ## Findings rollup in your verdict handoff. Mark the Status as success only if all 5 checks above pass for every dependent task.",
+      "pathsAllowed": [
+        ".orchestrate/agcli-audit/handoffs/**"
+      ],
+      "pathsForbidden": [
+        "src/**",
+        "docs/**",
+        "tests/**",
+        "Cargo.toml",
+        "subtensor/**"
+      ],
+      "acceptance": [
+        "`cargo check --all-targets` passes on the merged branch.",
+        "`cargo build --bin agcli` passes on the merged branch.",
+        "Every dependent worker's audit_*.rs test file compiles.",
+        "Verdict handoff consolidates the dependent workers' Findings into a single rollup.",
+        "Verdict handoff Status reflects the actual pass/fail of the cargo checks."
+      ],
+      "model": "claude-opus-4-7",
+      "maxAttempts": 2,
+      "dependsOn": [
+        "audit-wallet",
+        "audit-balance-transfer",
+        "audit-stake",
+        "audit-subnet",
+        "audit-weights",
+        "audit-root",
+        "audit-delegate"
+      ]
+    },
+    {
+      "name": "verify-network-batch",
+      "type": "verifier",
+      "verifies": "audit-identity",
+      "scopedGoal": "Verifier for the verify-network-batch batch. Confirm that, on a merged synthetic branch combining the worker outputs of [audit-identity, audit-serve, audit-proxy, audit-swap-keys, audit-subscribe, audit-multisig], the project still:\n\n1. Compiles: `cargo check --all-targets` succeeds.\n2. Builds: `cargo build --bin agcli` succeeds.\n3. Tests compile: `cargo test --no-run --workspace` succeeds.\n4. Each docs/commands/<group>.md the workers touched correctly enumerates every subcommand by inspecting the corresponding *Commands enum in src/cli/mod.rs (regex match the variant names against the markdown headings).\n5. Each tests/audit_<group>.rs file at least parses every subcommand variant via Cli::try_parse_from.\n\nRead each worker's handoff under .orchestrate/agcli-audit/handoffs/audit-<name>.md and consolidate the findings into one ## Findings rollup in your verdict handoff. Mark the Status as success only if all 5 checks above pass for every dependent task.",
+      "pathsAllowed": [
+        ".orchestrate/agcli-audit/handoffs/**"
+      ],
+      "pathsForbidden": [
+        "src/**",
+        "docs/**",
+        "tests/**",
+        "Cargo.toml",
+        "subtensor/**"
+      ],
+      "acceptance": [
+        "`cargo check --all-targets` passes on the merged branch.",
+        "`cargo build --bin agcli` passes on the merged branch.",
+        "Every dependent worker's audit_*.rs test file compiles.",
+        "Verdict handoff consolidates the dependent workers' Findings into a single rollup.",
+        "Verdict handoff Status reflects the actual pass/fail of the cargo checks."
+      ],
+      "model": "claude-opus-4-7",
+      "maxAttempts": 2,
+      "dependsOn": [
+        "audit-identity",
+        "audit-serve",
+        "audit-proxy",
+        "audit-swap-keys",
+        "audit-subscribe",
+        "audit-multisig"
+      ]
+    },
+    {
+      "name": "verify-governance-batch",
+      "type": "verifier",
+      "verifies": "audit-scheduler",
+      "scopedGoal": "Verifier for the verify-governance-batch batch. Confirm that, on a merged synthetic branch combining the worker outputs of [audit-scheduler, audit-preimage, audit-contracts, audit-evm, audit-safe-mode, audit-drand], the project still:\n\n1. Compiles: `cargo check --all-targets` succeeds.\n2. Builds: `cargo build --bin agcli` succeeds.\n3. Tests compile: `cargo test --no-run --workspace` succeeds.\n4. Each docs/commands/<group>.md the workers touched correctly enumerates every subcommand by inspecting the corresponding *Commands enum in src/cli/mod.rs (regex match the variant names against the markdown headings).\n5. Each tests/audit_<group>.rs file at least parses every subcommand variant via Cli::try_parse_from.\n\nRead each worker's handoff under .orchestrate/agcli-audit/handoffs/audit-<name>.md and consolidate the findings into one ## Findings rollup in your verdict handoff. Mark the Status as success only if all 5 checks above pass for every dependent task.",
+      "pathsAllowed": [
+        ".orchestrate/agcli-audit/handoffs/**"
+      ],
+      "pathsForbidden": [
+        "src/**",
+        "docs/**",
+        "tests/**",
+        "Cargo.toml",
+        "subtensor/**"
+      ],
+      "acceptance": [
+        "`cargo check --all-targets` passes on the merged branch.",
+        "`cargo build --bin agcli` passes on the merged branch.",
+        "Every dependent worker's audit_*.rs test file compiles.",
+        "Verdict handoff consolidates the dependent workers' Findings into a single rollup.",
+        "Verdict handoff Status reflects the actual pass/fail of the cargo checks."
+      ],
+      "model": "claude-opus-4-7",
+      "maxAttempts": 2,
+      "dependsOn": [
+        "audit-scheduler",
+        "audit-preimage",
+        "audit-contracts",
+        "audit-evm",
+        "audit-safe-mode",
+        "audit-drand"
+      ]
+    },
+    {
+      "name": "verify-economy-batch",
+      "type": "verifier",
+      "verifies": "audit-crowdloan",
+      "scopedGoal": "Verifier for the verify-economy-batch batch. Confirm that, on a merged synthetic branch combining the worker outputs of [audit-crowdloan, audit-liquidity, audit-commitment], the project still:\n\n1. Compiles: `cargo check --all-targets` succeeds.\n2. Builds: `cargo build --bin agcli` succeeds.\n3. Tests compile: `cargo test --no-run --workspace` succeeds.\n4. Each docs/commands/<group>.md the workers touched correctly enumerates every subcommand by inspecting the corresponding *Commands enum in src/cli/mod.rs (regex match the variant names against the markdown headings).\n5. Each tests/audit_<group>.rs file at least parses every subcommand variant via Cli::try_parse_from.\n\nRead each worker's handoff under .orchestrate/agcli-audit/handoffs/audit-<name>.md and consolidate the findings into one ## Findings rollup in your verdict handoff. Mark the Status as success only if all 5 checks above pass for every dependent task.",
+      "pathsAllowed": [
+        ".orchestrate/agcli-audit/handoffs/**"
+      ],
+      "pathsForbidden": [
+        "src/**",
+        "docs/**",
+        "tests/**",
+        "Cargo.toml",
+        "subtensor/**"
+      ],
+      "acceptance": [
+        "`cargo check --all-targets` passes on the merged branch.",
+        "`cargo build --bin agcli` passes on the merged branch.",
+        "Every dependent worker's audit_*.rs test file compiles.",
+        "Verdict handoff consolidates the dependent workers' Findings into a single rollup.",
+        "Verdict handoff Status reflects the actual pass/fail of the cargo checks."
+      ],
+      "model": "claude-opus-4-7",
+      "maxAttempts": 2,
+      "dependsOn": [
+        "audit-crowdloan",
+        "audit-liquidity",
+        "audit-commitment"
+      ]
+    },
+    {
+      "name": "verify-readonly-batch",
+      "type": "verifier",
+      "verifies": "audit-view",
+      "scopedGoal": "Verifier for the verify-readonly-batch batch. Confirm that, on a merged synthetic branch combining the worker outputs of [audit-view, audit-block, audit-diff, audit-audit-cmd, audit-doctor, audit-explain, audit-config, audit-completions-update, audit-batch, audit-utils-cli, audit-admin, audit-localnet], the project still:\n\n1. Compiles: `cargo check --all-targets` succeeds.\n2. Builds: `cargo build --bin agcli` succeeds.\n3. Tests compile: `cargo test --no-run --workspace` succeeds.\n4. Each docs/commands/<group>.md the workers touched correctly enumerates every subcommand by inspecting the corresponding *Commands enum in src/cli/mod.rs (regex match the variant names against the markdown headings).\n5. Each tests/audit_<group>.rs file at least parses every subcommand variant via Cli::try_parse_from.\n\nRead each worker's handoff under .orchestrate/agcli-audit/handoffs/audit-<name>.md and consolidate the findings into one ## Findings rollup in your verdict handoff. Mark the Status as success only if all 5 checks above pass for every dependent task.",
+      "pathsAllowed": [
+        ".orchestrate/agcli-audit/handoffs/**"
+      ],
+      "pathsForbidden": [
+        "src/**",
+        "docs/**",
+        "tests/**",
+        "Cargo.toml",
+        "subtensor/**"
+      ],
+      "acceptance": [
+        "`cargo check --all-targets` passes on the merged branch.",
+        "`cargo build --bin agcli` passes on the merged branch.",
+        "Every dependent worker's audit_*.rs test file compiles.",
+        "Verdict handoff consolidates the dependent workers' Findings into a single rollup.",
+        "Verdict handoff Status reflects the actual pass/fail of the cargo checks."
+      ],
+      "model": "claude-opus-4-7",
+      "maxAttempts": 2,
+      "dependsOn": [
+        "audit-view",
+        "audit-block",
+        "audit-diff",
+        "audit-audit-cmd",
+        "audit-doctor",
+        "audit-explain",
+        "audit-config",
+        "audit-completions-update",
+        "audit-batch",
+        "audit-utils-cli",
+        "audit-admin",
+        "audit-localnet"
+      ]
+    },
+    {
+      "name": "fix-error-mapping",
+      "type": "worker",
+      "scopedGoal": "Cross-cutting fix worker for src/error.rs. Read every audit handoff under .orchestrate/agcli-audit/handoffs/ first; collect every \"wrong exit code\" or \"missing pallet error mapping\" finding. Then update src/error.rs so:\n\n1. Every pallet error variant emitted by the subtensor pallets we surface (subtensor, admin-utils, commitments, crowdloan, proxy, swap, drand, utility, registry, shield) maps to a stable agcli exit code with a human-readable message.\n2. Validation errors (clap parse, ss58 invalid, netuid bounds, weight vector length, slippage out of range) all use exit code 12 consistently.\n3. Network errors (RPC connect, timeout) use exit codes 10/15 consistently.\n4. The mapping table is exhaustive: any subxt::Error::DispatchError that isn't recognized falls through to a documented generic \"1\" with the runtime metadata-decoded module + error name in the message.\n\nVerify your changes pass `cargo check` and re-run any tests/audit_*.rs that exercise exit codes.",
+      "pathsAllowed": [
+        "src/error.rs",
+        ".orchestrate/agcli-audit/handoffs/**"
+      ],
+      "pathsForbidden": [],
+      "acceptance": [
+        "`cargo check --all-targets` passes after your changes.",
+        "`cargo build --bin agcli` passes after your changes.",
+        "Handoff Findings section names every fix you applied and links it to the audit handoff(s) that motivated it."
+      ],
+      "verify": "Run `cargo check --all-targets` and `cargo build --bin agcli` on the worker branch. Both must succeed.",
+      "model": "gpt-5.3-codex-high-fast",
+      "maxAttempts": 2,
+      "dependsOn": [
+        "audit-wallet",
+        "audit-balance-transfer",
+        "audit-stake",
+        "audit-subnet",
+        "audit-weights",
+        "audit-root",
+        "audit-delegate",
+        "audit-view",
+        "audit-identity",
+        "audit-serve",
+        "audit-proxy",
+        "audit-swap-keys",
+        "audit-subscribe",
+        "audit-multisig",
+        "audit-scheduler",
+        "audit-preimage",
+        "audit-contracts",
+        "audit-evm",
+        "audit-safe-mode",
+        "audit-drand",
+        "audit-crowdloan",
+        "audit-liquidity",
+        "audit-commitment",
+        "audit-block",
+        "audit-diff",
+        "audit-config",
+        "audit-doctor",
+        "audit-explain",
+        "audit-completions-update",
+        "audit-audit-cmd",
+        "audit-batch",
+        "audit-utils-cli",
+        "audit-admin",
+        "audit-localnet"
+      ]
+    },
+    {
+      "name": "fix-events-pretty",
+      "type": "worker",
+      "scopedGoal": "Cross-cutting fix worker for src/events.rs (real-time event subscription). Audit handoffs under .orchestrate/agcli-audit/handoffs/ may have flagged ill-formatted events. Read them, then make sure:\n\n1. Every event variant emitted by subtensor/pallets/subtensor/src/macros/events.rs has a pretty printer in src/events.rs (cross-reference exhaustively).\n2. Filters in SubscribeCommands actually fire on the named event class (delegation, keys, swap, governance, crowdloan, etc.).\n3. JSON output for each event has a stable schema (no missing fields, no inconsistent number-vs-string types).\n\nVerify with `cargo check` and `cargo build --bin agcli`.",
+      "pathsAllowed": [
+        "src/events.rs",
+        ".orchestrate/agcli-audit/handoffs/**"
+      ],
+      "pathsForbidden": [],
+      "acceptance": [
+        "`cargo check --all-targets` passes after your changes.",
+        "`cargo build --bin agcli` passes after your changes.",
+        "Handoff Findings section names every fix you applied and links it to the audit handoff(s) that motivated it."
+      ],
+      "verify": "Run `cargo check --all-targets` and `cargo build --bin agcli` on the worker branch. Both must succeed.",
+      "model": "gpt-5.3-codex-high-fast",
+      "maxAttempts": 2,
+      "dependsOn": [
+        "audit-wallet",
+        "audit-balance-transfer",
+        "audit-stake",
+        "audit-subnet",
+        "audit-weights",
+        "audit-root",
+        "audit-delegate",
+        "audit-view",
+        "audit-identity",
+        "audit-serve",
+        "audit-proxy",
+        "audit-swap-keys",
+        "audit-subscribe",
+        "audit-multisig",
+        "audit-scheduler",
+        "audit-preimage",
+        "audit-contracts",
+        "audit-evm",
+        "audit-safe-mode",
+        "audit-drand",
+        "audit-crowdloan",
+        "audit-liquidity",
+        "audit-commitment",
+        "audit-block",
+        "audit-diff",
+        "audit-config",
+        "audit-doctor",
+        "audit-explain",
+        "audit-completions-update",
+        "audit-audit-cmd",
+        "audit-batch",
+        "audit-utils-cli",
+        "audit-admin",
+        "audit-localnet"
+      ]
+    },
+    {
+      "name": "fix-explain-topics",
+      "type": "worker",
+      "scopedGoal": "Cross-cutting fix worker for src/utils/explain.rs (built-in concept reference). Audit handoffs may have flagged outdated or missing topics. Make sure:\n\n1. Every topic listed in docs/llm.txt's \"explain\" subsection has a matching entry in src/utils/explain.rs.\n2. Every CLI command group has at least one topic explaining its core concept (tempo, commit-reveal, weights, AMM/dynamic, bootstrap, registration, proxy, multisig, scheduler, drand, safe-mode, swap, EVM bridge, contracts, ss58 vs evm-h160).\n3. The `--full` flag falls through to docs/commands/<topic>.md when present (verify the resolution).\n\nUpdate the topics list inline. Run `cargo check` to confirm.",
+      "pathsAllowed": [
+        "src/utils/explain.rs",
+        ".orchestrate/agcli-audit/handoffs/**"
+      ],
+      "pathsForbidden": [],
+      "acceptance": [
+        "`cargo check --all-targets` passes after your changes.",
+        "`cargo build --bin agcli` passes after your changes.",
+        "Handoff Findings section names every fix you applied and links it to the audit handoff(s) that motivated it."
+      ],
+      "verify": "Run `cargo check --all-targets` and `cargo build --bin agcli` on the worker branch. Both must succeed.",
+      "model": "gpt-5.3-codex-high-fast",
+      "maxAttempts": 2,
+      "dependsOn": [
+        "audit-wallet",
+        "audit-balance-transfer",
+        "audit-stake",
+        "audit-subnet",
+        "audit-weights",
+        "audit-root",
+        "audit-delegate",
+        "audit-view",
+        "audit-identity",
+        "audit-serve",
+        "audit-proxy",
+        "audit-swap-keys",
+        "audit-subscribe",
+        "audit-multisig",
+        "audit-scheduler",
+        "audit-preimage",
+        "audit-contracts",
+        "audit-evm",
+        "audit-safe-mode",
+        "audit-drand",
+        "audit-crowdloan",
+        "audit-liquidity",
+        "audit-commitment",
+        "audit-block",
+        "audit-diff",
+        "audit-config",
+        "audit-doctor",
+        "audit-explain",
+        "audit-completions-update",
+        "audit-audit-cmd",
+        "audit-batch",
+        "audit-utils-cli",
+        "audit-admin",
+        "audit-localnet"
+      ]
+    },
+    {
+      "name": "fix-llm-txt",
+      "type": "worker",
+      "scopedGoal": "Cross-cutting fix worker for the agent-facing reference docs: docs/llm.txt and docs/hyperparameters.md. Read every audit handoff for drift between code and llm.txt. Then:\n\n1. Make docs/llm.txt's \"Common Tasks\" and per-group sections match the actual clap surface — every flag agcli accepts must appear, every flag listed must actually parse.\n2. Make docs/hyperparameters.md cover every `sudo_set_*` dispatchable in subtensor/pallets/admin-utils/src/lib.rs. List default value, units, on-chain interaction.\n3. Cross-link commands ↔ pallet dispatchables ↔ docs/commands/*.md.\n\nRun `cargo check` (no source touched, but our README links may break tests).",
+      "pathsAllowed": [
+        "docs/llm.txt",
+        "docs/hyperparameters.md",
+        "docs/why-agcli.md",
+        "docs/faq.md",
+        ".orchestrate/agcli-audit/handoffs/**"
+      ],
+      "pathsForbidden": [],
+      "acceptance": [
+        "`cargo check --all-targets` passes after your changes.",
+        "`cargo build --bin agcli` passes after your changes.",
+        "Handoff Findings section names every fix you applied and links it to the audit handoff(s) that motivated it."
+      ],
+      "verify": "Run `cargo check --all-targets` and `cargo build --bin agcli` on the worker branch. Both must succeed.",
+      "model": "gpt-5.3-codex-high-fast",
+      "maxAttempts": 2,
+      "dependsOn": [
+        "audit-wallet",
+        "audit-balance-transfer",
+        "audit-stake",
+        "audit-subnet",
+        "audit-weights",
+        "audit-root",
+        "audit-delegate",
+        "audit-view",
+        "audit-identity",
+        "audit-serve",
+        "audit-proxy",
+        "audit-swap-keys",
+        "audit-subscribe",
+        "audit-multisig",
+        "audit-scheduler",
+        "audit-preimage",
+        "audit-contracts",
+        "audit-evm",
+        "audit-safe-mode",
+        "audit-drand",
+        "audit-crowdloan",
+        "audit-liquidity",
+        "audit-commitment",
+        "audit-block",
+        "audit-diff",
+        "audit-config",
+        "audit-doctor",
+        "audit-explain",
+        "audit-completions-update",
+        "audit-audit-cmd",
+        "audit-batch",
+        "audit-utils-cli",
+        "audit-admin",
+        "audit-localnet"
+      ]
+    },
+    {
+      "name": "fix-chain-queries",
+      "type": "worker",
+      "scopedGoal": "Cross-cutting fix worker for src/chain/queries.rs (read-only chain queries). Audit handoffs may have flagged stale data, missing at-block support, broken caches, or malformed JSON output. Make sure:\n\n1. Every read used by the CLI exposes both a \"latest\" and `get_*_at_block(block_hash)` variant where it makes sense for the diff/at-block command surface.\n2. Cache TTLs (src/queries/cache.rs, src/queries/disk_cache.rs, src/queries/query_cache.rs) honor at-block (no stale data when at_block is pinned).\n3. JSON output schemas don't have fields that sometimes-strings sometimes-numbers (consistent across calls).\n\nRun `cargo check` and `cargo build --bin agcli`.",
+      "pathsAllowed": [
+        "src/chain/queries.rs",
+        "src/chain/rpc_types.rs",
+        "src/queries/**",
+        "src/types/**",
+        ".orchestrate/agcli-audit/handoffs/**"
+      ],
+      "pathsForbidden": [],
+      "acceptance": [
+        "`cargo check --all-targets` passes after your changes.",
+        "`cargo build --bin agcli` passes after your changes.",
+        "Handoff Findings section names every fix you applied and links it to the audit handoff(s) that motivated it."
+      ],
+      "verify": "Run `cargo check --all-targets` and `cargo build --bin agcli` on the worker branch. Both must succeed.",
+      "model": "gpt-5.3-codex-high-fast",
+      "maxAttempts": 2,
+      "dependsOn": [
+        "audit-wallet",
+        "audit-balance-transfer",
+        "audit-stake",
+        "audit-subnet",
+        "audit-weights",
+        "audit-root",
+        "audit-delegate",
+        "audit-view",
+        "audit-identity",
+        "audit-serve",
+        "audit-proxy",
+        "audit-swap-keys",
+        "audit-subscribe",
+        "audit-multisig",
+        "audit-scheduler",
+        "audit-preimage",
+        "audit-contracts",
+        "audit-evm",
+        "audit-safe-mode",
+        "audit-drand",
+        "audit-crowdloan",
+        "audit-liquidity",
+        "audit-commitment",
+        "audit-block",
+        "audit-diff",
+        "audit-config",
+        "audit-doctor",
+        "audit-explain",
+        "audit-completions-update",
+        "audit-audit-cmd",
+        "audit-batch",
+        "audit-utils-cli",
+        "audit-admin",
+        "audit-localnet"
+      ]
+    },
+    {
+      "name": "fix-chain-extrinsics",
+      "type": "worker",
+      "scopedGoal": "Cross-cutting fix worker for src/chain/extrinsics.rs (subxt extrinsic submitters). Audit handoffs may have flagged bad encoding, missing dispatchables, broken finalization handling, or wrong MEV-shield gating. Make sure:\n\n1. Every dispatchable surfaced by an agcli subcommand has a matching submitter in src/chain/extrinsics.rs.\n2. Every submitter that has a \"_mev\" twin uses src/extrinsics/mev_shield.rs correctly (encryption + sub-account routing) and falls back to plain when --mev is off.\n3. Finalization timeout, mortality blocks, and best-vs-finalized are honored per the global flags.\n4. Sudo/admin extrinsics route through Sudo when --sudo-key is provided.\n\nRun `cargo check` and `cargo build --bin agcli`.",
+      "pathsAllowed": [
+        "src/chain/extrinsics.rs",
+        "src/extrinsics/**",
+        ".orchestrate/agcli-audit/handoffs/**"
+      ],
+      "pathsForbidden": [],
+      "acceptance": [
+        "`cargo check --all-targets` passes after your changes.",
+        "`cargo build --bin agcli` passes after your changes.",
+        "Handoff Findings section names every fix you applied and links it to the audit handoff(s) that motivated it."
+      ],
+      "verify": "Run `cargo check --all-targets` and `cargo build --bin agcli` on the worker branch. Both must succeed.",
+      "model": "gpt-5.3-codex-high-fast",
+      "maxAttempts": 2,
+      "dependsOn": [
+        "audit-wallet",
+        "audit-balance-transfer",
+        "audit-stake",
+        "audit-subnet",
+        "audit-weights",
+        "audit-root",
+        "audit-delegate",
+        "audit-view",
+        "audit-identity",
+        "audit-serve",
+        "audit-proxy",
+        "audit-swap-keys",
+        "audit-subscribe",
+        "audit-multisig",
+        "audit-scheduler",
+        "audit-preimage",
+        "audit-contracts",
+        "audit-evm",
+        "audit-safe-mode",
+        "audit-drand",
+        "audit-crowdloan",
+        "audit-liquidity",
+        "audit-commitment",
+        "audit-block",
+        "audit-diff",
+        "audit-config",
+        "audit-doctor",
+        "audit-explain",
+        "audit-completions-update",
+        "audit-audit-cmd",
+        "audit-batch",
+        "audit-utils-cli",
+        "audit-admin",
+        "audit-localnet"
+      ]
+    },
+    {
+      "name": "fix-scaffold-localnet",
+      "type": "worker",
+      "scopedGoal": "Cross-cutting fix worker for src/scaffold.rs and src/localnet.rs. Audit handoffs (especially from audit-localnet, audit-admin, audit-subnet) may have flagged scaffold misbehavior. Make sure:\n\n1. `agcli localnet scaffold` brings up a chain that successfully runs a 3-neuron flow (1 validator, 2 miners) using the same docker storage-driver hack from .orchestrate/agcli-audit/discovery.md (vfs).\n2. `agcli localnet status` honestly reports the current chain state.\n3. The scaffold config TOML round-trips cleanly (deserialize/serialize symmetric) and rejects unknown keys with a clear error.\n4. Default ChainConfig + SubnetConfig values match the docs/commands/localnet.md description.\n\nRun `cargo check`, `cargo build --bin agcli`, and (if Docker/network allow) the actual scaffold E2E. If Docker is unavailable, mark Verification as not-verified and explain.",
+      "pathsAllowed": [
+        "src/scaffold.rs",
+        "src/localnet.rs",
+        "examples/scaffold.toml",
+        ".orchestrate/agcli-audit/handoffs/**"
+      ],
+      "pathsForbidden": [],
+      "acceptance": [
+        "`cargo check --all-targets` passes after your changes.",
+        "`cargo build --bin agcli` passes after your changes.",
+        "Handoff Findings section names every fix you applied and links it to the audit handoff(s) that motivated it."
+      ],
+      "verify": "Run `cargo check --all-targets` and `cargo build --bin agcli` on the worker branch. Both must succeed.",
+      "model": "gpt-5.3-codex-high-fast",
+      "maxAttempts": 2,
+      "dependsOn": [
+        "audit-wallet",
+        "audit-balance-transfer",
+        "audit-stake",
+        "audit-subnet",
+        "audit-weights",
+        "audit-root",
+        "audit-delegate",
+        "audit-view",
+        "audit-identity",
+        "audit-serve",
+        "audit-proxy",
+        "audit-swap-keys",
+        "audit-subscribe",
+        "audit-multisig",
+        "audit-scheduler",
+        "audit-preimage",
+        "audit-contracts",
+        "audit-evm",
+        "audit-safe-mode",
+        "audit-drand",
+        "audit-crowdloan",
+        "audit-liquidity",
+        "audit-commitment",
+        "audit-block",
+        "audit-diff",
+        "audit-config",
+        "audit-doctor",
+        "audit-explain",
+        "audit-completions-update",
+        "audit-audit-cmd",
+        "audit-batch",
+        "audit-utils-cli",
+        "audit-admin",
+        "audit-localnet"
+      ]
+    },
+    {
+      "name": "verify-xcut-batch",
+      "type": "verifier",
+      "verifies": "fix-error-mapping",
+      "scopedGoal": "Final verifier for the cross-cutting fix wave. After [fix-error-mapping, fix-events-pretty, fix-explain-topics, fix-llm-txt, fix-chain-queries, fix-chain-extrinsics, fix-scaffold-localnet] all hand off, confirm on a synthesized merged branch that:\n\n1. `cargo check --all-targets` passes.\n2. `cargo build --bin agcli` passes.\n3. `cargo clippy --all-targets -- -D warnings` passes for the files the cross-cutting workers touched (best-effort: warn about pre-existing clippy noise but don't fail on it).\n4. `cargo test --no-run --workspace` passes.\n5. Spot-check 5 random tests/audit_*.rs files for parse-surface coverage.\n\nRoll up the cross-cutting handoffs into a single ## Findings section. Status = success only if all 5 checks above pass.",
+      "pathsAllowed": [
+        ".orchestrate/agcli-audit/handoffs/**"
+      ],
+      "pathsForbidden": [
+        "src/**",
+        "docs/**",
+        "tests/**",
+        "Cargo.toml",
+        "subtensor/**"
+      ],
+      "acceptance": [
+        "All four cargo invocations above pass.",
+        "Verdict handoff consolidates each cross-cutting worker's findings.",
+        "Verdict handoff Status reflects actual cargo results."
+      ],
+      "model": "claude-opus-4-7",
+      "maxAttempts": 2,
+      "dependsOn": [
+        "fix-error-mapping",
+        "fix-events-pretty",
+        "fix-explain-topics",
+        "fix-llm-txt",
+        "fix-chain-queries",
+        "fix-chain-extrinsics",
+        "fix-scaffold-localnet"
+      ]
+    }
+  ]
+}
