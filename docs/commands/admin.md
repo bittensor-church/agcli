@@ -1,167 +1,107 @@
-# admin — Sudo AdminUtils
+# admin commands
 
-Set subnet hyperparameters via the chain's `AdminUtils` pallet. Requires the sudo key (Alice on localnet, root key on mainnet).
+`agcli admin` wraps privileged `AdminUtils` dispatchables through `Sudo.sudo`.
+This page reflects the current code in:
 
-These commands close the gap where agents can register subnets but can't configure them without writing Rust — every AdminUtils call is now a one-liner.
+- `src/cli/mod.rs` (`AdminCommands`)
+- `src/cli/admin_cmds.rs` (handlers)
+- `src/admin.rs` (subxt dynamic call wrappers)
+- `subtensor/pallets/admin-utils/src/lib.rs` at commit `6844ee37...`
 
-## Typed Commands
+## Shared behavior
 
-### admin set-tempo
-Set the tempo (blocks per epoch) for a subnet.
+### Sudo key resolution
 
-```bash
-agcli admin set-tempo --netuid 1 --tempo 100 --sudo-key //Alice --network local
+- `--sudo-key <String>` accepts a dev URI such as `//Alice`.
+- If omitted, agcli falls back to the wallet coldkey.
+
+### JSON output schema
+
+For all write commands (`admin list` excluded), `--output json` prints:
+
+```json
+{
+  "tx_hash": "0x..."
+}
 ```
 
-**On-chain**: `AdminUtils::sudo_set_tempo(origin, netuid, tempo)`
+For `admin list`, `--output json` prints:
 
-### admin set-max-validators
-Set max validator slots.
-
-```bash
-agcli admin set-max-validators --netuid 1 --max 8 --sudo-key //Alice --network local
+```json
+[
+  {
+    "call": "sudo_set_tempo",
+    "description": "Blocks per epoch",
+    "args": ["netuid: u16", "tempo: u16"]
+  }
+]
 ```
 
-**On-chain**: `AdminUtils::sudo_set_max_allowed_validators(origin, netuid, max)`
+### Exit codes (from `src/error.rs`)
 
-### admin set-max-uids
-Set max total UID slots.
+- `0` success
+- `10` network / websocket failure
+- `11` auth / wallet unlock failure
+- `12` validation (bad CLI value, bad JSON args, bad call name)
+- `13` chain dispatch failure (`BadOrigin`, `SubnetDoesNotExist`, pallet errors)
+- `14` local I/O failure (wallet/key file access)
+- `15` timeout
+- `1` uncategorized failure
 
-```bash
-agcli admin set-max-uids --netuid 1 --max 256 --sudo-key //Alice --network local
-```
+## Command reference
 
-**On-chain**: `AdminUtils::sudo_set_max_allowed_uids(origin, netuid, max)`
+Notes:
+- "SCALE sent by agcli" describes the exact dynamic values passed in `src/admin.rs`.
+- All write calls are wrapped by `Sudo.sudo` and surface `Sudo::Sudid`.
+- Admin-utils event emission is sparse. Most setters emit no `AdminUtils::*` event.
 
-### admin set-immunity-period
-Set immunity period (blocks of immunity after registration).
+| Subcommand | Clap flags and types | Pallet ref and dispatchable | SCALE sent by agcli | Primary storage key(s) touched | Events on success |
+|---|---|---|---|---|---|
+| `set-tempo` | `--netuid <u16>` `--tempo <u16>` `--sudo-key <String?>` | `AdminUtils::sudo_set_tempo(netuid: NetUid, tempo: u16)` | `(u128(netuid), u128(tempo))` | `SubtensorModule::Tempo[netuid]` | `Sudo::Sudid(Ok)`, `SubtensorModule::TempoSet` |
+| `set-max-validators` | `--netuid <u16>` `--max <u16>` `--sudo-key <String?>` | `AdminUtils::sudo_set_max_allowed_validators(netuid, max_allowed_validators)` | `(u128(netuid), u128(max))` | `SubtensorModule::MaxAllowedValidators[netuid]` | `Sudo::Sudid(Ok)`, `SubtensorModule::MaxAllowedValidatorsSet` |
+| `set-max-uids` | `--netuid <u16>` `--max <u16>` `--sudo-key <String?>` | `AdminUtils::sudo_set_max_allowed_uids(netuid, max_allowed_uids)` | `(u128(netuid), u128(max))` | `SubtensorModule::MaxAllowedUids[netuid]` | `Sudo::Sudid(Ok)`, `SubtensorModule::MaxAllowedUidsSet` |
+| `set-immunity-period` | `--netuid <u16>` `--period <u16>` `--sudo-key <String?>` | `AdminUtils::sudo_set_immunity_period(netuid, immunity_period)` | `(u128(netuid), u128(period))` | `SubtensorModule::ImmunityPeriod[netuid]` | `Sudo::Sudid(Ok)`, `SubtensorModule::ImmunityPeriodSet` |
+| `set-min-weights` | `--netuid <u16>` `--min <u16>` `--sudo-key <String?>` | `AdminUtils::sudo_set_min_allowed_weights(netuid, min_allowed_weights)` | `(u128(netuid), u128(min))` | `SubtensorModule::MinAllowedWeights[netuid]` | `Sudo::Sudid(Ok)`, `SubtensorModule::MinAllowedWeightSet` |
+| `set-max-weight-limit` | `--netuid <u16>` `--limit <u16>` `--sudo-key <String?>` | agcli targets `AdminUtils::sudo_set_max_weight_limit`, but this dispatchable is not present in current `admin-utils` pallet | `(u128(netuid), u128(limit))` | No on-chain write in current runtime path. Related key exists: `SubtensorModule::MaxWeightsLimit[netuid]` | Fails before submit when metadata lacks call (`13`), no chain event |
+| `set-weights-rate-limit` | `--netuid <u16>` `--limit <u64>` `--sudo-key <String?>` | `AdminUtils::sudo_set_weights_set_rate_limit(netuid, weights_set_rate_limit)` | `(u128(netuid), u128(limit))` | `SubtensorModule::WeightsSetRateLimit[netuid]` | `Sudo::Sudid(Ok)`, `SubtensorModule::WeightsSetRateLimitSet` |
+| `set-commit-reveal` | `--netuid <u16>` `--enabled <bool flag>` `--sudo-key <String?>` | `AdminUtils::sudo_set_commit_reveal_weights_enabled(netuid, enabled)` | `(u128(netuid), bool(enabled))` | `SubtensorModule::CommitRevealWeightsEnabled[netuid]` | `Sudo::Sudid(Ok)`, `SubtensorModule::CommitRevealEnabled` |
+| `set-difficulty` | `--netuid <u16>` `--difficulty <u64>` `--sudo-key <String?>` | `AdminUtils::sudo_set_difficulty(netuid, difficulty)` | `(u128(netuid), u128(difficulty))` | `SubtensorModule::Difficulty[netuid]` | `Sudo::Sudid(Ok)`, `SubtensorModule::DifficultySet` |
+| `set-activity-cutoff` | `--netuid <u16>` `--cutoff <u16>` `--sudo-key <String?>` | `AdminUtils::sudo_set_activity_cutoff(netuid, activity_cutoff)` | `(u128(netuid), u128(cutoff))` | `SubtensorModule::ActivityCutoff[netuid]` | `Sudo::Sudid(Ok)`, `SubtensorModule::ActivityCutoffSet` |
+| `set-default-take` | `--take <u16>` `--sudo-key <String?>` | `AdminUtils::sudo_set_default_take(default_take)` | `(u128(take))` | `SubtensorModule::MaxDelegateTake` | `Sudo::Sudid(Ok)`, `SubtensorModule::MaxDelegateTakeSet` |
+| `set-tx-rate-limit` | `--limit <u64>` `--sudo-key <String?>` | `AdminUtils::sudo_set_tx_rate_limit(tx_rate_limit)` | `(u128(limit))` | `SubtensorModule::TxRateLimit` | `Sudo::Sudid(Ok)`, `SubtensorModule::TxRateLimitSet` |
+| `set-min-difficulty` | `--netuid <u16>` `--difficulty <u64>` `--sudo-key <String?>` | `AdminUtils::sudo_set_min_difficulty(netuid, min_difficulty)` | `(u128(netuid), u128(difficulty))` | `SubtensorModule::MinDifficulty[netuid]` | `Sudo::Sudid(Ok)`, `SubtensorModule::MinDifficultySet` |
+| `set-max-difficulty` | `--netuid <u16>` `--difficulty <u64>` `--sudo-key <String?>` | `AdminUtils::sudo_set_max_difficulty(netuid, max_difficulty)` | `(u128(netuid), u128(difficulty))` | `SubtensorModule::MaxDifficulty[netuid]` | `Sudo::Sudid(Ok)`, `SubtensorModule::MaxDifficultySet` |
+| `set-adjustment-interval` | `--netuid <u16>` `--interval <u16>` `--sudo-key <String?>` | `AdminUtils::sudo_set_adjustment_interval(netuid, adjustment_interval)` | `(u128(netuid), u128(interval))` | `SubtensorModule::AdjustmentInterval[netuid]` | `Sudo::Sudid(Ok)`, `SubtensorModule::AdjustmentIntervalSet` |
+| `set-kappa` | `--netuid <u16>` `--kappa <u16>` `--sudo-key <String?>` | `AdminUtils::sudo_set_kappa(netuid, kappa)` | `(u128(netuid), u128(kappa))` | `SubtensorModule::Kappa[netuid]` | `Sudo::Sudid(Ok)`, `SubtensorModule::KappaSet` |
+| `set-rho` | `--netuid <u16>` `--rho <u16>` `--sudo-key <String?>` | `AdminUtils::sudo_set_rho(netuid, rho)` | `(u128(netuid), u128(rho))` | `SubtensorModule::Rho[netuid]` | `Sudo::Sudid(Ok)` (no dedicated `SubtensorModule` event in setter path) |
+| `set-min-burn` | `--netuid <u16>` `--burn <u64>` `--sudo-key <String?>` | `AdminUtils::sudo_set_min_burn(netuid, min_burn)` | `(u128(netuid), u128(burn))` | `SubtensorModule::MinBurn[netuid]` | `Sudo::Sudid(Ok)`, `SubtensorModule::MinBurnSet` |
+| `set-max-burn` | `--netuid <u16>` `--burn <u64>` `--sudo-key <String?>` | `AdminUtils::sudo_set_max_burn(netuid, max_burn)` | `(u128(netuid), u128(burn))` | `SubtensorModule::MaxBurn[netuid]` | `Sudo::Sudid(Ok)`, `SubtensorModule::MaxBurnSet` |
+| `set-liquid-alpha` | `--netuid <u16>` `--enabled <bool flag>` `--sudo-key <String?>` | `AdminUtils::sudo_set_liquid_alpha_enabled(netuid, enabled)` | `(u128(netuid), bool(enabled))` | `SubtensorModule::LiquidAlphaOn[netuid]` | `Sudo::Sudid(Ok)` (no `AdminUtils` event for this call) |
+| `set-alpha-values` | `--netuid <u16>` `--alpha-low <u16>` `--alpha-high <u16>` `--sudo-key <String?>` | `AdminUtils::sudo_set_alpha_values(netuid, alpha_low, alpha_high)` | `(u128(netuid), u128(alpha_low), u128(alpha_high))` | `SubtensorModule::AlphaValues[netuid]` | `Sudo::Sudid(Ok)` (setter path logs, no dedicated event) |
+| `set-yuma3` | `--netuid <u16>` `--enabled <bool flag>` `--sudo-key <String?>` | `AdminUtils::sudo_set_yuma3_enabled(netuid, enabled)` | `(u128(netuid), bool(enabled))` | `SubtensorModule::Yuma3On[netuid]` | `Sudo::Sudid(Ok)`, `AdminUtils::Yuma3EnableToggled` |
+| `set-bonds-penalty` | `--netuid <u16>` `--penalty <u16>` `--sudo-key <String?>` | `AdminUtils::sudo_set_bonds_penalty(netuid, bonds_penalty)` | `(u128(netuid), u128(penalty))` | `SubtensorModule::BondsPenalty[netuid]` | `Sudo::Sudid(Ok)`, `SubtensorModule::BondsPenaltySet` |
+| `set-stake-threshold` | `--threshold <u64>` `--sudo-key <String?>` | `AdminUtils::sudo_set_stake_threshold(min_stake)` | `(u128(threshold))` | `SubtensorModule::StakeThreshold` | `Sudo::Sudid(Ok)`, `SubtensorModule::StakeThresholdSet` |
+| `set-network-registration` | `--netuid <u16>` `--allowed <bool flag>` `--sudo-key <String?>` | `AdminUtils::sudo_set_network_registration_allowed(netuid, registration_allowed)` | `(u128(netuid), bool(allowed))` | `SubtensorModule::NetworkRegistrationAllowed[netuid]` | `Sudo::Sudid(Ok)`, `SubtensorModule::RegistrationAllowed` |
+| `set-pow-registration` | `--netuid <u16>` `--allowed <bool flag>` `--sudo-key <String?>` | `AdminUtils::sudo_set_network_pow_registration_allowed(netuid, registration_allowed)` | `(u128(netuid), bool(allowed))` | None in current runtime path because dispatchable returns `AdminUtils::POWRegistrationDisabled` | `Sudo::Sudid(Err(...POWRegistrationDisabled...))` |
+| `set-adjustment-alpha` | `--netuid <u16>` `--alpha <u64>` `--sudo-key <String?>` | `AdminUtils::sudo_set_adjustment_alpha(netuid, adjustment_alpha)` | `(u128(netuid), u128(alpha))` | `SubtensorModule::AdjustmentAlpha[netuid]` | `Sudo::Sudid(Ok)`, `SubtensorModule::AdjustmentAlphaSet` |
+| `set-subnet-moving-alpha` | `--alpha <u64>` `--sudo-key <String?>` | `AdminUtils::sudo_set_subnet_moving_alpha(alpha: I96F32)` | agcli sends `(u128(alpha))`, while pallet expects fixed-point `I96F32` | `SubtensorModule::SubnetMovingAlpha` | Can fail with type/dispatch error if encoding mismatches runtime expectation |
+| `set-mechanism-count` | `--netuid <u16>` `--count <u16>` `--sudo-key <String?>` | `AdminUtils::sudo_set_mechanism_count(netuid, mechanism_count)` | `(u128(netuid), u128(count))` | `SubtensorModule::MechanismCountCurrent[netuid]` and possible reset of `MechanismEmissionSplit[netuid]` when count changes | `Sudo::Sudid(Ok)` (no dedicated admin-utils event) |
+| `set-mechanism-emission-split` | `--netuid <u16>` `--weights <String>` `--sudo-key <String?>` | `AdminUtils::sudo_set_mechanism_emission_split(netuid, maybe_split: Option<Vec<u16>>)` | agcli parses CSV into `Vec<u64>` and sends unnamed composite vector, not explicit `Option<Vec<u16>>` | Intended target is `SubtensorModule::MechanismEmissionSplit[netuid]` | Can fail at dispatch/encoding if runtime rejects arg shape |
+| `set-nominator-min-stake` | `--stake <u64>` `--sudo-key <String?>` | `AdminUtils::sudo_set_nominator_min_required_stake(min_stake)` | `(u128(stake))` | `SubtensorModule::NominatorMinRequiredStake` | `Sudo::Sudid(Ok)` |
+| `raw` | `--call <String>` `--args <JSON array>` `--sudo-key <String?>` | `AdminUtils::<dynamic call name>` | JSON numbers become `u128`, bools become bool, strings become string | Depends on call | `Sudo::Sudid(...)` for runtime dispatch result |
+| `list` | no args | local only, does not submit to chain | n/a | n/a | n/a |
 
-```bash
-agcli admin set-immunity-period --netuid 1 --period 100 --sudo-key //Alice --network local
-```
+## `admin raw` accepted call names
 
-**On-chain**: `AdminUtils::sudo_set_immunity_period(origin, netuid, period)`
+`admin raw` is restricted by `validate_admin_call_name` to agcli's local `known_params` list, not the full runtime call set. Current allowed names are:
 
-### admin set-min-weights
-Set minimum weights a validator must set.
+`sudo_set_tempo`, `sudo_set_max_allowed_validators`, `sudo_set_max_allowed_uids`, `sudo_set_immunity_period`, `sudo_set_min_allowed_weights`, `sudo_set_max_weight_limit`, `sudo_set_weights_set_rate_limit`, `sudo_set_commit_reveal_weights_enabled`, `sudo_set_difficulty`, `sudo_set_bonds_moving_average`, `sudo_set_target_registrations_per_interval`, `sudo_set_activity_cutoff`, `sudo_set_serving_rate_limit`, `sudo_set_default_take`, `sudo_set_tx_rate_limit`, `sudo_set_min_difficulty`, `sudo_set_max_difficulty`, `sudo_set_adjustment_interval`, `sudo_set_adjustment_alpha`, `sudo_set_kappa`, `sudo_set_rho`, `sudo_set_min_burn`, `sudo_set_max_burn`, `sudo_set_liquid_alpha_enabled`, `sudo_set_alpha_values`, `sudo_set_yuma3_enabled`, `sudo_set_bonds_penalty`, `sudo_set_subnet_moving_alpha`, `sudo_set_mechanism_count`, `sudo_set_mechanism_emission_split`, `sudo_set_stake_threshold`, `sudo_set_nominator_min_required_stake`, `sudo_set_network_registration_allowed`, `sudo_set_network_pow_registration_allowed`.
 
-```bash
-agcli admin set-min-weights --netuid 1 --min 1 --sudo-key //Alice --network local
-```
-
-**On-chain**: `AdminUtils::sudo_set_min_allowed_weights(origin, netuid, min)`
-
-### admin set-max-weight-limit
-Set maximum weight value.
-
-```bash
-agcli admin set-max-weight-limit --netuid 1 --limit 65535 --sudo-key //Alice --network local
-```
-
-**On-chain**: `AdminUtils::sudo_set_max_weight_limit(origin, netuid, limit)`
-
-### admin set-weights-rate-limit
-Set blocks between weight submissions (0 = unlimited).
-
-```bash
-agcli admin set-weights-rate-limit --netuid 1 --limit 0 --sudo-key //Alice --network local
-```
-
-**On-chain**: `AdminUtils::sudo_set_weights_set_rate_limit(origin, netuid, limit)`
-
-### admin set-commit-reveal
-Enable or disable commit-reveal weights.
-
-```bash
-agcli admin set-commit-reveal --netuid 1 --enabled false --sudo-key //Alice --network local
-```
-
-**On-chain**: `AdminUtils::sudo_set_commit_reveal_weights_enabled(origin, netuid, enabled)`
-
-### admin set-difficulty
-Set POW registration difficulty.
-
-```bash
-agcli admin set-difficulty --netuid 1 --difficulty 1000000 --sudo-key //Alice --network local
-```
-
-**On-chain**: `AdminUtils::sudo_set_difficulty(origin, netuid, difficulty)`
-
-### admin set-activity-cutoff
-Set activity cutoff (blocks before a neuron is considered inactive).
+## Practical examples
 
 ```bash
-agcli admin set-activity-cutoff --netuid 1 --cutoff 5000 --sudo-key //Alice --network local
+agcli --network local admin set-tempo --netuid 1 --tempo 120 --sudo-key //Alice
+agcli --network local --output json admin set-default-take --take 32767 --sudo-key //Alice
+agcli --network local admin raw --call sudo_set_target_registrations_per_interval --args '[1, 3]' --sudo-key //Alice
+agcli --output json admin list
 ```
-
-**On-chain**: `AdminUtils::sudo_set_activity_cutoff(origin, netuid, cutoff)`
-
-## Generic Commands
-
-### admin raw
-Execute any AdminUtils call by name — escape hatch for parameters without a typed command.
-
-```bash
-# Set bonds moving average
-agcli admin raw --call sudo_set_bonds_moving_average --args '[1, 900000]' --sudo-key //Alice --network local
-
-# Set target registrations per interval
-agcli admin raw --call sudo_set_target_registrations_per_interval --args '[1, 3]' --sudo-key //Alice --network local
-
-# Set serving rate limit
-agcli admin raw --call sudo_set_serving_rate_limit --args '[1, 50]' --sudo-key //Alice --network local
-```
-
-Args must be a JSON array. Supported value types: numbers (u128), booleans, strings.
-
-### admin list
-Show all known AdminUtils parameters with descriptions and argument types.
-
-```bash
-agcli admin list
-# JSON: [{"call", "description", "args"}]
-```
-
-**Known parameters:**
-| Call | Description | Args |
-|------|-------------|------|
-| `sudo_set_tempo` | Blocks per epoch | `netuid: u16, tempo: u16` |
-| `sudo_set_max_allowed_validators` | Max validator slots | `netuid: u16, max: u16` |
-| `sudo_set_max_allowed_uids` | Max total UID slots | `netuid: u16, max: u16` |
-| `sudo_set_immunity_period` | Blocks of immunity after registration | `netuid: u16, period: u16` |
-| `sudo_set_min_allowed_weights` | Minimum weights a validator must set | `netuid: u16, min: u16` |
-| `sudo_set_max_weight_limit` | Maximum weight value | `netuid: u16, limit: u16` |
-| `sudo_set_weights_set_rate_limit` | Blocks between weight submissions (0=unlimited) | `netuid: u16, limit: u64` |
-| `sudo_set_commit_reveal_weights_enabled` | Enable/disable commit-reveal weights | `netuid: u16, enabled: bool` |
-| `sudo_set_difficulty` | POW registration difficulty | `netuid: u16, difficulty: u64` |
-| `sudo_set_bonds_moving_average` | Bonds moving average | `netuid: u16, avg: u64` |
-| `sudo_set_target_registrations_per_interval` | Target registrations per interval | `netuid: u16, target: u16` |
-| `sudo_set_activity_cutoff` | Blocks before neuron is inactive | `netuid: u16, cutoff: u16` |
-| `sudo_set_serving_rate_limit` | Axon serving rate limit | `netuid: u16, limit: u64` |
-
-## Sudo Key
-
-On **localnet**, Alice (`//Alice`) is the sudo account. Pass `--sudo-key //Alice`.
-
-If `--sudo-key` is omitted, the command falls back to the wallet coldkey. On mainnet, only the chain's root key can execute AdminUtils calls.
-
-## Common Errors
-| Error | Cause | Fix |
-|-------|-------|-----|
-| `Invalid sudo key URI` | Bad URI format | Use `//Alice` or `//Bob` |
-| `BadOrigin` / extrinsic failed | Caller is not the sudo account | Verify `--sudo-key` is the chain's sudo key |
-| `SubnetDoesNotExist` | Invalid netuid | Check `agcli subnet list` |
-| `Invalid JSON args` | Malformed `--args` in `raw` | Must be JSON array: `'[1, 100]'` |
-
-## Source Code
-**agcli handler**: [`src/cli/admin_cmds.rs`](https://github.com/unarbos/agcli/blob/main/src/cli/admin_cmds.rs) — `handle_admin()` L34, `resolve_sudo_key()` L12, `parse_raw_args()` L232
-
-**SDK**: [`src/admin.rs`](https://github.com/unarbos/agcli/blob/main/src/admin.rs) — `set_tempo()` L25, `set_max_allowed_validators()` L42, `set_max_allowed_uids()` L59, `set_immunity_period()` L76, `set_min_allowed_weights()` L93, `set_max_weight_limit()` L110, `set_weights_set_rate_limit()` L127, `set_commit_reveal_weights_enabled()` L144, `set_difficulty()` L161, `set_activity_cutoff()` L212, `set_serving_rate_limit()` L229, `raw_admin_call()` L249, `known_params()` L262
-
-**Subtensor pallet**: [`pallets/admin-utils/src/lib.rs`](https://github.com/opentensor/subtensor/blob/main/pallets/admin-utils/src/lib.rs) — All `sudo_set_*` dispatch entry points
-
-## Related Commands
-- `agcli localnet start` — Start a local chain for testing
-- `agcli localnet scaffold` — Full test environment with admin calls included
-- `agcli subnet set-param` — Set hyperparameters as subnet owner (not sudo)
-- `agcli subnet hyperparams` — View current hyperparameters
