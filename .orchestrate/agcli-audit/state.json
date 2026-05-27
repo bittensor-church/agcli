@@ -406,12 +406,12 @@
       "agentId": "bc-7c929b1a-c547-4d01-aef6-c3c84cd0d81b",
       "runId": "run-30ef5b1e-2016-485e-b1b9-5429f072f065",
       "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
-      "status": "running",
-      "resultStatus": null,
-      "handoffPath": null,
+      "status": "handed-off",
+      "resultStatus": "finished",
+      "handoffPath": "handoffs/audit-evm.md",
       "startedAt": "2026-05-27T11:16:34.052Z",
-      "finishedAt": null,
-      "lastUpdate": "2026-05-27T11:16:36.994Z",
+      "finishedAt": "2026-05-27T11:33:28.039Z",
+      "lastUpdate": "2026-05-27T11:33:28.039Z",
       "note": null,
       "attempts": 1,
       "slackTs": null,
@@ -609,13 +609,13 @@
       "handoffPath": "handoffs/audit-doctor.md",
       "startedAt": "2026-05-27T11:17:09.730Z",
       "finishedAt": "2026-05-27T11:33:26.885Z",
-      "lastUpdate": "2026-05-27T11:33:26.885Z",
+      "lastUpdate": "2026-05-27T11:33:28.030Z",
       "note": null,
       "attempts": 1,
       "slackTs": null,
       "prNumber": null,
       "failureMode": null,
-      "verification": null
+      "verification": "unit-test-verified"
     },
     {
       "name": "audit-explain",
@@ -1817,6 +1817,10 @@
     {
       "at": "2026-05-27T11:32:49.188Z",
       "message": "audit-admin: respawned by self-planner (was error)"
+    },
+    {
+      "at": "2026-05-27T11:33:28.031Z",
+      "message": "audit-doctor: verification self-reported (unit-test-verified)"
     }
   ]
 }
