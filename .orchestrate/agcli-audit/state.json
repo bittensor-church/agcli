@@ -7,20 +7,20 @@
       "branch": "orch/agcli-audit/bootstrap-env",
       "startingRef": "cursor/agcli-subtensor-audit-e2e7",
       "dependsOn": [],
-      "agentId": "bc-05e45c90-5c21-4902-b6b9-13281d5bade4",
-      "runId": "run-98d0d654-8d69-4721-8667-9df1bb6a0e38",
+      "agentId": null,
+      "runId": null,
       "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
-      "status": "error",
-      "resultStatus": "error",
-      "handoffPath": "handoffs/bootstrap-env.md",
-      "startedAt": "2026-05-27T11:15:38.024Z",
-      "finishedAt": "2026-05-27T11:16:25.775Z",
-      "lastUpdate": "2026-05-27T11:16:25.775Z",
-      "note": "respawned by self-planner (was error; attempts=1)",
+      "status": "pending",
+      "resultStatus": null,
+      "handoffPath": null,
+      "startedAt": null,
+      "finishedAt": null,
+      "lastUpdate": "2026-05-27T11:31:59.001Z",
+      "note": "respawned by self-planner (was error; attempts=2)",
       "attempts": 2,
       "slackTs": null,
       "prNumber": null,
-      "failureMode": "unknown",
+      "failureMode": null,
       "verification": null
     },
     {
@@ -39,11 +39,11 @@
       "finishedAt": "2026-05-27T11:16:41.532Z",
       "lastUpdate": "2026-05-27T11:16:41.532Z",
       "note": null,
+      "attempts": 1,
       "slackTs": null,
       "prNumber": null,
       "failureMode": "unknown",
-      "verification": null,
-      "attempts": 1
+      "verification": null
     },
     {
       "name": "audit-balance-transfer",
@@ -61,11 +61,11 @@
       "finishedAt": "2026-05-27T11:16:49.559Z",
       "lastUpdate": "2026-05-27T11:16:49.559Z",
       "note": null,
+      "attempts": 1,
       "slackTs": null,
       "prNumber": null,
       "failureMode": "unknown",
-      "verification": null,
-      "attempts": 1
+      "verification": null
     },
     {
       "name": "audit-stake",
@@ -83,11 +83,11 @@
       "finishedAt": "2026-05-27T11:16:29.962Z",
       "lastUpdate": "2026-05-27T11:16:29.962Z",
       "note": null,
+      "attempts": 1,
       "slackTs": null,
       "prNumber": null,
       "failureMode": "unknown",
-      "verification": null,
-      "attempts": 1
+      "verification": null
     },
     {
       "name": "audit-subnet",
@@ -105,11 +105,11 @@
       "finishedAt": "2026-05-27T11:16:56.769Z",
       "lastUpdate": "2026-05-27T11:16:56.769Z",
       "note": null,
+      "attempts": 1,
       "slackTs": null,
       "prNumber": null,
       "failureMode": "unknown",
-      "verification": null,
-      "attempts": 1
+      "verification": null
     },
     {
       "name": "audit-weights",
@@ -127,11 +127,11 @@
       "finishedAt": "2026-05-27T11:16:28.795Z",
       "lastUpdate": "2026-05-27T11:16:28.795Z",
       "note": null,
+      "attempts": 1,
       "slackTs": null,
       "prNumber": null,
       "failureMode": "unknown",
-      "verification": null,
-      "attempts": 1
+      "verification": null
     },
     {
       "name": "audit-root",
@@ -149,11 +149,11 @@
       "finishedAt": "2026-05-27T11:16:44.032Z",
       "lastUpdate": "2026-05-27T11:16:44.032Z",
       "note": null,
+      "attempts": 1,
       "slackTs": null,
       "prNumber": null,
       "failureMode": "unknown",
-      "verification": null,
-      "attempts": 1
+      "verification": null
     },
     {
       "name": "audit-delegate",
@@ -171,11 +171,11 @@
       "finishedAt": "2026-05-27T11:17:01.033Z",
       "lastUpdate": "2026-05-27T11:17:01.033Z",
       "note": null,
+      "attempts": 1,
       "slackTs": null,
       "prNumber": null,
       "failureMode": "unknown",
-      "verification": null,
-      "attempts": 1
+      "verification": null
     },
     {
       "name": "audit-view",
@@ -193,11 +193,11 @@
       "finishedAt": "2026-05-27T11:16:33.089Z",
       "lastUpdate": "2026-05-27T11:16:33.089Z",
       "note": null,
+      "attempts": 1,
       "slackTs": null,
       "prNumber": null,
       "failureMode": "unknown",
-      "verification": null,
-      "attempts": 1
+      "verification": null
     },
     {
       "name": "audit-identity",
@@ -215,11 +215,11 @@
       "finishedAt": "2026-05-27T11:16:31.977Z",
       "lastUpdate": "2026-05-27T11:16:31.977Z",
       "note": null,
+      "attempts": 1,
       "slackTs": null,
       "prNumber": null,
       "failureMode": "unknown",
-      "verification": null,
-      "attempts": 1
+      "verification": null
     },
     {
       "name": "audit-serve",
@@ -237,11 +237,11 @@
       "finishedAt": "2026-05-27T11:17:04.292Z",
       "lastUpdate": "2026-05-27T11:17:04.292Z",
       "note": null,
+      "attempts": 1,
       "slackTs": null,
       "prNumber": null,
       "failureMode": "unknown",
-      "verification": null,
-      "attempts": 1
+      "verification": null
     },
     {
       "name": "audit-proxy",
@@ -259,11 +259,11 @@
       "finishedAt": "2026-05-27T11:16:58.837Z",
       "lastUpdate": "2026-05-27T11:16:58.837Z",
       "note": null,
+      "attempts": 1,
       "slackTs": null,
       "prNumber": null,
       "failureMode": "unknown",
-      "verification": null,
-      "attempts": 1
+      "verification": null
     },
     {
       "name": "audit-swap-keys",
@@ -281,11 +281,11 @@
       "finishedAt": "2026-05-27T11:17:32.138Z",
       "lastUpdate": "2026-05-27T11:17:32.138Z",
       "note": null,
+      "attempts": 1,
       "slackTs": null,
       "prNumber": null,
       "failureMode": "unknown",
-      "verification": null,
-      "attempts": 1
+      "verification": null
     },
     {
       "name": "audit-subscribe",
@@ -303,11 +303,11 @@
       "finishedAt": "2026-05-27T11:16:52.296Z",
       "lastUpdate": "2026-05-27T11:16:52.297Z",
       "note": null,
+      "attempts": 1,
       "slackTs": null,
       "prNumber": null,
       "failureMode": "unknown",
-      "verification": null,
-      "attempts": 1
+      "verification": null
     },
     {
       "name": "audit-multisig",
@@ -325,11 +325,11 @@
       "finishedAt": "2026-05-27T11:17:17.845Z",
       "lastUpdate": "2026-05-27T11:17:17.845Z",
       "note": null,
+      "attempts": 1,
       "slackTs": null,
       "prNumber": null,
       "failureMode": "unknown",
-      "verification": null,
-      "attempts": 1
+      "verification": null
     },
     {
       "name": "audit-scheduler",
@@ -347,11 +347,11 @@
       "finishedAt": "2026-05-27T11:17:16.678Z",
       "lastUpdate": "2026-05-27T11:17:16.679Z",
       "note": null,
+      "attempts": 1,
       "slackTs": null,
       "prNumber": null,
       "failureMode": "unknown",
-      "verification": null,
-      "attempts": 1
+      "verification": null
     },
     {
       "name": "audit-preimage",
@@ -369,11 +369,11 @@
       "finishedAt": null,
       "lastUpdate": "2026-05-27T11:16:30.932Z",
       "note": null,
+      "attempts": 1,
       "slackTs": null,
       "prNumber": null,
       "failureMode": null,
-      "verification": null,
-      "attempts": 1
+      "verification": null
     },
     {
       "name": "audit-contracts",
@@ -391,11 +391,11 @@
       "finishedAt": "2026-05-27T11:17:07.517Z",
       "lastUpdate": "2026-05-27T11:17:07.517Z",
       "note": null,
+      "attempts": 1,
       "slackTs": null,
       "prNumber": null,
       "failureMode": "unknown",
-      "verification": null,
-      "attempts": 1
+      "verification": null
     },
     {
       "name": "audit-evm",
@@ -413,11 +413,11 @@
       "finishedAt": null,
       "lastUpdate": "2026-05-27T11:16:36.994Z",
       "note": null,
+      "attempts": 1,
       "slackTs": null,
       "prNumber": null,
       "failureMode": null,
-      "verification": null,
-      "attempts": 1
+      "verification": null
     },
     {
       "name": "audit-safe-mode",
@@ -435,11 +435,11 @@
       "finishedAt": "2026-05-27T11:18:17.234Z",
       "lastUpdate": "2026-05-27T11:18:17.234Z",
       "note": null,
+      "attempts": 1,
       "slackTs": null,
       "prNumber": null,
       "failureMode": "unknown",
-      "verification": null,
-      "attempts": 1
+      "verification": null
     },
     {
       "name": "audit-drand",
@@ -457,11 +457,11 @@
       "finishedAt": "2026-05-27T11:17:26.565Z",
       "lastUpdate": "2026-05-27T11:17:26.565Z",
       "note": null,
+      "attempts": 1,
       "slackTs": null,
       "prNumber": null,
       "failureMode": "unknown",
-      "verification": null,
-      "attempts": 1
+      "verification": null
     },
     {
       "name": "audit-crowdloan",
@@ -479,11 +479,11 @@
       "finishedAt": "2026-05-27T11:17:34.041Z",
       "lastUpdate": "2026-05-27T11:17:34.041Z",
       "note": null,
+      "attempts": 1,
       "slackTs": null,
       "prNumber": null,
       "failureMode": "unknown",
-      "verification": null,
-      "attempts": 1
+      "verification": null
     },
     {
       "name": "audit-liquidity",
@@ -501,11 +501,11 @@
       "finishedAt": "2026-05-27T11:17:27.771Z",
       "lastUpdate": "2026-05-27T11:17:27.771Z",
       "note": null,
+      "attempts": 1,
       "slackTs": null,
       "prNumber": null,
       "failureMode": "unknown",
-      "verification": null,
-      "attempts": 1
+      "verification": null
     },
     {
       "name": "audit-commitment",
@@ -523,11 +523,11 @@
       "finishedAt": null,
       "lastUpdate": "2026-05-27T11:16:59.891Z",
       "note": null,
+      "attempts": 1,
       "slackTs": null,
       "prNumber": null,
       "failureMode": null,
-      "verification": null,
-      "attempts": 1
+      "verification": null
     },
     {
       "name": "audit-block",
@@ -545,11 +545,11 @@
       "finishedAt": "2026-05-27T11:18:20.008Z",
       "lastUpdate": "2026-05-27T11:18:20.008Z",
       "note": null,
+      "attempts": 1,
       "slackTs": null,
       "prNumber": null,
       "failureMode": "unknown",
-      "verification": null,
-      "attempts": 1
+      "verification": null
     },
     {
       "name": "audit-diff",
@@ -567,11 +567,11 @@
       "finishedAt": "2026-05-27T11:17:20.596Z",
       "lastUpdate": "2026-05-27T11:17:20.596Z",
       "note": null,
+      "attempts": 1,
       "slackTs": null,
       "prNumber": null,
       "failureMode": "unknown",
-      "verification": null,
-      "attempts": 1
+      "verification": null
     },
     {
       "name": "audit-config",
@@ -589,11 +589,11 @@
       "finishedAt": "2026-05-27T11:17:30.889Z",
       "lastUpdate": "2026-05-27T11:17:30.889Z",
       "note": null,
+      "attempts": 1,
       "slackTs": null,
       "prNumber": null,
       "failureMode": "unknown",
-      "verification": null,
-      "attempts": 1
+      "verification": null
     },
     {
       "name": "audit-doctor",
@@ -611,11 +611,11 @@
       "finishedAt": null,
       "lastUpdate": "2026-05-27T11:17:12.864Z",
       "note": null,
+      "attempts": 1,
       "slackTs": null,
       "prNumber": null,
       "failureMode": null,
-      "verification": null,
-      "attempts": 1
+      "verification": null
     },
     {
       "name": "audit-explain",
@@ -633,11 +633,11 @@
       "finishedAt": null,
       "lastUpdate": "2026-05-27T11:17:15.697Z",
       "note": null,
+      "attempts": 1,
       "slackTs": null,
       "prNumber": null,
       "failureMode": null,
-      "verification": null,
-      "attempts": 1
+      "verification": null
     },
     {
       "name": "audit-completions-update",
@@ -655,11 +655,11 @@
       "finishedAt": "2026-05-27T11:17:42.475Z",
       "lastUpdate": "2026-05-27T11:17:42.475Z",
       "note": null,
+      "attempts": 1,
       "slackTs": null,
       "prNumber": null,
       "failureMode": "unknown",
-      "verification": null,
-      "attempts": 1
+      "verification": null
     },
     {
       "name": "audit-audit-cmd",
@@ -677,11 +677,11 @@
       "finishedAt": "2026-05-27T11:18:13.382Z",
       "lastUpdate": "2026-05-27T11:18:13.382Z",
       "note": null,
+      "attempts": 1,
       "slackTs": null,
       "prNumber": null,
       "failureMode": "unknown",
-      "verification": null,
-      "attempts": 1
+      "verification": null
     },
     {
       "name": "audit-batch",
@@ -699,11 +699,11 @@
       "finishedAt": "2026-05-27T11:18:06.981Z",
       "lastUpdate": "2026-05-27T11:18:06.981Z",
       "note": null,
+      "attempts": 1,
       "slackTs": null,
       "prNumber": null,
       "failureMode": "unknown",
-      "verification": null,
-      "attempts": 1
+      "verification": null
     },
     {
       "name": "audit-utils-cli",
@@ -721,11 +721,11 @@
       "finishedAt": "2026-05-27T11:18:38.223Z",
       "lastUpdate": "2026-05-27T11:18:38.223Z",
       "note": null,
+      "attempts": 1,
       "slackTs": null,
       "prNumber": null,
       "failureMode": "unknown",
-      "verification": null,
-      "attempts": 1
+      "verification": null
     },
     {
       "name": "audit-admin",
@@ -743,11 +743,11 @@
       "finishedAt": "2026-05-27T11:18:52.660Z",
       "lastUpdate": "2026-05-27T11:18:52.660Z",
       "note": null,
+      "attempts": 1,
       "slackTs": null,
       "prNumber": null,
       "failureMode": "unknown",
-      "verification": null,
-      "attempts": 1
+      "verification": null
     },
     {
       "name": "audit-localnet",
@@ -765,11 +765,11 @@
       "finishedAt": null,
       "lastUpdate": "2026-05-27T11:17:41.503Z",
       "note": null,
+      "attempts": 1,
       "slackTs": null,
       "prNumber": null,
       "failureMode": null,
-      "verification": null,
-      "attempts": 1
+      "verification": null
     },
     {
       "name": "verify-write-batch",
