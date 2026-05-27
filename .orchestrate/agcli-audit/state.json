@@ -472,12 +472,12 @@
       "agentId": "bc-7a5ff33b-cc4a-4a7a-bc23-604514a9ef46",
       "runId": "run-a1b8c5ef-603b-4294-834d-30d418aa117c",
       "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
-      "status": "running",
-      "resultStatus": null,
-      "handoffPath": null,
+      "status": "handed-off",
+      "resultStatus": "finished",
+      "handoffPath": "handoffs/audit-crowdloan.md",
       "startedAt": "2026-05-27T11:34:23.080Z",
-      "finishedAt": null,
-      "lastUpdate": "2026-05-27T11:34:26.245Z",
+      "finishedAt": "2026-05-27T11:46:25.485Z",
+      "lastUpdate": "2026-05-27T11:46:25.485Z",
       "note": "respawned by self-planner (was error; attempts=1)",
       "attempts": 2,
       "slackTs": null,
@@ -499,13 +499,13 @@
       "handoffPath": "handoffs/audit-liquidity.md",
       "startedAt": "2026-05-27T11:34:26.249Z",
       "finishedAt": "2026-05-27T11:45:56.828Z",
-      "lastUpdate": "2026-05-27T11:45:56.828Z",
+      "lastUpdate": "2026-05-27T11:46:25.481Z",
       "note": "respawned by self-planner (was error; attempts=1)",
       "attempts": 2,
       "slackTs": null,
       "prNumber": null,
       "failureMode": null,
-      "verification": null
+      "verification": "unit-test-verified"
     },
     {
       "name": "audit-commitment",
@@ -2113,6 +2113,10 @@
     {
       "at": "2026-05-27T11:45:56.812Z",
       "message": "audit-scheduler: verification self-reported (type-check-only)"
+    },
+    {
+      "at": "2026-05-27T11:46:25.482Z",
+      "message": "audit-liquidity: verification self-reported (unit-test-verified)"
     }
   ]
 }
