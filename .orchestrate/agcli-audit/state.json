@@ -120,17 +120,17 @@
       "agentId": "bc-615c2871-2bec-45ed-866e-85e7d5767845",
       "runId": "run-9cc8ecd5-514e-43f9-927c-a03dc4a0ce85",
       "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
-      "status": "running",
-      "resultStatus": null,
-      "handoffPath": null,
+      "status": "error",
+      "resultStatus": "error",
+      "handoffPath": "handoffs/audit-weights.md",
       "startedAt": "2026-05-27T11:33:41.868Z",
-      "finishedAt": null,
-      "lastUpdate": "2026-05-27T11:33:44.846Z",
+      "finishedAt": "2026-05-27T11:34:30.190Z",
+      "lastUpdate": "2026-05-27T11:34:30.190Z",
       "note": "respawned by self-planner (was error; attempts=1)",
       "attempts": 2,
       "slackTs": null,
       "prNumber": null,
-      "failureMode": null,
+      "failureMode": "unknown",
       "verification": null
     },
     {
@@ -1901,6 +1901,10 @@
     {
       "at": "2026-05-27T11:34:20.226Z",
       "message": "bootstrap-env: synthetic failure handoff written to /workspace/.orchestrate/agcli-audit/handoffs/bootstrap-env-failure.md"
+    },
+    {
+      "at": "2026-05-27T11:34:30.189Z",
+      "message": "audit-weights: run.wait returned status=error; recovery probe found terminal status=error, accepting authoritative status"
     }
   ]
 }
