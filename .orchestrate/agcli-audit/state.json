@@ -51,20 +51,20 @@
       "branch": "orch/agcli-audit/audit-balance-transfer",
       "startingRef": "cursor/agcli-subtensor-audit-e2e7",
       "dependsOn": [],
-      "agentId": "bc-f437e611-308d-4bc5-9c59-02daf62d3a55",
-      "runId": "run-077e301b-8227-4845-a178-2a184578e762",
+      "agentId": null,
+      "runId": null,
       "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
-      "status": "error",
-      "resultStatus": "error",
-      "handoffPath": "handoffs/audit-balance-transfer.md",
-      "startedAt": "2026-05-27T11:15:44.852Z",
-      "finishedAt": "2026-05-27T11:16:49.559Z",
-      "lastUpdate": "2026-05-27T11:16:49.559Z",
-      "note": null,
+      "status": "pending",
+      "resultStatus": null,
+      "handoffPath": null,
+      "startedAt": null,
+      "finishedAt": null,
+      "lastUpdate": "2026-05-27T11:32:02.011Z",
+      "note": "respawned by self-planner (was error; attempts=1)",
       "attempts": 1,
       "slackTs": null,
       "prNumber": null,
-      "failureMode": "unknown",
+      "failureMode": null,
       "verification": null
     },
     {
@@ -1705,6 +1705,10 @@
     {
       "at": "2026-05-27T11:32:00.175Z",
       "message": "bootstrap-env: respawned by self-planner (was error)"
+    },
+    {
+      "at": "2026-05-27T11:32:01.630Z",
+      "message": "audit-wallet: respawned by self-planner (was error)"
     }
   ]
 }
