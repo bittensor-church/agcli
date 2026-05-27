@@ -29,15 +29,15 @@
       "branch": "orch/agcli-audit/audit-wallet",
       "startingRef": "cursor/agcli-subtensor-audit-e2e7",
       "dependsOn": [],
-      "agentId": null,
-      "runId": null,
+      "agentId": "bc-9b380bd6-7b10-456f-8921-d351f2c5522a",
+      "runId": "run-dbb80bce-4055-42a5-8acc-21b56decb98d",
       "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
       "status": "running",
       "resultStatus": null,
       "handoffPath": null,
       "startedAt": "2026-05-27T11:33:25.383Z",
       "finishedAt": null,
-      "lastUpdate": "2026-05-27T11:33:25.383Z",
+      "lastUpdate": "2026-05-27T11:33:33.091Z",
       "note": "respawned by self-planner (was error; attempts=1)",
       "attempts": 2,
       "slackTs": null,
@@ -54,14 +54,14 @@
       "agentId": null,
       "runId": null,
       "parentAgentId": "bc-7a49ac6f-68f4-4bba-9ae1-d5414487e2e7",
-      "status": "pending",
+      "status": "running",
       "resultStatus": null,
       "handoffPath": null,
-      "startedAt": null,
+      "startedAt": "2026-05-27T11:33:33.092Z",
       "finishedAt": null,
-      "lastUpdate": "2026-05-27T11:32:02.011Z",
+      "lastUpdate": "2026-05-27T11:33:33.092Z",
       "note": "respawned by self-planner (was error; attempts=1)",
-      "attempts": 1,
+      "attempts": 2,
       "slackTs": null,
       "prNumber": null,
       "failureMode": null,
@@ -763,13 +763,13 @@
       "handoffPath": "handoffs/audit-localnet.md",
       "startedAt": "2026-05-27T11:17:38.730Z",
       "finishedAt": "2026-05-27T11:33:32.134Z",
-      "lastUpdate": "2026-05-27T11:33:32.134Z",
+      "lastUpdate": "2026-05-27T11:33:33.089Z",
       "note": null,
       "attempts": 1,
       "slackTs": null,
       "prNumber": null,
       "failureMode": null,
-      "verification": null
+      "verification": "type-check-only"
     },
     {
       "name": "verify-write-batch",
@@ -1837,6 +1837,10 @@
     {
       "at": "2026-05-27T11:33:32.119Z",
       "message": "audit-explain: verification self-reported (type-check-only)"
+    },
+    {
+      "at": "2026-05-27T11:33:33.089Z",
+      "message": "audit-localnet: verification self-reported (type-check-only)"
     }
   ]
 }
