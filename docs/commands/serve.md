@@ -29,7 +29,7 @@ agcli serve axon --netuid <U16> --ip <IPV4> --port <U16> \
 | `--netuid` | u16 | — | yes | Target subnet UID |
 | `--ip` | String (IPv4) | — | yes | IPv4 address (dotted-quad) |
 | `--port` | u16 | — | yes | Listening port (1–65535) |
-| `--protocol` | u8 | `4` | no | Protocol identifier (4 = TCP) |
+| `--protocol` | u8 | `0` | no | Transport: **0 = TCP**, **1 = UDP** (not IPv4 — `ip_type` is always 4) |
 | `--version` | u32 | `0` | no | Axon software version tag |
 
 **Pallet**: `SubtensorModule` · call index **4** · `serve_axon`  
@@ -60,25 +60,15 @@ agcli serve axon --netuid <U16> --ip <IPV4> --port <U16> \
 
 ### serve reset
 
-Clear the axon endpoint for your hotkey on a subnet by submitting a zeroed
-`serve_axon` call.
+**Not supported.** `serve reset` fails immediately (exit 12) with an explanation — on-chain
+`serve_axon` rejects `port=0` (`InvalidPort`). There is no extrinsic to clear axon storage.
+
+Workaround: serve a non-routable endpoint, or stop using the neuron without clearing on-chain metadata.
 
 ```bash
+# This command intentionally errors — do not use for clearing axons
 agcli serve reset --netuid <U16>
 ```
-
-| Flag | Type | Required | Description |
-|------|------|----------|-------------|
-| `--netuid` | u16 | yes | Subnet whose axon to clear |
-
-**Pallet**: `SubtensorModule` · call index **4** · `serve_axon`  
-**Implementation**: `src/cli/network_cmds.rs` → `handle_serve` → `ServeCommands::Reset`
-
-**Known audit finding (critical)**: This command always fails at chain level. It
-submits `serve_axon` with `port: 0`. The pallet's `validate_axon_data` check
-`if port == 0 { return Err(InvalidPort) }` fires unconditionally. A "reset"
-pattern cannot be implemented with the current `serve_axon` dispatchable because
-the port field is mandatory and non-zero. See [Suggested follow-ups](#suggested-follow-ups).
 
 ---
 
@@ -99,12 +89,12 @@ agcli serve batch-axon --file <PATH>
 ```json
 [
   {"netuid": 1, "ip": "1.2.3.4", "port": 8091},
-  {"netuid": 2, "ip": "10.0.0.1", "port": 8092, "protocol": 4, "version": 720}
+  {"netuid": 2, "ip": "10.0.0.1", "port": 8092, "protocol": 0, "version": 720}
 ]
 ```
 
 Required per entry: `netuid` (u16), `ip` (IPv4 string), `port` (u16 ≥ 1).  
-Optional per entry: `protocol` (u8, default 4), `version` (u32, default 0).  
+Optional per entry: `protocol` (u8, default **0** = TCP, 1 = UDP), `version` (u32, default 0).  
 An empty JSON array `[]` is rejected by the validator.
 
 **Pallet**: `SubtensorModule` · call index **4** · `serve_axon` — one transaction per entry, signed with the same hotkey.  

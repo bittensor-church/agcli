@@ -97,7 +97,23 @@ fn parse_swap_coldkey_missing_arg_fails() {
     assert!(cli.is_err(), "missing --new-coldkey must be a parse error");
 }
 
+// ─────────────────── swap coldkey-exec ─────────────────────────────────────
+
+#[test]
+fn parse_swap_coldkey_exec_minimal() {
+    let cli = parse(&["agcli", "swap", "coldkey-exec", "--new-coldkey", BOB]);
+    assert!(cli.is_ok(), "should parse coldkey-exec: {:?}", cli.err());
+}
+
+#[test]
+fn parse_swap_coldkey_exec_missing_arg_fails() {
+    let cli = parse(&["agcli", "swap", "coldkey-exec"]);
+    assert!(cli.is_err(), "missing --new-coldkey must be a parse error");
+}
+
 // ─────────────────── swap evm-key ──────────────────────────────────────────
+
+const EVM_NETUID: &str = "1";
 
 /// 65-byte ECDSA signature: 64 zero bytes (r+s) + one byte v=27.
 const SIG_HEX: &str = concat!(
@@ -116,6 +132,8 @@ fn parse_swap_evm_key_minimal() {
         "agcli",
         "swap",
         "evm-key",
+        "--netuid",
+        EVM_NETUID,
         "--evm-address",
         EVM_ADDR,
         "--block-number",
@@ -132,6 +150,8 @@ fn parse_swap_evm_key_field_values() {
         "agcli",
         "swap",
         "evm-key",
+        "--netuid",
+        EVM_NETUID,
         "--evm-address",
         EVM_ADDR,
         "--block-number",
@@ -141,17 +161,35 @@ fn parse_swap_evm_key_field_values() {
     ])
     .unwrap();
     if let Commands::Swap(SwapCommands::EvmKey {
+        netuid,
         evm_address,
         block_number,
         signature,
     }) = cli.command
     {
+        assert_eq!(netuid, 1u16);
         assert_eq!(evm_address, EVM_ADDR);
-        assert_eq!(block_number, 42u32);
+        assert_eq!(block_number, 42u64);
         assert_eq!(signature, SIG_HEX);
     } else {
         panic!("unexpected command variant");
     }
+}
+
+#[test]
+fn parse_swap_evm_key_missing_netuid_fails() {
+    let cli = parse(&[
+        "agcli",
+        "swap",
+        "evm-key",
+        "--evm-address",
+        EVM_ADDR,
+        "--block-number",
+        "1",
+        "--signature",
+        SIG_HEX,
+    ]);
+    assert!(cli.is_err(), "missing --netuid must fail");
 }
 
 #[test]
@@ -160,6 +198,8 @@ fn parse_swap_evm_key_missing_evm_address_fails() {
         "agcli",
         "swap",
         "evm-key",
+        "--netuid",
+        EVM_NETUID,
         "--block-number",
         "1",
         "--signature",
@@ -174,6 +214,8 @@ fn parse_swap_evm_key_missing_block_number_fails() {
         "agcli",
         "swap",
         "evm-key",
+        "--netuid",
+        EVM_NETUID,
         "--evm-address",
         EVM_ADDR,
         "--signature",
@@ -188,6 +230,8 @@ fn parse_swap_evm_key_missing_signature_fails() {
         "agcli",
         "swap",
         "evm-key",
+        "--netuid",
+        EVM_NETUID,
         "--evm-address",
         EVM_ADDR,
         "--block-number",
@@ -203,6 +247,8 @@ fn parse_swap_evm_key_with_global_yes_flag() {
         "--yes",
         "swap",
         "evm-key",
+        "--netuid",
+        EVM_NETUID,
         "--evm-address",
         EVM_ADDR,
         "--block-number",

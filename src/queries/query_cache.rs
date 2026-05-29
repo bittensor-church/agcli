@@ -467,6 +467,7 @@ impl QueryCache {
         if self.use_disk {
             super::disk_cache::remove(&self.disk_key("all_subnets"));
             super::disk_cache::remove(&self.disk_key("all_dynamic_info"));
+            super::disk_cache::remove_at_block_entries();
         }
     }
 }

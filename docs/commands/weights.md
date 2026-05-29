@@ -232,7 +232,7 @@ Uses the default wallet/hotkey from global flags.
 
 **Pre-flight:** `validate_netuid` → `require_subnet_exists_for_weights_cmd` (subnet existence; RPC error warns + continues) → wallet unlock → hotkey load → `try_join!(get_weight_commits, get_block_number, get_subnet_hyperparams, get_reveal_period_epochs)`.
 
-**Output:** Human text only — **no JSON mode** (see Findings §6). The output includes: hotkey (short SS58), current block, commit-reveal enabled/disabled, reveal period in epochs, and per-commit: hash, commit block, reveal window blocks, and phase status.
+**Output:** Human table by default. With `--output json`: `{"hotkey", "current_block", "commit_reveal_enabled", "reveal_period_epochs", "pending_commits": [...]}`.
 
 **No extrinsic submitted** — read-only.
 
@@ -479,8 +479,9 @@ The `--weights` argument accepts four formats:
 | file (`@path`) | `"@weights.json"` |
 
 - `uid` = neuron UID (u16, range 0–65535; must exist in metagraph for the set call to succeed)
-- `weight` = weight value (u16, range 0–65535)
-- Weights are normalized on-chain to sum to u16::MAX (65535 = 1.0)
+- `weight` = weight value (u16, range 0–65535) — **relative rational**, not a percentage literal
+- On-chain normalization (`subtensor/pallets/subtensor/src/macros/dispatches.rs`): the pallet scales the vector so weights sum to **u16::MAX (65535 = 1.0)**, preserving proportions. Example: `0:100,1:200` and `0:32768,1:65535` encode the same ~33%:67% split.
+- Do **not** assume `weight:100` means 100% — only values that already sum to 65535 map 1:1 to percentages
 - Overflow (uid or weight > 65535) is rejected at parse time with an explicit error
 - Object map key order is not guaranteed — use array format for deterministic ordering
 
@@ -629,11 +630,9 @@ Every write subcommand (`weights set` live path, `weights commit`, `weights reve
 
 **Suggested follow-up:** All write commands should check `ctx.output.is_json()` and emit `{"tx": "<hash>", "netuid": N, ...}` when enabled.
 
-### §6 — `weights status` has no JSON output mode
+### §6 — ~~`weights status` has no JSON output mode~~ (fixed)
 
-`WeightCommands::Status` produces human text unconditionally. The output includes structured data (hash, block numbers, reveal window, phase status) that agents would benefit from consuming as JSON.
-
-**Suggested follow-up:** Add a JSON output branch to `WeightCommands::Status` emitting `{"hotkey": "...", "current_block": N, "commit_reveal_enabled": bool, "reveal_period_epochs": N, "commits": [...]}`.
+`weights status` emits structured JSON when `--output json` is set (`pending_commits` array with hash, blocks, status).
 
 ### §7 — `weights commit-reveal` fallback to `set_weights` is silent and undifferentiated
 

@@ -90,32 +90,20 @@ are not surfaced.
 
 ### `safe-mode force-enter`
 
-Force-enter safe mode for `--duration` blocks via `Sudo::sudo`.  Requires the
-caller to be the sudo key (or a configured `ForceEnterOrigin`).  No deposit is
-reserved.
+Force-enter safe mode via `Sudo::sudo`.  Requires the caller to be the sudo key
+(or a configured `ForceEnterOrigin`).  No deposit is reserved.  Duration is set
+by chain config (`ForceEnterOrigin`), not by CLI flags.
 
 ```
-agcli [GLOBAL OPTIONS] safe-mode force-enter --duration <BLOCKS>
+agcli [GLOBAL OPTIONS] safe-mode force-enter
 ```
 
-**Flags:**
-
-| Flag | Type | Required | Description |
-|------|------|----------|-------------|
-| `--duration` | `u32` | Yes | Number of blocks safe mode will be active. |
+**Flags:** none.
 
 **Pallet dispatchable:** `SafeMode::force_enter` (call index 1).
+No explicit call arguments.
 
-> **Audit finding — critical encoding bug:**  The FRAME `force_enter` call
-> takes **no explicit arguments**.  The duration is supplied by the
-> `ForceEnterOrigin`'s `Success` type (a pallet-config constant), not by a
-> call field.  agcli encodes `duration` as `Value::u128(duration as u128)` and
-> passes it in `fields`, producing a SCALE payload the chain will reject with a
-> decode error.  The `--duration` flag has no effect on-chain; the real
-> duration is set by the runtime's `ForceEnterOrigin` configuration.
-> See **Suggested follow-ups** for the fix.
-
-**SCALE encoding (intended, correct):** `Sudo::sudo(call: SafeMode::force_enter())` — no fields.
+**SCALE encoding:** `Sudo::sudo(call: SafeMode::force_enter())` — no fields.
 
 **On-chain events emitted:**
 - `SafeMode::Entered { until: BlockNumber }`.
@@ -187,7 +175,7 @@ No explicit call arguments.
 | Call | Call index | agcli subcommand | Status |
 |------|-----------|-----------------|--------|
 | `enter()` | 0 | `safe-mode enter` | ✅ Surfaced |
-| `force_enter()` | 1 | `safe-mode force-enter` | ⚠️ Surfaced but **wrongly encodes `duration` as call arg** |
+| `force_enter()` | 1 | `safe-mode force-enter` | ✅ Surfaced |
 | `extend()` | 2 | `safe-mode extend` | ✅ Surfaced |
 | `force_extend()` | 3 | *(none)* | ❌ Missing |
 | `force_exit()` | 4 | `safe-mode force-exit` | ✅ Surfaced |

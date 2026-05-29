@@ -21,7 +21,7 @@
 //!   3. Tears down the container on completion.
 
 use agcli::chain::Client;
-use agcli::types::balance::Balance;
+use agcli::types::balance::{AlphaBalance, Balance};
 use agcli::types::chain_data::SubnetIdentity;
 use agcli::types::network::NetUid;
 use agcli::AccountId;
@@ -1461,13 +1461,13 @@ async fn flow_staking_power_user(client: &mut Client, primary_sn: NetUid) {
 
     // Step 4: Remove partial stake
     ensure_alive(client).await;
-    let remove_amount = Balance::from_tao(10.0);
+    let remove_amount = AlphaBalance::from_units(10.0);
     let _ = try_extrinsic!(
         client,
         client.remove_stake(&alice, ALICE_SS58, primary_sn, remove_amount)
     );
     wait_blocks(client, 3).await;
-    println!("  4. Removed {} TAO stake", remove_amount.tao());
+    println!("  4. Removed {} alpha stake", remove_amount.units());
 
     // Step 5: Set childkey take (delegation fee)
     ensure_alive(client).await;
@@ -2075,29 +2075,57 @@ async fn flow_key_rotation(client: &mut Client, netuid: NetUid) {
     }
     wait_blocks(client, 5).await;
 
-    // Step 4: Schedule coldkey swap (to a fresh account)
+    // Step 4: Announce coldkey swap (to a fresh account)
     let (new_coldkey, _) = sr25519::Pair::generate();
     let new_ck_ss58 = to_ss58(&new_coldkey.public());
     ensure_alive(client).await;
 
-    let ck_swap = try_extrinsic!(client, client.schedule_swap_coldkey(&alice, &new_ck_ss58));
+    let ck_swap = try_extrinsic!(client, client.announce_swap_coldkey(&alice, &new_ck_ss58));
     match &ck_swap {
-        Ok(hash) => println!("  3. Scheduled coldkey swap: {}", hash),
-        Err(e) => println!("  3. Coldkey swap schedule: {}", e),
+        Ok(hash) => println!("  3. Announced coldkey swap: {}", hash),
+        Err(e) => println!("  3. Coldkey swap announce: {}", e),
     }
     wait_blocks(client, 3).await;
 
     // Step 5: Query the coldkey swap status
     ensure_alive(client).await;
     let swap_status = client.get_coldkey_swap_scheduled(ALICE_SS58).await;
-    match &swap_status {
-        Ok(Some((block, dest))) => println!(
-            "  4. Coldkey swap scheduled: block={}, dest={}...",
-            block,
-            &dest[..16]
-        ),
-        Ok(None) => println!("  4. No coldkey swap scheduled"),
-        Err(e) => println!("  4. Swap query: {}", e),
+    let exec_block = match &swap_status {
+        Ok(Some((block, dest))) => {
+            println!(
+                "  4. Coldkey swap scheduled: block={}, dest={}...",
+                block,
+                &dest[..16.min(dest.len())]
+            );
+            Some(*block)
+        }
+        Ok(None) => {
+            println!("  4. No coldkey swap scheduled");
+            None
+        }
+        Err(e) => {
+            println!("  4. Swap query: {}", e);
+            None
+        }
+    };
+
+    // Step 6: Execute announced swap after cooldown (when announcement is on-chain)
+    if exec_block.is_some() {
+        if let Ok(current) = client.get_block_number().await {
+            if let Some(until) = exec_block {
+                if current < until as u64 {
+                    let wait = (until as u64).saturating_sub(current) + 1;
+                    println!("  5. Waiting {wait} blocks for coldkey swap cooldown...");
+                    wait_blocks(client, wait as u64).await;
+                }
+            }
+        }
+        ensure_alive(client).await;
+        let ck_exec = try_extrinsic!(client, client.execute_swap_coldkey(&alice, &new_ck_ss58));
+        match &ck_exec {
+            Ok(hash) => println!("  6. Executed coldkey swap: {}", hash),
+            Err(e) => println!("  6. Coldkey swap exec: {}", e),
+        }
     }
 
     println!("[PASS] Flow 11: Key Rotation");
@@ -2410,7 +2438,12 @@ async fn flow_edge_cases_and_errors(client: &mut Client, netuid: NetUid) {
     let (nobody, _) = sr25519::Pair::generate();
     let nobody_ss58 = to_ss58(&nobody.public());
     let remove_no_stake = client
-        .remove_stake(&alice, &nobody_ss58, netuid, Balance::from_tao(100.0))
+        .remove_stake(
+            &alice,
+            &nobody_ss58,
+            netuid,
+            AlphaBalance::from_units(100.0),
+        )
         .await;
     match &remove_no_stake {
         Ok(_) => println!("  10. Remove non-existent stake: succeeded (unexpected)"),
@@ -2597,15 +2630,15 @@ async fn flow_cross_subnet_stake_juggler(client: &mut Client, primary_sn: NetUid
 
     // Step 3: Move stake from primary to SN2 (same coldkey, same hotkey)
     ensure_alive(client).await;
-    let move_amount = Balance::from_tao(20.0);
+    let move_amount = AlphaBalance::from_units(20.0);
     let move_result = try_extrinsic!(
         client,
         client.move_stake(&alice, ALICE_SS58, primary_sn, sn2, move_amount)
     );
     match &move_result {
         Ok(hash) => println!(
-            "  3. Moved {} TAO SN{} → SN{}: {}",
-            move_amount.tao(),
+            "  3. Moved {:.9} α SN{} → SN{}: {}",
+            move_amount.units(),
             primary_sn.0,
             sn2.0,
             hash
@@ -2616,15 +2649,15 @@ async fn flow_cross_subnet_stake_juggler(client: &mut Client, primary_sn: NetUid
 
     // Step 4: Swap stake between subnets (same hotkey different mechanism)
     ensure_alive(client).await;
-    let swap_amount = Balance::from_tao(10.0);
+    let swap_amount = AlphaBalance::from_units(10.0);
     let swap_result = try_extrinsic!(
         client,
         client.swap_stake(&alice, ALICE_SS58, primary_sn, sn2, swap_amount)
     );
     match &swap_result {
         Ok(hash) => println!(
-            "  4. Swapped {} TAO SN{} → SN{}: {}",
-            swap_amount.tao(),
+            "  4. Swapped {:.9} α SN{} → SN{}: {}",
+            swap_amount.units(),
             primary_sn.0,
             sn2.0,
             hash
@@ -2635,7 +2668,7 @@ async fn flow_cross_subnet_stake_juggler(client: &mut Client, primary_sn: NetUid
 
     // Step 5: Transfer stake to Bob's coldkey
     ensure_alive(client).await;
-    let transfer_amount = Balance::from_tao(5.0);
+    let transfer_amount = AlphaBalance::from_units(5.0);
     let xfer_result = try_extrinsic!(
         client,
         client.transfer_stake(
@@ -2649,8 +2682,8 @@ async fn flow_cross_subnet_stake_juggler(client: &mut Client, primary_sn: NetUid
     );
     match &xfer_result {
         Ok(hash) => println!(
-            "  5. Transferred {} TAO stake to Bob: {}",
-            transfer_amount.tao(),
+            "  5. Transferred {} α stake to Bob: {}",
+            transfer_amount.units(),
             hash
         ),
         Err(e) => println!("  5. Transfer stake: {}", e),
@@ -2705,10 +2738,10 @@ async fn flow_limit_order_trader(client: &mut Client, primary_sn: NetUid) {
 
     // Step 2: Remove stake via limit order (willing to sell alpha at min price)
     ensure_alive(client).await;
-    let remove_rao = Balance::from_tao(2.0).rao();
+    let remove_alpha = AlphaBalance::from_units(2.0);
     let remove_result = try_extrinsic!(
         client,
-        client.remove_stake_limit(&alice, ALICE_SS58, primary_sn, remove_rao, 0, true)
+        client.remove_stake_limit(&alice, ALICE_SS58, primary_sn, remove_alpha, 0, true)
     );
     match &remove_result {
         Ok(hash) => println!(
@@ -2732,7 +2765,7 @@ async fn flow_limit_order_trader(client: &mut Client, primary_sn: NetUid) {
                 ALICE_SS58,
                 primary_sn,
                 sn2,
-                remove_rao,
+                remove_alpha,
                 u64::MAX,
                 true
             )
@@ -2830,7 +2863,12 @@ async fn flow_alpha_token_alchemist(client: &mut Client, primary_sn: NetUid) {
     ensure_alive(client).await;
     let recycle_result = try_extrinsic!(
         client,
-        client.recycle_alpha(&alice, ALICE_SS58, primary_sn, 1_000_000_000)
+        client.recycle_alpha(
+            &alice,
+            ALICE_SS58,
+            primary_sn,
+            AlphaBalance::from_raw(1_000_000_000)
+        )
     );
     match &recycle_result {
         Ok(hash) => println!("  5. Recycled alpha → TAO: {}", hash),
@@ -2842,7 +2880,12 @@ async fn flow_alpha_token_alchemist(client: &mut Client, primary_sn: NetUid) {
     ensure_alive(client).await;
     let burn_result = try_extrinsic!(
         client,
-        client.burn_alpha(&alice, ALICE_SS58, 500_000_000, primary_sn)
+        client.burn_alpha(
+            &alice,
+            ALICE_SS58,
+            AlphaBalance::from_raw(500_000_000),
+            primary_sn
+        )
     );
     match &burn_result {
         Ok(hash) => println!("  6. Burned alpha: {}", hash),
@@ -3690,10 +3733,7 @@ async fn flow_safe_mode_guardian(client: &mut Client) {
 
     let alice = dev_pair(ALICE_URI);
 
-    // NOTE: The SDK's safe_mode_force_enter passes a `duration` arg but this runtime's
-    // SafeMode::force_enter takes 0 args (fixed duration). We use submit_sudo_raw_call_checked
-    // with empty args to workaround. If force_enter also panics in sudo wrapping, we use
-    // submit_raw_call as a last resort.
+    // SafeMode::force_enter takes no args on this runtime; agcli submits empty sudo call.
 
     // Step 1: Try entering safe mode via sudo (no duration arg on this runtime)
     ensure_alive(client).await;
@@ -3951,7 +3991,12 @@ async fn flow_rapid_fire_stress(client: &mut Client, primary_sn: NetUid) {
             wait_blocks(client, 2).await;
             let unstake_res = try_extrinsic!(
                 client,
-                client.remove_stake(&alice, ALICE_SS58, primary_sn, Balance::from_tao(1.0))
+                client.remove_stake(
+                    &alice,
+                    ALICE_SS58,
+                    primary_sn,
+                    AlphaBalance::from_units(1.0)
+                )
             );
             if unstake_res.is_ok() {
                 cycle_ok += 1;

@@ -43,8 +43,11 @@ impl Client {
         Ok(stakes)
     }
 
-    /// Get all stakes for a coldkey at a pinned block hash (via runtime API).
-    /// Use with `pin_latest_block()` to avoid redundant `at_latest()` calls.
+    /// Backward-compatible alias for pinned stake reads.
+    #[deprecated(
+        since = "0.1.0",
+        note = "use `get_stake_for_coldkey_at_block` instead; will be removed in 0.2.0"
+    )]
     pub async fn get_stake_for_coldkey_pinned(
         &self,
         coldkey_ss58: &str,
@@ -166,6 +169,10 @@ impl Client {
     }
 
     /// Backward-compatible alias for pinned subnet info reads.
+    #[deprecated(
+        since = "0.1.0",
+        note = "use `get_subnet_info_at_block` instead; will be removed in 0.2.0"
+    )]
     pub async fn get_subnet_info_pinned(
         &self,
         netuid: NetUid,
@@ -194,6 +201,10 @@ impl Client {
     }
 
     /// Backward-compatible alias for pinned subnet hyperparameter reads.
+    #[deprecated(
+        since = "0.1.0",
+        note = "use `get_subnet_hyperparams_at_block` instead; will be removed in 0.2.0"
+    )]
     pub async fn get_subnet_hyperparams_pinned(
         &self,
         netuid: NetUid,
@@ -413,7 +424,11 @@ impl Client {
         }))
     }
 
-    /// Get on-chain identity at a pinned block hash.
+    /// Backward-compatible alias for pinned identity reads.
+    #[deprecated(
+        since = "0.1.0",
+        note = "use `get_identity_at_block` instead; will be removed in 0.2.0"
+    )]
     pub async fn get_identity_pinned(
         &self,
         ss58: &str,
@@ -449,6 +464,10 @@ impl Client {
     }
 
     /// Backward-compatible alias for pinned subnet identity reads.
+    #[deprecated(
+        since = "0.1.0",
+        note = "use `get_subnet_identity_at_block` instead; will be removed in 0.2.0"
+    )]
     pub async fn get_subnet_identity_pinned(
         &self,
         netuid: NetUid,
@@ -478,6 +497,10 @@ impl Client {
     }
 
     /// Backward-compatible alias for pinned delegate reads.
+    #[deprecated(
+        since = "0.1.0",
+        note = "use `get_delegate_at_block` instead; will be removed in 0.2.0"
+    )]
     pub async fn get_delegate_pinned(
         &self,
         hotkey_ss58: &str,
@@ -517,6 +540,10 @@ impl Client {
     }
 
     /// Backward-compatible alias for pinned proxy reads.
+    #[deprecated(
+        since = "0.1.0",
+        note = "use `list_proxies_at_block` instead; will be removed in 0.2.0"
+    )]
     pub async fn list_proxies_pinned(
         &self,
         ss58: &str,
@@ -552,6 +579,10 @@ impl Client {
     }
 
     /// Backward-compatible alias for pinned coldkey swap reads.
+    #[deprecated(
+        since = "0.1.0",
+        note = "use `get_coldkey_swap_scheduled_at_block` instead; will be removed in 0.2.0"
+    )]
     pub async fn get_coldkey_swap_scheduled_pinned(
         &self,
         ss58: &str,
@@ -591,6 +622,10 @@ impl Client {
     }
 
     /// Backward-compatible alias for pinned child key reads.
+    #[deprecated(
+        since = "0.1.0",
+        note = "use `get_child_keys_at_block` instead; will be removed in 0.2.0"
+    )]
     pub async fn get_child_keys_pinned(
         &self,
         hotkey_ss58: &str,
@@ -633,6 +668,10 @@ impl Client {
     }
 
     /// Backward-compatible alias for pinned pending child key reads.
+    #[deprecated(
+        since = "0.1.0",
+        note = "use `get_pending_child_keys_at_block` instead; will be removed in 0.2.0"
+    )]
     pub async fn get_pending_child_keys_pinned(
         &self,
         hotkey_ss58: &str,
@@ -1583,12 +1622,22 @@ impl Client {
         &self,
         crowdloan_id: u32,
     ) -> Result<Vec<(String, u64)>> {
+        let storage_item = crowdloan_contributors_storage_item(&self.metadata())?;
+        self.fetch_crowdloan_contributors(crowdloan_id, storage_item)
+            .await
+    }
+
+    async fn fetch_crowdloan_contributors(
+        &self,
+        crowdloan_id: u32,
+        storage_item: &str,
+    ) -> Result<Vec<(String, u64)>> {
         let inner = &self.inner;
         let mut results = Vec::new();
         let mut iter = retry_on_transient("get_crowdloan_contributors", RPC_RETRIES, || async {
             let addr = subxt::dynamic::storage(
                 "Crowdloan",
-                "Contributions",
+                storage_item,
                 vec![subxt::dynamic::Value::u128(crowdloan_id as u128)],
             );
             let i = inner
@@ -1599,8 +1648,8 @@ impl Client {
                 .await
                 .with_context(|| {
                     format!(
-                        "Failed to iterate contributors for crowdloan {}",
-                        crowdloan_id
+                        "Failed to iterate {} for crowdloan {}",
+                        storage_item, crowdloan_id
                     )
                 })?;
             Ok(i)
@@ -1611,7 +1660,7 @@ impl Client {
             if key_bytes.len() >= 32 {
                 let account_bytes: [u8; 32] = match key_bytes[key_bytes.len() - 32..].try_into() {
                     Ok(b) => b,
-                    Err(_) => continue, // skip malformed key
+                    Err(_) => continue,
                 };
                 let account = crate::AccountId::from(account_bytes).to_string();
                 if let Ok(amount) = kv.value.as_type::<u64>() {
@@ -1619,7 +1668,7 @@ impl Client {
                 }
             }
         }
-        results.sort_by_key(|item| std::cmp::Reverse(item.1)); // Sort by amount descending
+        results.sort_by_key(|item| std::cmp::Reverse(item.1));
         Ok(results)
     }
 
@@ -2331,6 +2380,24 @@ fn decode_identity_data(data: &api::runtime_types::pallet_registry::types::Data)
     )
 }
 
+/// Crowdloan contributors map name for this runtime (`Contributions` vs legacy `Contributors`).
+fn crowdloan_contributors_storage_item(metadata: &subxt::Metadata) -> Result<&'static str> {
+    const PRIMARY: &str = "Contributions";
+    const LEGACY: &str = "Contributors";
+    let storage = metadata
+        .pallet_by_name("Crowdloan")
+        .and_then(|p| p.storage());
+    if storage.and_then(|s| s.entry_by_name(PRIMARY)).is_some() {
+        Ok(PRIMARY)
+    } else if storage.and_then(|s| s.entry_by_name(LEGACY)).is_some() {
+        Ok(LEGACY)
+    } else {
+        anyhow::bail!(
+            "Crowdloan pallet has neither `{PRIMARY}` nor `{LEGACY}` storage in runtime metadata"
+        )
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use crate::types::balance::Balance;
@@ -2438,5 +2505,16 @@ mod tests {
         let raw: Vec<u8> = vec![0xFF, 0xFE, 0xFD];
         let symbol = String::from_utf8_lossy(&raw).into_owned();
         assert!(symbol.contains('\u{FFFD}')); // replacement character
+    }
+
+    #[cfg(feature = "test-utils")]
+    #[test]
+    fn crowdloan_contributors_storage_from_metadata() {
+        let item = super::crowdloan_contributors_storage_item(&crate::test_metadata())
+            .expect("embedded metadata should expose Crowdloan contributors storage");
+        assert!(
+            matches!(item, "Contributions" | "Contributors"),
+            "unexpected storage item: {item}"
+        );
     }
 }

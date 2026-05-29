@@ -33,6 +33,7 @@ fn now_secs() -> u64 {
         .as_secs()
 }
 
+/// True when a disk cache key holds an immutable at-block snapshot (`query_cache` prefix `atblock:`).
 fn is_at_block_key(key: &str) -> bool {
     key.contains("atblock:")
 }
@@ -181,6 +182,15 @@ pub fn list_keys() -> Vec<String> {
         })
         .filter(|k| !k.starts_with('.'))
         .collect()
+}
+
+/// Remove all at-block disk cache entries (keys containing `atblock:`).
+pub fn remove_at_block_entries() {
+    for key in list_keys() {
+        if is_at_block_key(&key) {
+            remove(&key);
+        }
+    }
 }
 
 /// Maximum number of cache entries before automatic pruning.

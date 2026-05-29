@@ -121,6 +121,12 @@ pub struct PyAlphaBalance {
     inner: agcli::types::balance::AlphaBalance,
 }
 
+impl PyAlphaBalance {
+    pub(crate) fn inner(&self) -> agcli::types::balance::AlphaBalance {
+        self.inner
+    }
+}
+
 #[pymethods]
 impl PyAlphaBalance {
     #[new]

@@ -45,33 +45,33 @@ async fn green_path_audit_queries_local_chain() {
         .await
         .expect("balance query should succeed");
     let stakes = client
-        .get_stake_for_coldkey_pinned(ALICE_SS58, pin)
+        .get_stake_for_coldkey_at_block(ALICE_SS58, pin)
         .await
         .expect("stake query should succeed");
     let _ = client
-        .get_identity_pinned(ALICE_SS58, pin)
+        .get_identity_at_block(ALICE_SS58, pin)
         .await
         .expect("identity query should succeed");
     let _ = client
-        .list_proxies_pinned(ALICE_SS58, pin)
+        .list_proxies_at_block(ALICE_SS58, pin)
         .await
         .expect("proxy query should succeed");
     let _ = client
-        .get_delegate_pinned(ALICE_SS58, pin)
+        .get_delegate_at_block(ALICE_SS58, pin)
         .await
         .expect("delegate query should succeed");
     let _ = client
-        .get_coldkey_swap_scheduled_pinned(ALICE_SS58, pin)
+        .get_coldkey_swap_scheduled_at_block(ALICE_SS58, pin)
         .await
         .expect("coldkey swap query should succeed");
 
     if let Some(first) = stakes.first() {
         let _ = client
-            .get_child_keys_pinned(&first.hotkey, first.netuid, pin)
+            .get_child_keys_at_block(&first.hotkey, first.netuid, pin)
             .await
             .expect("child key query should succeed");
         let _ = client
-            .get_pending_child_keys_pinned(&first.hotkey, first.netuid, pin)
+            .get_pending_child_keys_at_block(&first.hotkey, first.netuid, pin)
             .await
             .expect("pending child key query should succeed");
     }

@@ -37,10 +37,13 @@ jobs:
       - name: Clippy
         # Same integration crates as the nextest job (avoid `--tests`: pulls proptest/stress + full `#[cfg(test)]` clippy).
         run: >-
-          cargo clippy --lib --bins
+          cargo clippy --lib --bins --features test-utils
           --test wallet_test --test cli_weights
           --test cli_test --test helpers_test
+          --test extrinsic_encoding
           -- -D warnings
+      - name: Extrinsic unit manifest
+        run: bash scripts/check_extrinsic_units.sh
 
   python-clippy:
     name: Python clippy
@@ -100,6 +103,8 @@ jobs:
           cargo nextest run --lib
           --test wallet_test --test cli_weights
           --test cli_test --test helpers_test
+          --features test-utils
+          --test extrinsic_encoding
         timeout-minutes: 25
 
   coverage:
@@ -130,6 +135,8 @@ jobs:
           cargo llvm-cov nextest --lib
           --test wallet_test --test cli_weights
           --test cli_test --test helpers_test
+          --features test-utils
+          --test extrinsic_encoding
           --codecov --output-path codecov.json
         timeout-minutes: 25
       - name: Upload to Codecov

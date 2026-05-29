@@ -1,8 +1,11 @@
 //! Substrate chain client — connect, query storage, submit extrinsics.
 
+pub mod extrinsic_args;
 pub mod extrinsics;
 pub mod queries;
 pub mod rpc_types;
+
+pub use extrinsic_args::{ArgUnit, ExtrinsicArgSpec, ExtrinsicSpec, ALL_SPECS};
 
 use anyhow::{Context, Result};
 use sp_core::sr25519;
@@ -1098,10 +1101,10 @@ fn decode_custom_error(msg: &str) -> Option<DecodedError> {
         6 => ("HotKeyNotRegisteredInNetwork", "This hotkey is not registered on any network. Register first with `agcli subnet register-neuron --netuid <N>`"),
         7 => ("NonAssociatedColdKey", "This coldkey is not associated with the specified hotkey. Check your --wallet and --hotkey flags"),
         8 => ("NotEnoughStake", "Insufficient stake for this operation. Check your stake with `agcli stake list`"),
-        9 => ("NotEnoughStakeToWithdraw", "Cannot unstake this amount — it exceeds your current stake. Check `agcli stake list`"),
+        9 => ("NotEnoughStakeToWithdraw", "Cannot unstake this amount — it exceeds your alpha stake on this hotkey/subnet. `stake remove --amount` is in α (not TAO); check `agcli stake list`"),
         10 => ("NotEnoughStakeToSetWeights", "Your stake is below the minimum required to set weights on this subnet"),
         11 => ("NotEnoughStakeToSetChildkeys", "Your stake is below the minimum required to set childkeys"),
-        12 => ("NotEnoughBalanceToStake", "Your TAO balance is too low to stake this amount. Check `agcli balance`"),
+        12 => ("NotEnoughBalanceToStake", "Insufficient free TAO — for staking use `agcli balance`; for registration the dynamic burn may exceed balance (`agcli subnet cost --netuid N`)"),
         13 => ("BalanceWithdrawalError", "Failed to withdraw balance — the chain could not complete the transfer"),
         14 => ("ZeroBalanceAfterWithdrawn", "This operation would leave your account with zero balance, which is not allowed"),
         15 => ("NeuronNoValidatorPermit", "This neuron does not have a validator permit on the subnet"),
@@ -1150,7 +1153,7 @@ fn decode_custom_error(msg: &str) -> Option<DecodedError> {
         58 => ("NotEnoughBalanceToPaySwapColdKey", "Insufficient balance to pay the coldkey swap fee"),
         59 => ("InvalidChild", "The specified childkey UID is invalid"),
         60 => ("DuplicateChild", "Duplicate childkey UID — each child must appear only once"),
-        61 => ("ProportionOverflow", "Childkey proportions exceed 100% total"),
+        61 => ("ProportionOverflow", "Child proportions sum above u64::MAX — use decimals 0.0–1.0 in `stake set-children` or reduce raw u64 values"),
         62 => ("TooManyChildren", "Too many childkeys — the maximum number of children has been reached"),
         63 => ("TxRateLimitExceeded", "General transaction rate limit exceeded. Wait a few blocks before retrying"),
         64 => ("ColdkeySwapAnnouncementNotFound", "No coldkey swap has been announced for this account"),
@@ -1187,7 +1190,10 @@ fn decode_custom_error(msg: &str) -> Option<DecodedError> {
         92 => ("InvalidRecoveredPublicKey", "The recovered public key does not match the expected account"),
         93 => ("SubtokenDisabled", "The subtoken feature is not enabled on this subnet"),
         94 => ("HotKeySwapOnSubnetIntervalNotPassed", "The minimum interval between hotkey swaps on this subnet has not passed"),
-        95 => ("ZeroMaxStakeAmount", "Maximum stake amount cannot be set to zero"),
+        95 => (
+            "ZeroMaxStakeAmount",
+            "Limit price too low for any fill at current AMM liquidity (add_stake_limit / remove_stake_limit). Raise `--price` (τ/α) or check `agcli view price --netuid N`",
+        ),
         96 => ("SameNetuid", "Source and destination subnet are the same — use different netuids"),
         97 => ("InsufficientBalance", "Insufficient TAO balance for this operation. Check `agcli balance`"),
         98 => ("StakingOperationRateLimitExceeded", "Staking operations are rate-limited. Wait a few blocks (~12s each) before retrying"),
@@ -1216,7 +1222,10 @@ fn decode_custom_error(msg: &str) -> Option<DecodedError> {
         121 => ("ChildParentInconsistency", "Childkey parent relationship is inconsistent"),
         122 => ("InvalidNumRootClaim", "Invalid number of root claims"),
         123 => ("InvalidRootClaimThreshold", "The root claim threshold is invalid"),
-        124 => ("InvalidSubnetNumber", "The subnet number is invalid"),
+        124 => (
+            "InvalidSubnetNumber",
+            "Subnet list invalid — for `stake set-claim --claim-type keep-subnets` pass at least one netuid in `--subnets`",
+        ),
         125 => ("TooManyUIDsPerMechanism", "Too many UIDs assigned to a single mechanism"),
         126 => ("VotingPowerTrackingNotEnabled", "Voting power tracking is not enabled on this subnet"),
         127 => ("InvalidVotingPowerEmaAlpha", "The voting power EMA alpha parameter is invalid"),
@@ -1289,7 +1298,7 @@ fn format_dispatch_error(e: subxt::Error) -> anyhow::Error {
     let hint = if msg.contains("NotEnoughStakeToSetWeights") {
         "Stake is below the chain minimum required to set weights on this subnet. Stake more on this validator hotkey or check `agcli stake list`."
     } else if msg.contains("NotEnoughStakeToWithdraw") {
-        "Cannot unstake this amount — it exceeds your current stake. Check `agcli stake list`."
+        "Cannot unstake this amount — it exceeds your alpha stake. `stake remove --amount` is in α (9 decimals), not TAO. Check `agcli stake list` for the Alpha column."
     } else if msg.contains("NotEnoughStakeToSetChildkeys") {
         "Stake is below the minimum required to set childkeys on this subnet."
     } else if msg.contains("NotEnoughBalanceToStake") || msg.contains("NotEnoughStake") {
@@ -1388,7 +1397,9 @@ fn format_dispatch_error(e: subxt::Error) -> anyhow::Error {
     } else if msg.contains("HotKeySwapOnSubnetIntervalNotPassed") {
         "Minimum blocks between hotkey swaps on this subnet have not elapsed. Wait and retry."
     } else if msg.contains("ZeroMaxStakeAmount") {
-        "Maximum stake cannot be set to zero; use a positive cap or a different hyperparameter flow."
+        "Limit order cannot fill at this price: AMM reports zero executable amount (`get_max_amount_add` / equivalent). \
+         For `stake add-limit` / `remove-limit`, raise `--price` (TAO per alpha, on-chain RAO/α) or use `agcli view price --netuid <N>`. \
+         On root or stable subnets, limit price must be ≥ 1.0 τ/α (1e9 RAO/α)."
     } else if msg.contains("SameNetuid") {
         "Source and destination netuids must differ for this cross-subnet operation."
     } else if msg.contains("InvalidLeaseBeneficiary") {
@@ -1546,7 +1557,7 @@ fn format_dispatch_error(e: subxt::Error) -> anyhow::Error {
     } else if msg.contains("InvalidNumRootClaim") || msg.contains("InvalidRootClaimThreshold") {
         "Root-claim parameters are invalid for this runtime. Check allowed ranges in pallet docs or adjust counts/thresholds."
     } else if msg.contains("InvalidSubnetNumber") {
-        "The subnet count or index in this call is not allowed (e.g. exceeds runtime limits)."
+        "Subnet list rejected on-chain. For `agcli stake set-claim --claim-type keep-subnets`, `--subnets` must list at least one valid netuid (comma-separated)."
     } else if msg.contains("TooManyUIDsPerMechanism") {
         "UID capacity for this mechanism would exceed the chain limit (UIDs × mechanisms ≤ 256). Reduce registrations or mechanism count."
     } else if msg.contains("VotingPowerTrackingNotEnabled") {
@@ -1564,7 +1575,7 @@ fn format_dispatch_error(e: subxt::Error) -> anyhow::Error {
     } else if msg.contains("DuplicateChild") {
         "The same child appears twice in the child list; each child must be unique."
     } else if msg.contains("ProportionOverflow") {
-        "Child proportions sum to more than 100% — reduce proportions so the total fits the runtime cap."
+        "Child proportions sum above u64::MAX on-chain. In `agcli stake set-children`, use decimal fractions (0.5 = 50%) or ensure raw u64 values sum ≤ u64::MAX."
     } else if msg.contains("TooManyChildren") {
         "At most five childkeys are allowed per parent on this subnet; remove a child before adding another."
     } else if msg.contains("NotEnoughAlphaOutToRecycle") {
@@ -1665,7 +1676,11 @@ fn format_dispatch_error(e: subxt::Error) -> anyhow::Error {
     } else if msg.contains("InvalidTransaction") && msg.contains("proxy") {
         "Proxy transaction failed. Check that the proxy account has enough balance for fees and that the proxy type matches the operation."
     } else if msg.contains("SubNetRegistrationDisabled") {
-        "Registration is disabled on this subnet."
+        "Registration is disabled on this subnet. Owner can enable via `agcli subnet set-param --param registration_allowed --value true`."
+    } else if msg.contains("POWRegistrationDisabled") {
+        "PoW registration is disabled on this subnet. Enable via `agcli subnet set-param --param pow_registration_allowed --value true`, or use burn registration (`agcli subnet register-neuron`)."
+    } else if msg.contains("RegistrationPriceLimitExceeded") {
+        "Registration burn cost exceeds your limit-price extrinsic cap. Raise the limit or wait for burn price to decay (`agcli subnet cost --netuid N`)."
     } else if msg.contains("NoNeuronIdAvailable") {
         "No neuron UID slots available on this subnet. Wait for a slot to open or try a different subnet."
     } else if msg.contains("Crowdloan::InsufficientBalance") {

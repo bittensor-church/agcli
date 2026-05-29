@@ -165,19 +165,15 @@ Values are **case-insensitive**. Aliases match `EventFilter::FromStr` in `src/ev
 
 ## Audit notes / Known drift
 
-The following issues were identified in the `audit-subscribe` audit pass. They are documented here for agent awareness; source-level fixes are tracked separately.
+The following issues were identified in the `audit-subscribe` audit pass.
 
-**1. `SWAP_VARIANTS` has 4 phantom event names and 3 missing real ones.**
-The `Swap` pallet (`subtensor/pallets/swap/src/pallet/mod.rs`) emits: `FeeRateSet`, `UserLiquidityToggled`, `LiquidityAdded`, `LiquidityRemoved`, `LiquidityModified`. The `SWAP_VARIANTS` constant in `src/events.rs` lists: `SwapExecuted`, `LiquidityAdded`, `LiquidityRemoved`, `PositionCreated`, `PositionClosed`, `FeesCollected`. The variants `SwapExecuted`, `PositionCreated`, `PositionClosed`, and `FeesCollected` do not exist on-chain and will never match. The real events `FeeRateSet`, `UserLiquidityToggled`, and `LiquidityModified` are missing. With the current code, `--filter swap` only captures `LiquidityAdded` and `LiquidityRemoved`.
+**1. ~~`SWAP_VARIANTS` phantom/missing names~~ (fixed)** — `src/events.rs` now lists `FeeRateSet`, `UserLiquidityToggled`, `LiquidityAdded`, `LiquidityRemoved`, `LiquidityModified`.
 
-**2. `KEY_VARIANTS` includes `ColdkeySwapScheduled` which is not a pallet event.**
-`ColdkeySwapScheduled` is a deprecated storage map that was migrated (`migrate_coldkey_swap_scheduled_to_announcements.rs`), not an event. The pallet actually emits `ColdkeySwapAnnounced`, `ColdkeySwapReset`, `ColdkeySwapDisputed`, `AllBalanceUnstakedAndTransferredToNewColdkey`, and `ArbitrationPeriodExtended` for the coldkey lifecycle. None of these are in `KEY_VARIANTS`. The `--filter keys` will miss all real coldkey-swap lifecycle events.
+**2. ~~`KEY_VARIANTS` missing coldkey swap lifecycle~~ (fixed)** — includes `ColdkeySwapAnnounced`, `ColdkeySwapReset`, `ColdkeySwapped`, `ColdkeySwapDisputed`, `AllBalanceUnstakedAndTransferredToNewColdkey`, `ArbitrationPeriodExtended`, etc.
 
-**3. `STAKING_VARIANTS` includes `AllStakeRemoved` which does not exist on-chain.**
-The subtensor pallet's event enum in `events.rs` has no `AllStakeRemoved` variant. This is a phantom that will never match. The staking filter otherwise captures real events correctly.
+**3. ~~`STAKING_VARIANTS` includes phantom `AllStakeRemoved`~~ (fixed)** — removed; list matches on-chain staking events.
 
-**4. `CROWDLOAN_VARIANTS` has `Edited` which does not exist; `Finalized` is missing.**
-The crowdloan pallet emits `Finalized` when a crowdloan is successfully finalized and several update events (`MinContributionUpdated`, `EndUpdated`, `CapUpdated`). It has no `Edited` event. The `Edited` entry will never match. `Finalized` events will be invisible under `--filter crowdloan`.
+**4. ~~`CROWDLOAN_VARIANTS` `Edited` / missing `Finalized`~~ (fixed)** — includes `Finalized`; no `Edited`.
 
 **5. `--netuid` filtering only works for named composite fields.**
 `extract_netuid` only checks `Composite::Named` fields for a `"netuid"` key. Subtensor events that encode netuid as an unnamed positional tuple (e.g. `WeightsSet(NetUidStorageIndex, u16)`) will return `None` from `extract_netuid` and be dropped when `--netuid` is active, even if the encoded value matches the filter. This means `--filter weights --netuid N` will silently drop `WeightsSet` events for subnet N.

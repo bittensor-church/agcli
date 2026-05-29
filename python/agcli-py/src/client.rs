@@ -693,7 +693,7 @@ impl PyClient {
         future_into_py(py, async move {
             let client = client.lock().await;
             let stakes = client
-                .get_stake_for_coldkey_pinned(&coldkey, block_hash)
+                .get_stake_for_coldkey_at_block(&coldkey, block_hash)
                 .await
                 .map_err(map_error)?;
             to_pyobject_unbound(&stakes)
@@ -765,7 +765,7 @@ impl PyClient {
         future_into_py(py, async move {
             let client = client.lock().await;
             let info = client
-                .get_subnet_info_pinned(netuid, block_hash)
+                .get_subnet_info_at_block(netuid, block_hash)
                 .await
                 .map_err(map_error)?;
             match info {
@@ -787,7 +787,7 @@ impl PyClient {
         future_into_py(py, async move {
             let client = client.lock().await;
             let params = client
-                .get_subnet_hyperparams_pinned(netuid, block_hash)
+                .get_subnet_hyperparams_at_block(netuid, block_hash)
                 .await
                 .map_err(map_error)?;
             match params {
@@ -808,7 +808,7 @@ impl PyClient {
         future_into_py(py, async move {
             let client = client.lock().await;
             let identity = client
-                .get_identity_pinned(&ss58, block_hash)
+                .get_identity_at_block(&ss58, block_hash)
                 .await
                 .map_err(map_error)?;
             match identity {
@@ -830,7 +830,7 @@ impl PyClient {
         future_into_py(py, async move {
             let client = client.lock().await;
             let identity = client
-                .get_subnet_identity_pinned(netuid, block_hash)
+                .get_subnet_identity_at_block(netuid, block_hash)
                 .await
                 .map_err(map_error)?;
             match identity {
@@ -851,7 +851,7 @@ impl PyClient {
         future_into_py(py, async move {
             let client = client.lock().await;
             let delegate = client
-                .get_delegate_pinned(&hotkey, block_hash)
+                .get_delegate_at_block(&hotkey, block_hash)
                 .await
                 .map_err(map_error)?;
             match delegate {
@@ -872,7 +872,7 @@ impl PyClient {
         future_into_py(py, async move {
             let client = client.lock().await;
             let proxies = client
-                .list_proxies_pinned(&ss58, block_hash)
+                .list_proxies_at_block(&ss58, block_hash)
                 .await
                 .map_err(map_error)?;
             to_pyobject_unbound(&proxies)
@@ -890,7 +890,7 @@ impl PyClient {
         future_into_py(py, async move {
             let client = client.lock().await;
             let value = client
-                .get_coldkey_swap_scheduled_pinned(&ss58, block_hash)
+                .get_coldkey_swap_scheduled_at_block(&ss58, block_hash)
                 .await
                 .map_err(map_error)?;
             to_pyobject_unbound(&value)
@@ -910,7 +910,7 @@ impl PyClient {
         future_into_py(py, async move {
             let client = client.lock().await;
             let keys = client
-                .get_child_keys_pinned(&hotkey_ss58, netuid, block_hash)
+                .get_child_keys_at_block(&hotkey_ss58, netuid, block_hash)
                 .await
                 .map_err(map_error)?;
             to_pyobject_unbound(&keys)
@@ -930,7 +930,7 @@ impl PyClient {
         future_into_py(py, async move {
             let client = client.lock().await;
             let keys = client
-                .get_pending_child_keys_pinned(&hotkey_ss58, netuid, block_hash)
+                .get_pending_child_keys_at_block(&hotkey_ss58, netuid, block_hash)
                 .await
                 .map_err(map_error)?;
             to_pyobject_unbound(&keys)

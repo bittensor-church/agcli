@@ -18,10 +18,19 @@ async fn main() {
     let out_dir = env::var_os("OUT_DIR").unwrap();
     let metadata_path = Path::new(&out_dir).join("metadata.rs");
 
+    let scale_path = Path::new(&out_dir).join("metadata.scale");
+
     // If metadata already exists and SKIP_METADATA_FETCH is set, reuse it
     if metadata_path.exists() && env::var("SKIP_METADATA_FETCH").is_ok() {
-        eprintln!("agcli: reusing cached metadata (SKIP_METADATA_FETCH set)");
-        return;
+        let need_scale = env::var("CARGO_FEATURE_TEST_UTILS").is_ok() && !scale_path.exists();
+        if !need_scale {
+            warn_missing_scale(&scale_path);
+            eprintln!("agcli: reusing cached metadata (SKIP_METADATA_FETCH set)");
+            return;
+        }
+        eprintln!(
+            "agcli: SKIP_METADATA_FETCH set but metadata.scale missing for test-utils; fetching..."
+        );
     }
 
     eprintln!("agcli: fetching chain metadata from {endpoint}...");
@@ -40,8 +49,15 @@ async fn main() {
     let metadata_bytes = match fetch_result {
         Ok(bytes) => bytes,
         Err(e) => {
-            // If fetch fails but we have cached metadata, reuse it
+            // If fetch fails but we have cached codegen, reuse it
             if metadata_path.exists() {
+                if !scale_path.exists() && env::var("CARGO_FEATURE_TEST_UTILS").is_ok() {
+                    panic!(
+                        "metadata.scale required for test-utils but fetch failed ({e}) and no cached scale. \
+                         Run `cargo build` once with network access (without SKIP_METADATA_FETCH)."
+                    );
+                }
+                warn_missing_scale(&scale_path);
                 eprintln!(
                     "agcli: metadata fetch failed ({e}), reusing cached metadata at {}",
                     metadata_path.display()
@@ -57,6 +73,8 @@ async fn main() {
 
     let codegen = CodegenBuilder::new();
     let code = codegen.generate(metadata).unwrap();
+
+    std::fs::write(Path::new(&out_dir).join("metadata.scale"), &metadata_bytes).unwrap();
 
     // Try to format with rustfmt; if not available, write directly
     match Command::new("rustfmt")
@@ -79,4 +97,14 @@ async fn main() {
         "agcli: metadata codegen complete → {}",
         metadata_path.display()
     );
+}
+
+fn warn_missing_scale(scale_path: &Path) {
+    if !scale_path.exists() {
+        eprintln!(
+            "agcli: warning: {} missing; run one online build before \
+             `cargo test --features test-utils --test extrinsic_encoding`",
+            scale_path.display()
+        );
+    }
 }

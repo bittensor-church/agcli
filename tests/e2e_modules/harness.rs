@@ -4,7 +4,7 @@ pub use agcli::cli::helpers::{
 };
 pub use agcli::extrinsics::compute_weight_commit_hash;
 pub use agcli::queries::subnet::list_subnets;
-pub use agcli::types::balance::Balance;
+pub use agcli::types::balance::{AlphaBalance, Balance};
 pub use agcli::types::chain_data::{AxonInfo, SubnetIdentity};
 pub use agcli::types::network::NetUid;
 pub use sp_core::{sr25519, Pair};

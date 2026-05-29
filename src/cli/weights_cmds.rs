@@ -6,6 +6,32 @@ use crate::cli::*;
 use crate::types::{Balance, NetUid};
 use anyhow::{Context, Result};
 
+/// Summarize a weight vector for logs / dry-run (on-chain normalizes to u16::MAX).
+fn weight_vector_summary(wts: &[u16]) -> (u64, String) {
+    let sum: u64 = wts.iter().map(|w| *w as u64).sum();
+    let note = if sum == 0 {
+        "all weights are zero".to_string()
+    } else {
+        format!(
+            "sum={sum} before normalization; chain scales to 65535 (1.0) preserving ratios (e.g. 100:200 → ~33%:67%)"
+        )
+    };
+    (sum, note)
+}
+
+fn log_weight_normalization_hint(wts: &[u16]) {
+    let (sum, note) = weight_vector_summary(wts);
+    if sum == 0 {
+        return;
+    }
+    eprintln!("Note: {note}");
+    tracing::info!(
+        weight_sum = sum,
+        num_weights = wts.len(),
+        "Weight vector pre-normalization"
+    );
+}
+
 /// Parse weights from string, stdin ("-"), or file ("@path").
 /// Supports:
 /// - "uid:weight,uid:weight" format
@@ -274,6 +300,8 @@ pub(super) async fn handle_weights(
             validate_netuid(netuid)?;
             validate_weight_input(&weights)?;
             let (uids, wts) = resolve_weights(&weights)?;
+            let (weight_sum, weight_note) = weight_vector_summary(&wts);
+            log_weight_normalization_hint(&wts);
 
             // Pre-flight checks (always run these)
             let hyperparams = match client.get_subnet_hyperparams(NetUid(netuid)).await {
@@ -340,16 +368,20 @@ pub(super) async fn handle_weights(
                     "stake_sufficient": stake_ok,
                     "commit_reveal_enabled": cr_enabled,
                     "weights_rate_limit_blocks": rate_limit,
+                    "weight_sum": weight_sum,
+                    "weight_normalization": "on-chain scales vector to u16::MAX (65535 = 1.0)",
+                    "weight_note": weight_note,
                     "weights": uids.iter().zip(wts.iter()).map(|(u, w)| serde_json::json!({"uid": u, "weight": w})).collect::<Vec<_>>(),
                 }));
                 return Ok(());
             }
 
             println!(
-                "Setting {} weights on SN{} (version_key={})",
+                "Setting {} weights on SN{} (version_key={}; {})",
                 uids.len(),
                 netuid,
-                version_key
+                version_key,
+                weight_note
             );
             let hash = client
                 .set_weights(wallet.hotkey()?, NetUid(netuid), &uids, &wts, version_key)
@@ -654,6 +686,43 @@ pub(super) async fn handle_weights(
                 .as_ref()
                 .map(|h| h.commit_reveal_weights_enabled)
                 .unwrap_or(false);
+
+            let commit_entries: Vec<serde_json::Value> = match &commits {
+                Some(entries) if !entries.is_empty() => entries
+                    .iter()
+                    .enumerate()
+                    .map(|(i, (hash, commit_block, first_reveal, last_reveal))| {
+                        let status = if block < *first_reveal {
+                            format!("waiting ({} blocks until reveal)", first_reveal - block)
+                        } else if block <= *last_reveal {
+                            format!("ready ({} blocks remaining)", last_reveal - block)
+                        } else {
+                            "expired".to_string()
+                        };
+                        serde_json::json!({
+                            "index": i + 1,
+                            "hash": format!("0x{}", hex::encode(hash.0)),
+                            "commit_block": commit_block,
+                            "first_reveal": first_reveal,
+                            "last_reveal": last_reveal,
+                            "status": status,
+                        })
+                    })
+                    .collect(),
+                _ => Vec::new(),
+            };
+
+            if ctx.output.is_json() {
+                print_json(&serde_json::json!({
+                    "netuid": netuid,
+                    "hotkey": hotkey_ss58,
+                    "current_block": block,
+                    "commit_reveal_enabled": cr_enabled,
+                    "reveal_period_epochs": reveal_period,
+                    "pending_commits": commit_entries,
+                }));
+                return Ok(());
+            }
 
             println!("Weight Commit Status — SN{}", netuid);
             println!(

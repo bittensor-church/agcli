@@ -4,7 +4,7 @@ use pyo3::prelude::*;
 use pyo3::types::PyAny;
 use pyo3_async_runtimes::tokio::future_into_py;
 
-use crate::chain_data::PySubnetIdentity;
+use crate::chain_data::{PyAlphaBalance, PySubnetIdentity};
 use crate::client::PyClient;
 use crate::errors::{map_error, ValidationError};
 use crate::types::{parse_hash, PyBalance, PyNetUid};
@@ -66,8 +66,30 @@ fn parse_balance(value: &Bound<'_, PyAny>, field: &str) -> PyResult<agcli::Balan
     Ok(agcli::Balance::from_rao(raw as u64))
 }
 
-fn parse_rao_amount(value: &Bound<'_, PyAny>, field: &str) -> PyResult<u64> {
-    Ok(parse_balance(value, field)?.rao())
+
+fn parse_alpha_balance(value: &Bound<'_, PyAny>, field: &str) -> PyResult<agcli::AlphaBalance> {
+    if let Ok(balance) = value.extract::<PyRef<'_, PyAlphaBalance>>() {
+        return Ok(balance.inner());
+    }
+    let raw = value.extract::<i128>().map_err(|_| {
+        validation_error(format!(
+            "{field} must be an AlphaBalance or non-negative integer amount in rao"
+        ))
+    })?;
+    if raw < 0 {
+        return Err(validation_error(format!("{field} cannot be negative")));
+    }
+    if raw > u64::MAX as i128 {
+        return Err(validation_error(format!(
+            "{field} {raw} exceeds maximum value {}",
+            u64::MAX
+        )));
+    }
+    Ok(agcli::AlphaBalance::from_raw(raw as u64))
+}
+
+fn parse_limit_price(value: u64) -> agcli::LimitPriceRao {
+    agcli::LimitPriceRao::from_rao(value)
 }
 
 fn parse_hash_32(value: &Bound<'_, PyAny>, field: &str) -> PyResult<[u8; 32]> {
@@ -256,7 +278,7 @@ impl PyClient {
     ) -> PyResult<Bound<'py, PyAny>> {
         let _ = wait;
         let netuid = parse_netuid(&netuid, "netuid")?;
-        let amount = parse_balance(&amount, "amount")?;
+        let amount = parse_alpha_balance(&amount, "amount")?;
         let client = self.shared_client();
         let wallet = wallet.shared_wallet();
         future_into_py(py, async move {
@@ -299,6 +321,7 @@ impl PyClient {
         let _ = wait;
         let netuid = parse_netuid(&netuid, "netuid")?;
         let amount = parse_balance(&amount, "amount")?;
+        let limit_price = parse_limit_price(limit_price);
         let client = self.shared_client();
         let wallet = wallet.shared_wallet();
         future_into_py(py, async move {
@@ -355,7 +378,8 @@ impl PyClient {
     ) -> PyResult<Bound<'py, PyAny>> {
         let _ = wait;
         let netuid = parse_netuid(&netuid, "netuid")?;
-        let amount = parse_rao_amount(&amount, "amount")?;
+        let amount = parse_alpha_balance(&amount, "amount")?;
+        let limit_price = parse_limit_price(limit_price);
         let client = self.shared_client();
         let wallet = wallet.shared_wallet();
         future_into_py(py, async move {
@@ -412,7 +436,7 @@ impl PyClient {
         let _ = wait;
         let from_netuid = parse_netuid(&from_netuid, "from_netuid")?;
         let to_netuid = parse_netuid(&to_netuid, "to_netuid")?;
-        let amount = parse_balance(&amount, "amount")?;
+        let amount = parse_alpha_balance(&amount, "amount")?;
         let client = self.shared_client();
         let wallet = wallet.shared_wallet();
         future_into_py(py, async move {
@@ -425,7 +449,15 @@ impl PyClient {
                 apply_call_overrides(&mut client, dry_run, finalization_timeout, mortality_blocks);
             let result = if mev {
                 client
-                    .move_stake_mev(&pair, &hotkey_ss58, from_netuid, to_netuid, amount, true)
+                    .move_stake_mev(
+                        &pair,
+                        &hotkey_ss58,
+                        &hotkey_ss58,
+                        from_netuid,
+                        to_netuid,
+                        amount,
+                        true,
+                    )
                     .await
             } else {
                 client
@@ -454,7 +486,7 @@ impl PyClient {
         let _ = wait;
         let from_netuid = parse_netuid(&from_netuid, "from_netuid")?;
         let to_netuid = parse_netuid(&to_netuid, "to_netuid")?;
-        let amount = parse_balance(&amount, "amount")?;
+        let amount = parse_alpha_balance(&amount, "amount")?;
         let client = self.shared_client();
         let wallet = wallet.shared_wallet();
         future_into_py(py, async move {
@@ -498,7 +530,8 @@ impl PyClient {
         let _ = wait;
         let from_netuid = parse_netuid(&from_netuid, "from_netuid")?;
         let to_netuid = parse_netuid(&to_netuid, "to_netuid")?;
-        let amount = parse_rao_amount(&amount, "amount")?;
+        let amount = parse_alpha_balance(&amount, "amount")?;
+        let limit_price = parse_limit_price(limit_price);
         let client = self.shared_client();
         let wallet = wallet.shared_wallet();
         future_into_py(py, async move {
@@ -559,7 +592,7 @@ impl PyClient {
         ensure_ss58("destination", &dest_ss58)?;
         let from_netuid = parse_netuid(&from_netuid, "from_netuid")?;
         let to_netuid = parse_netuid(&to_netuid, "to_netuid")?;
-        let amount = parse_balance(&amount, "amount")?;
+        let amount = parse_alpha_balance(&amount, "amount")?;
         let client = self.shared_client();
         let wallet = wallet.shared_wallet();
         future_into_py(py, async move {
@@ -672,7 +705,7 @@ impl PyClient {
     ) -> PyResult<Bound<'py, PyAny>> {
         let _ = wait;
         let netuid = parse_netuid(&netuid, "netuid")?;
-        let amount = parse_rao_amount(&amount, "amount")?;
+        let amount = parse_alpha_balance(&amount, "amount")?;
         let client = self.shared_client();
         let wallet = wallet.shared_wallet();
         future_into_py(py, async move {
@@ -712,7 +745,7 @@ impl PyClient {
     ) -> PyResult<Bound<'py, PyAny>> {
         let _ = wait;
         let netuid = parse_netuid(&netuid, "netuid")?;
-        let amount = parse_rao_amount(&amount, "amount")?;
+        let amount = parse_alpha_balance(&amount, "amount")?;
         let client = self.shared_client();
         let wallet = wallet.shared_wallet();
         future_into_py(py, async move {
@@ -1234,7 +1267,7 @@ impl PyClient {
             let pair = wallet_coldkey_pair(&wallet)?;
             let previous =
                 apply_call_overrides(&mut client, dry_run, finalization_timeout, mortality_blocks);
-            let result = client.schedule_swap_coldkey(&pair, &new_coldkey_ss58).await;
+            let result = client.announce_swap_coldkey(&pair, &new_coldkey_ss58).await;
             restore_call_overrides(&mut client, previous);
             result.map_err(map_error)
         })

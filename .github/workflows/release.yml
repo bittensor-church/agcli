@@ -32,6 +32,9 @@ jobs:
       - name: Build release binary
         run: cargo build --release
 
+      - name: Smoke test binary
+        run: ./target/release/agcli --version
+
       - name: Prepare artifacts
         run: |
           cp target/release/agcli agcli-linux-amd64

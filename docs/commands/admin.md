@@ -48,6 +48,17 @@ For `admin list`, `--output json` prints:
 - `15` timeout
 - `1` uncategorized failure
 
+### Value encoding (hyperparams)
+
+Several admin setters mirror `subnet set-param` on-chain types. Prefer `agcli subnet set-param` for subnet owners; use `agcli admin` when you have sudo.
+
+| Param | CLI flag | On-chain | How to pass |
+|---|---|---|---|
+| kappa | `--kappa` | u16, runtime ÷65535 → [0,1] | Raw u16 (e.g. `32767`) or use `subnet set-param --value 0.5` |
+| rho | `--rho` | u16 sigmoid scale | Integer only (default ~10; **not** a 0–1 fraction) |
+| min_burn / max_burn | `--burn` | u64 RAO | Raw RAO integer, or use `subnet set-param --value 1.0` (TAO) |
+| alpha_low / alpha_high | `--alpha-low`, `--alpha-high` | u16 | Raw u16; see liquid-alpha pallet docs for semantics |
+
 ## Command reference
 
 Notes:

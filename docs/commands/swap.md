@@ -2,9 +2,24 @@
 
 This page covers the `agcli liquidity ...` command group, which maps to the Subtensor `Swap` pallet AMM/liquidity dispatchables.
 
-> Note: `agcli swap ...` (hotkey/coldkey/evm-key) targets `SubtensorModule` account-swap operations, not the `Swap` pallet.
+> Note: `agcli swap ...` (hotkey/coldkey/coldkey-exec/evm-key) targets `SubtensorModule` account-swap operations, not the `Swap` pallet.
 
-## Liquidity subcommands (`LiquidityCommands`)
+## Key-swap subcommands (`SwapCommands`)
+
+Handler: `src/cli/network_cmds.rs::handle_swap`
+
+| Subcommand | Pallet call | Signer |
+|---|---|---|
+| `swap hotkey --new-hotkey SS58` | `SubtensorModule::swap_hotkey` | coldkey |
+| `swap coldkey --new-coldkey SS58` | `SubtensorModule::announce_coldkey_swap` (step 1) | coldkey |
+| `swap coldkey-exec --new-coldkey SS58` | `SubtensorModule::swap_coldkey_announced` (step 2) | coldkey |
+| `swap evm-key --netuid N --evm-address 0x... --block-number N --signature 0x...` | `SubtensorModule::associate_evm_key` | coldkey |
+
+Coldkey rotation is two-phase: announce, wait for `coldkey_swap_announcement_delay`, then `coldkey-exec`. Check status with `agcli wallet check-swap`.
+
+> **Breaking (0.1 → 0.2):** `swap evm-key` now requires `--netuid`. See [CHANGELOG.md](../../CHANGELOG.md).
+
+---
 
 Handler: `src/cli/network_cmds.rs::handle_liquidity`  
 Clap enum: `src/cli/mod.rs::LiquidityCommands`
@@ -69,14 +84,7 @@ agcli liquidity add \
 
 **Output JSON schema**
 
-- Current behavior (including `--output json`): no JSON object; handler prints plain text status lines.
-- Expected normalized tx schema used elsewhere in agcli:
-
-```json
-{
-  "tx_hash": "0x..."
-}
-```
+With `--output json`: `{"tx_hash": "0x..."}` via `print_tx_result`.
 
 ---
 
@@ -117,14 +125,7 @@ agcli liquidity remove \
 
 **Output JSON schema**
 
-- Current behavior (including `--output json`): plain text only.
-- Expected normalized schema:
-
-```json
-{
-  "tx_hash": "0x..."
-}
-```
+With `--output json`: `{"tx_hash": "0x..."}`.
 
 ---
 
@@ -169,14 +170,7 @@ agcli liquidity modify \
 
 **Output JSON schema**
 
-- Current behavior (including `--output json`): plain text only.
-- Expected normalized schema:
-
-```json
-{
-  "tx_hash": "0x..."
-}
-```
+With `--output json`: `{"tx_hash": "0x..."}`.
 
 ---
 
@@ -217,14 +211,7 @@ agcli liquidity toggle --netuid <u16> [--enable]
 
 **Output JSON schema**
 
-- Current behavior (including `--output json`): plain text only.
-- Expected normalized schema:
-
-```json
-{
-  "tx_hash": "0x..."
-}
-```
+With `--output json`: `{"tx_hash": "0x..."}`.
 
 ## Swap-pallet coverage snapshot (dispatchables in scope)
 

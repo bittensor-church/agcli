@@ -41,7 +41,7 @@ Live mode: `--live [SECS]` polls `fetch_portfolio` continuously.
 
 ### Read path
 
-1. `pin_latest_block` → parallel `try_join!(get_balance_at_hash, get_stake_for_coldkey_pinned, get_all_dynamic_info_at_block)`.
+1. `pin_latest_block` → parallel `try_join!(get_balance_at_hash, get_stake_for_coldkey_at_block, get_all_dynamic_info_at_block)`.
 2. `--at-block N`: `get_block_hash(N)` → parallel `try_join!(get_balance_at_block, get_stake_for_coldkey_at_block)` — no dynamic info merge on this path.
 3. `--live`: `src/live.rs::live_portfolio` loops over `fetch_portfolio`.
 
@@ -222,9 +222,11 @@ Full detail for a single neuron: hotkey, coldkey, stake, rank, trust, consensus,
 
 ### JSON schema
 
-> **Audit finding**: `view neuron` does **not** respect `--output json`. The handler uses `println!` directly and ignores the `OutputFormat`. Running `agcli --output json view neuron --netuid 1 --uid 0` produces human-readable text, not JSON.
+Serializes the full `NeuronInfo` struct (hotkey, coldkey, stake, metrics, optional axon/prometheus). With `--output csv`, emits a single data row.
 
-Output is human-readable table only (no JSON/CSV path implemented):
+Not found: exits **12** with a clear message (was exit 0 with human text only).
+
+### Examples (human table)
 
 ```
 Neuron UID 0 on SN1
@@ -246,11 +248,10 @@ Neuron UID 0 on SN1
   Prometheus:      192.168.1.1:9090 (v1)
 ```
 
-### Examples
-
 ```bash
 agcli view neuron --netuid 1 --uid 0
 agcli view neuron --netuid 18 --uid 42 --at-block 4000000
+agcli --output json view neuron --netuid 1 --uid 0
 ```
 
 ---
@@ -342,7 +343,7 @@ Comprehensive account explorer: free balance, total staked, identity info, deleg
 
 ### Read path
 
-- Latest: `pin_latest_block` → parallel `try_join!(get_balance_at_hash, get_stake_for_coldkey_pinned, get_identity_pinned, get_all_dynamic_info, get_delegate_pinned)`.
+- Latest: `pin_latest_block` → parallel `try_join!(get_balance_at_hash, get_stake_for_coldkey_at_block, get_identity_at_block, get_all_dynamic_info, get_delegate_at_block)`.
 - `--at-block N`: `get_block_hash(N)` → parallel `try_join!(get_balance_at_block, get_stake_for_coldkey_at_block, get_identity_at_block)`.
 
 ### Pallet storage accessed (read-only)
@@ -401,7 +402,7 @@ Detailed analytics for a specific subnet: neuron counts, validator/miner split, 
 
 ### Read path
 
-`pin_latest_block` → parallel `try_join!(get_subnet_info_pinned, get_dynamic_info_at_block, get_neurons_lite, get_subnet_hyperparams_pinned, get_subnet_identity_pinned)`.
+`pin_latest_block` → parallel `try_join!(get_subnet_info_at_block, get_dynamic_info_at_block, get_neurons_lite, get_subnet_hyperparams_at_block, get_subnet_identity_at_block)`.
 
 ### Pallet storage accessed (read-only)
 
@@ -543,8 +544,6 @@ agcli --output json view swap-sim --netuid 1 --tao 10.0
 
 Show all delegators and their stake for a specific validator hotkey.
 
-> **Audit finding**: Output is always human-readable text; `--output json` serializes via `print_json_ser(&delegates)` which outputs the raw `Vec<DelegateInfo>` struct, and `--output csv` is **silently ignored** (the handler short-circuits after the JSON branch with no CSV path).
-
 ### Flags
 
 | Flag | Type | Required | Default |
@@ -561,21 +560,24 @@ Show all delegators and their stake for a specific validator hotkey.
 
 ### JSON schema
 
-Serialized `Vec<DelegateInfo>` (raw struct serialization via `serde`):
-
 ```json
-[
-  {
-    "hotkey": "5H...",
-    "owner": "5G...",
-    "take": 0.18,
-    "total_stake": ...,
-    "nominators": [["5G...", ...]],
-    "registrations": [1, 3],
-    "validator_permits": [1]
-  }
-]
+{
+  "hotkey": "5H...",
+  "delegates": [
+    {
+      "hotkey": "5H...",
+      "owner": "5G...",
+      "take": 0.18,
+      "total_stake": { "rao": "..." },
+      "nominators": [["5G...", { "rao": "..." }]],
+      "registrations": [1, 3],
+      "validator_permits": [1]
+    }
+  ]
+}
 ```
+
+CSV: one row per nominator (`delegate_hotkey,owner,take_pct,total_stake_rao,nominator,stake_rao`).
 
 ### Examples
 
@@ -852,7 +854,7 @@ Full security audit of a coldkey account: proxies, delegates, stake exposure, ch
 
 ### Read path
 
-`pin_latest_block` → parallel `try_join!(get_balance_at_hash, get_stake_for_coldkey_pinned, get_identity_pinned, list_proxies_pinned, get_delegate_pinned, get_all_dynamic_info, get_coldkey_swap_scheduled_pinned)` → per-stake childkey queries (parallel).
+`pin_latest_block` → parallel `try_join!(get_balance_at_hash, get_stake_for_coldkey_at_block, get_identity_at_block, list_proxies_at_block, get_delegate_at_block, get_all_dynamic_info, get_coldkey_swap_scheduled_at_block)` → per-stake childkey queries (parallel).
 
 ### Pallet storage accessed (read-only)
 
@@ -944,29 +946,29 @@ agcli audit [--address <SS58>]
 1. `pin_latest_block()` (pins one block hash for consistency).
 2. In parallel at pinned hash:
    - `get_balance_at_hash(address, pin)` → `System::Account`.
-   - `get_stake_for_coldkey_pinned(address, pin)` → `StakeInfoRuntimeApi::get_stake_info_for_coldkey`.
-   - `get_identity_pinned(address, pin)` → `Registry::IdentityOf`.
-   - `list_proxies_pinned(address, pin)` → `Proxy::Proxies`.
-   - `get_delegate_pinned(address, pin)` → `DelegateInfoRuntimeApi::get_delegate`.
-   - `get_coldkey_swap_scheduled_pinned(address, pin)` → `SubtensorModule::ColdkeySwapAnnouncements`.
+   - `get_stake_for_coldkey_at_block(address, pin)` → `StakeInfoRuntimeApi::get_stake_info_for_coldkey`.
+   - `get_identity_at_block(address, pin)` → `Registry::IdentityOf`.
+   - `list_proxies_at_block(address, pin)` → `Proxy::Proxies`.
+   - `get_delegate_at_block(address, pin)` → `DelegateInfoRuntimeApi::get_delegate`.
+   - `get_coldkey_swap_scheduled_at_block(address, pin)` → `SubtensorModule::ColdkeySwapAnnouncements`.
 3. Non-fatal supplemental latest-state query:
    - `get_all_dynamic_info()` → `SubnetInfoRuntimeApi::get_all_dynamic_info`.
 4. For each staked hotkey/netuid pair at pinned hash:
-   - `get_child_keys_pinned(hotkey, netuid, pin)` → `SubtensorModule::ChildKeys`.
-   - `get_pending_child_keys_pinned(hotkey, netuid, pin)` → `SubtensorModule::PendingChildKeys`.
+   - `get_child_keys_at_block(hotkey, netuid, pin)` → `SubtensorModule::ChildKeys`.
+   - `get_pending_child_keys_at_block(hotkey, netuid, pin)` → `SubtensorModule::PendingChildKeys`.
 
 ### Subxt pallet/runtime API mapping and SCALE key/arg encoding
 
 | agcli call | Subxt target | Chain reference | SCALE key/arg shape |
 |---|---|---|---|
 | `get_balance_at_hash` | `api::storage().system().account(&account_id)` | FRAME `System::Account` | key: `AccountId32` decoded from SS58 |
-| `get_stake_for_coldkey_pinned` | `api::apis().stake_info_runtime_api().get_stake_info_for_coldkey(account_id)` | `subtensor/pallets/subtensor/runtime-api/src/lib.rs` (`StakeInfoRuntimeApi`) | arg: `AccountId32` |
-| `get_identity_pinned` | `api::storage().registry().identity_of(&account_id)` | `subtensor/pallets/registry/src/lib.rs` (`IdentityOf`) | key: `AccountId32` |
-| `list_proxies_pinned` | `api::storage().proxy().proxies(&account_id)` | `subtensor/pallets/proxy/src/lib.rs` (`Proxies`) | key: `AccountId32` |
-| `get_delegate_pinned` | `api::apis().delegate_info_runtime_api().get_delegate(account_id)` | `subtensor/pallets/subtensor/runtime-api/src/lib.rs` (`DelegateInfoRuntimeApi`) | arg: `AccountId32` |
-| `get_coldkey_swap_scheduled_pinned` | `api::storage().subtensor_module().coldkey_swap_announcements(&account_id)` | `subtensor/pallets/subtensor/src/lib.rs` (`ColdkeySwapAnnouncements`) | key: `AccountId32` |
-| `get_child_keys_pinned` | `api::storage().subtensor_module().child_keys(&account_id, netuid)` | `subtensor/pallets/subtensor/src/lib.rs` (`ChildKeys`) | key1: `AccountId32`, key2: `NetUid` (`u16`) |
-| `get_pending_child_keys_pinned` | `api::storage().subtensor_module().pending_child_keys(netuid, &account_id)` | `subtensor/pallets/subtensor/src/lib.rs` (`PendingChildKeys`) | key1: `NetUid` (`u16`), key2: `AccountId32` |
+| `get_stake_for_coldkey_at_block` | `api::apis().stake_info_runtime_api().get_stake_info_for_coldkey(account_id)` | `subtensor/pallets/subtensor/runtime-api/src/lib.rs` (`StakeInfoRuntimeApi`) | arg: `AccountId32` |
+| `get_identity_at_block` | `api::storage().registry().identity_of(&account_id)` | `subtensor/pallets/registry/src/lib.rs` (`IdentityOf`) | key: `AccountId32` |
+| `list_proxies_at_block` | `api::storage().proxy().proxies(&account_id)` | `subtensor/pallets/proxy/src/lib.rs` (`Proxies`) | key: `AccountId32` |
+| `get_delegate_at_block` | `api::apis().delegate_info_runtime_api().get_delegate(account_id)` | `subtensor/pallets/subtensor/runtime-api/src/lib.rs` (`DelegateInfoRuntimeApi`) | arg: `AccountId32` |
+| `get_coldkey_swap_scheduled_at_block` | `api::storage().subtensor_module().coldkey_swap_announcements(&account_id)` | `subtensor/pallets/subtensor/src/lib.rs` (`ColdkeySwapAnnouncements`) | key: `AccountId32` |
+| `get_child_keys_at_block` | `api::storage().subtensor_module().child_keys(&account_id, netuid)` | `subtensor/pallets/subtensor/src/lib.rs` (`ChildKeys`) | key1: `AccountId32`, key2: `NetUid` (`u16`) |
+| `get_pending_child_keys_at_block` | `api::storage().subtensor_module().pending_child_keys(netuid, &account_id)` | `subtensor/pallets/subtensor/src/lib.rs` (`PendingChildKeys`) | key1: `NetUid` (`u16`), key2: `AccountId32` |
 | `get_all_dynamic_info` | `api::apis().subnet_info_runtime_api().get_all_dynamic_info()` | `subtensor/pallets/subtensor/runtime-api/src/lib.rs` (`SubnetInfoRuntimeApi`) | no args |
 
 Dispatchables submitted by `agcli audit`: **none** (query-only command).

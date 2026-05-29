@@ -15,6 +15,7 @@ categories = ["command-line-utilities", "cryptography::cryptocurrencies"]
 [dependencies]
 # Substrate / chain interaction
 subxt = { version = "0.38", features = ["substrate-compat"] }
+subxt-metadata = { version = "0.38", optional = true }
 sp-core = { version = "34", default-features = false, features = ["std"] }
 parity-scale-codec = { version = "3.7", features = ["derive"] }
 
@@ -80,6 +81,8 @@ strip = true
 default = ["cli"]
 cli = []
 sdk-only = []
+# Embedded metadata.scale decoding for extrinsic encoding regression tests.
+test-utils = ["dep:subxt-metadata"]
 # Enables Docker / live-chain integration test targets (not run by default `cargo test`).
 e2e = []
 
@@ -107,6 +110,11 @@ required-features = ["e2e"]
 name = "chain_integration_test"
 path = "tests/chain_integration_test.rs"
 required-features = ["e2e"]
+
+[[test]]
+name = "extrinsic_encoding"
+path = "tests/extrinsic_encoding.rs"
+required-features = ["test-utils"]
 
 [dev-dependencies]
 tempfile = "3.27.0"

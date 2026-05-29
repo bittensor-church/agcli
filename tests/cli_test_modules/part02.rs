@@ -1825,6 +1825,44 @@ fn parse_subnet_register_leased_end_block() {
 }
 
 #[test]
+fn parse_subnet_register_leased_emissions_share() {
+    let cli = agcli::cli::Cli::try_parse_from([
+        "agcli",
+        "subnet",
+        "register-leased",
+        "--emissions-share",
+        "25",
+    ]);
+    assert!(
+        cli.is_ok(),
+        "register-leased emissions-share: {:?}",
+        cli.err()
+    );
+    if let agcli::cli::Commands::Subnet(agcli::cli::SubnetCommands::RegisterLeased {
+        emissions_share,
+        end_block,
+    }) = cli.unwrap().command
+    {
+        assert_eq!(emissions_share, 25);
+        assert!(end_block.is_none());
+    } else {
+        panic!("expected RegisterLeased");
+    }
+}
+
+#[test]
+fn parse_subnet_register_leased_emissions_share_out_of_range_fails() {
+    let cli = agcli::cli::Cli::try_parse_from([
+        "agcli",
+        "subnet",
+        "register-leased",
+        "--emissions-share",
+        "101",
+    ]);
+    assert!(cli.is_err(), "emissions share > 100 must fail parse");
+}
+
+#[test]
 fn parse_subnet_register_leased_with_global_flags() {
     let cli = agcli::cli::Cli::try_parse_from([
         "agcli",

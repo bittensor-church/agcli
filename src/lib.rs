@@ -52,7 +52,7 @@ pub type Hash = <SubtensorConfig as subxt::Config>::Hash;
 // Re-exports for ergonomic SDK use
 pub use chain::Client;
 pub use config::Config;
-pub use types::balance::Balance;
+pub use types::balance::{AlphaBalance, Balance, LimitPriceRao};
 pub use wallet::Wallet;
 
 pub mod sdk {
@@ -60,4 +60,23 @@ pub mod sdk {
         error, types::chain_data, types::network::NetUid, types::Network, Balance, Client, Config,
         Wallet,
     };
+}
+
+/// Embedded runtime metadata for extrinsic encoding regression tests.
+///
+/// Requires the `test-utils` feature (`cargo test --features test-utils`).
+#[cfg(feature = "test-utils")]
+#[doc(hidden)]
+pub fn test_metadata() -> &'static subxt::metadata::Metadata {
+    use parity_scale_codec::Decode;
+    use std::sync::OnceLock;
+
+    static METADATA: OnceLock<subxt::metadata::Metadata> = OnceLock::new();
+    METADATA.get_or_init(|| {
+        let bytes = include_bytes!(concat!(env!("OUT_DIR"), "/metadata.scale"));
+        let mut slice: &[u8] = bytes;
+        subxt_metadata::Metadata::decode(&mut slice)
+            .expect("metadata.scale should decode")
+            .into()
+    })
 }

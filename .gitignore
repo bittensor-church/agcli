@@ -5,6 +5,7 @@ Cargo.lock
 .env
 .env.*
 .coverage
+.venv/
 python/.venv/
 python/.pytest_cache/
 python/**/__pycache__/

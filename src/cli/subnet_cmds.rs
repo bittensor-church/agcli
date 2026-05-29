@@ -129,7 +129,7 @@ pub(super) async fn handle_subnet(
                 (si, di)
             } else {
                 let pin = client.pin_latest_block().await?;
-                tokio::try_join!(client.get_subnet_info_pinned(nuid, pin), async {
+                tokio::try_join!(client.get_subnet_info_at_block(nuid, pin), async {
                     Ok::<_, anyhow::Error>(
                         match client.get_dynamic_info_at_block(nuid, pin).await {
                             Ok(v) => v,
@@ -193,7 +193,7 @@ pub(super) async fn handle_subnet(
             let nuid = NetUid(netuid);
             let params = if let Some(bn) = at_block {
                 let bh = client.get_block_hash(bn).await?;
-                client.get_subnet_hyperparams_pinned(nuid, bh).await?
+                client.get_subnet_hyperparams_at_block(nuid, bh).await?
             } else {
                 client.get_subnet_hyperparams(nuid).await?
             };
@@ -203,9 +203,12 @@ pub(super) async fn handle_subnet(
                         print_json_ser(&h);
                         return Ok(());
                     }
-                    let rows: Vec<(String, String)> = vec![
-                        ("rho".into(), h.rho.to_string()),
-                        ("kappa".into(), h.kappa.to_string()),
+                    let mut rows: Vec<(String, String)> = vec![
+                        (
+                            "rho".into(),
+                            format!("{} (sigmoid scale, not ÷65535)", h.rho),
+                        ),
+                        ("kappa".into(), format_normalized_u16(h.kappa)),
                         ("immunity_period".into(), h.immunity_period.to_string()),
                         (
                             "min_allowed_weights".into(),
@@ -233,8 +236,8 @@ pub(super) async fn handle_subnet(
                             "target_regs_per_interval".into(),
                             h.target_regs_per_interval.to_string(),
                         ),
-                        ("min_burn".into(), h.min_burn.display_tao()),
-                        ("max_burn".into(), h.max_burn.display_tao()),
+                        ("min_burn".into(), format_rao(h.min_burn.rao())),
+                        ("max_burn".into(), format_rao(h.max_burn.rao())),
                         ("bonds_moving_avg".into(), h.bonds_moving_avg.to_string()),
                         (
                             "max_regs_per_block".into(),
@@ -260,6 +263,13 @@ pub(super) async fn handle_subnet(
                             h.liquid_alpha_enabled.to_string(),
                         ),
                     ];
+                    if let Ok((alpha_low, alpha_high)) = client.get_alpha_values(nuid).await {
+                        rows.push(("alpha_low".into(), format_normalized_u16(alpha_low)));
+                        rows.push(("alpha_high".into(), format_normalized_u16(alpha_high)));
+                    }
+                    if let Ok(pow_ok) = client.get_pow_registration_allowed(nuid).await {
+                        rows.push(("pow_registration_allowed".into(), pow_ok.to_string()));
+                    }
                     let title = match at_block {
                         Some(b) => format!("Hyperparameters for SN{} (at block {})", netuid, b),
                         None => format!("Hyperparameters for SN{}", netuid),
@@ -560,15 +570,25 @@ pub(super) async fn handle_subnet(
             );
             Ok(())
         }
-        SubnetCommands::RegisterLeased { end_block } => {
-            let (pair, hk) =
-                unlock_and_resolve(wallet_dir, wallet_name, hotkey_name, None, password)?;
+        SubnetCommands::RegisterLeased {
+            emissions_share,
+            end_block,
+        } => {
+            let mut wallet = open_wallet(wallet_dir, wallet_name)?;
+            unlock_coldkey(&mut wallet, password)?;
+            println!("Note: register-leased signs with coldkey; global --hotkey is ignored.");
             match end_block {
-                Some(block) => println!("Registering leased subnet (ends at block {})...", block),
-                None => println!("Registering leased subnet (no end block)..."),
+                Some(block) => println!(
+                    "Registering leased subnet ({}% emissions, ends at block {})...",
+                    emissions_share, block
+                ),
+                None => println!(
+                    "Registering leased subnet ({}% emissions, no end block)...",
+                    emissions_share
+                ),
             }
             let hash = client
-                .register_leased_network(&pair, &hk, end_block)
+                .register_leased_network(wallet.coldkey()?, emissions_share, end_block)
                 .await?;
             println!(
                 "Leased subnet registered. Check `agcli subnet list` for your new subnet ID.\n  Tx: {}",
@@ -615,33 +635,112 @@ pub(super) async fn handle_subnet(
             Ok(())
         }
         SubnetCommands::RegisterNeuron { netuid } => {
-            let nuid = NetUid(netuid);
-            client.require_subnet_exists(nuid, None).await?;
-            let (pair, hk) =
-                unlock_and_resolve(wallet_dir, wallet_name, hotkey_name, None, password)?;
-            println!(
-                "Burn-registering on SN{} with hotkey {}",
+            let ctx = preflight_burn_register(
+                client,
+                wallet_dir,
+                wallet_name,
+                hotkey_name,
+                password,
                 netuid,
-                crate::utils::short_ss58(&hk)
-            );
-            let hash = client.burned_register(&pair, nuid, &hk).await?;
+                None,
+            )
+            .await?;
+            let hash = client
+                .burned_register(&ctx.pair, NetUid(netuid), &ctx.hk)
+                .await?;
             println!(
-                "Neuron registered on SN{} with hotkey {}. Check `agcli subnet metagraph --netuid {}` for your UID.\n  Tx: {}",
-                netuid, crate::utils::short_ss58(&hk), netuid, hash
+                "Neuron registered on SN{} with hotkey {} (burned {}). Check `agcli subnet metagraph --netuid {}` for your UID.\n  Tx: {}",
+                netuid,
+                crate::utils::short_ss58(&ctx.hk),
+                ctx.burn.display_tao(),
+                netuid,
+                hash
+            );
+            Ok(())
+        }
+        SubnetCommands::RegisterLimit {
+            netuid,
+            limit_price,
+        } => {
+            crate::cli::helpers::validate_amount(limit_price, "limit price")?;
+            let limit_rao = crate::cli::helpers::safe_rao(limit_price);
+            let ctx = preflight_burn_register(
+                client,
+                wallet_dir,
+                wallet_name,
+                hotkey_name,
+                password,
+                netuid,
+                Some(limit_rao),
+            )
+            .await?;
+            let limit_bal = Balance::from_rao(limit_rao);
+            let hash = client
+                .register_limit(&ctx.pair, NetUid(netuid), &ctx.hk, limit_rao)
+                .await?;
+            println!(
+                "Neuron registered on SN{} with hotkey {} (burn cap {}, actual burn at quote {}). Check `agcli subnet metagraph --netuid {}` for your UID.\n  Tx: {}",
+                netuid,
+                crate::utils::short_ss58(&ctx.hk),
+                limit_bal.display_tao(),
+                ctx.burn.display_tao(),
+                netuid,
+                hash
             );
             Ok(())
         }
         SubnetCommands::Pow { netuid, threads } => {
             crate::cli::helpers::validate_threads(threads, "POW")?;
+            validate_netuid(netuid)?;
             let nuid = NetUid(netuid);
             client.require_subnet_exists(nuid, None).await?;
             let (pair, hk) =
                 unlock_and_resolve(wallet_dir, wallet_name, hotkey_name, None, password)?;
-            let hotkey_pk = crate::wallet::keypair::from_ss58(&hk)?;
-            println!("POW registration on SN{} with {} threads", netuid, threads);
-            let (block_number, block_hash) = client.get_block_info_for_pow().await?;
+
+            let info = client.get_subnet_info(nuid).await?.ok_or_else(|| {
+                anyhow::anyhow!(
+                    "Subnet {} not found.\n  List available subnets: agcli subnet list",
+                    netuid
+                )
+            })?;
+            let params = client.get_subnet_hyperparams(nuid).await?;
+            let pow_allowed = client.get_pow_registration_allowed(nuid).await?;
+            if !info.registration_allowed {
+                anyhow::bail!(
+                    "Registration is disabled on SN{}.\n  Tip: enable via `agcli subnet set-param --netuid {} --param registration_allowed --value true`",
+                    netuid, netuid
+                );
+            }
+            if !pow_allowed {
+                anyhow::bail!(
+                    "PoW registration is disabled on SN{}.\n  Tip: enable via `agcli subnet set-param --netuid {} --param pow_registration_allowed --value true`, or use `agcli subnet register-neuron` (burn).",
+                    netuid, netuid
+                );
+            }
+
             let difficulty = client.get_difficulty(nuid).await?;
-            println!("Difficulty: {}, Block: #{}", difficulty, block_number);
+            let min_diff = params.as_ref().map(|p| p.min_difficulty).unwrap_or(0);
+            let max_diff = params
+                .as_ref()
+                .map(|p| p.max_difficulty)
+                .unwrap_or(u64::MAX);
+            println!(
+                "POW registration on SN{}: hotkey {} | {} threads | difficulty {} (bounds {}–{})",
+                netuid,
+                crate::utils::short_ss58(&hk),
+                threads,
+                difficulty,
+                min_diff,
+                max_diff
+            );
+            eprintln!(
+                "Note: work must be found within ~3 blocks of the template block. \
+                 If PoW fails, try `agcli subnet register-neuron` (burn τ) or increase `--threads`."
+            );
+
+            let hotkey_pk = crate::wallet::keypair::from_ss58(&hk)?;
+            let (block_number, block_hash) = client.get_block_info_for_pow().await?;
+            println!("Solving at block #{}...", block_number);
 
             let attempts_per_thread = 10_000_000u64;
             let mut handles = Vec::new();
@@ -676,10 +775,17 @@ pub(super) async fn handle_subnet(
                         netuid, nonce, hash
                     );
                 }
-                None => println!(
-                    "POW not found after {} attempts/thread. Try burn registration.",
-                    attempts_per_thread
-                ),
+                None => {
+                    anyhow::bail!(
+                        "PoW not found after {} attempts/thread on SN{} (difficulty {}).\n  \
+                         Try more `--threads`, wait for difficulty to adjust down, or use burn registration:\n  \
+                         agcli subnet register-neuron --netuid {}",
+                        attempts_per_thread,
+                        netuid,
+                        difficulty,
+                        netuid
+                    );
+                }
             }
             Ok(())
         }
@@ -2168,7 +2274,7 @@ async fn handle_subnet_health(client: &Client, netuid: u16, output: OutputFormat
     let (neurons, dynamic, hyperparams, block) = tokio::try_join!(
         client.get_neurons_lite_at_block(nuid, pin),
         client.get_dynamic_info_at_block(nuid, pin),
-        client.get_subnet_hyperparams_pinned(nuid, pin),
+        client.get_subnet_hyperparams_at_block(nuid, pin),
         client.get_block_number_at(pin),
     )?;
 
@@ -2393,10 +2499,10 @@ async fn handle_subnet_cost(client: &Client, netuid: u16, output: OutputFormat) 
     // Pin a single block to save 2 redundant at_latest() RPC round-trips.
     let pin = client.pin_latest_block().await?;
     let (info, hyperparams, dynamic) = tokio::try_join!(
-        client.get_subnet_info_pinned(nuid, pin),
+        client.get_subnet_info_at_block(nuid, pin),
         async {
             Ok::<_, anyhow::Error>(
-                match client.get_subnet_hyperparams_pinned(nuid, pin).await {
+                match client.get_subnet_hyperparams_at_block(nuid, pin).await {
                     Ok(v) => v,
                     Err(e) => {
                         tracing::debug!(netuid = nuid.0, error = %e, "get_subnet_hyperparams failed (non-fatal)");
@@ -2836,6 +2942,23 @@ enum ParamType {
     Bool,
 }
 
+/// How `--value` is interpreted before encoding for AdminUtils.
+#[derive(Clone, Copy)]
+enum ParamValueForm {
+    /// Plain integer (blocks, counts, version keys, …).
+    Integer,
+    /// u16 stored on-chain; epoch code divides by 65535 → float in [0, 1] (kappa, bonds_penalty).
+    /// Accept `0.0`–`1.0` decimal or raw u16 integer.
+    NormalizedU16,
+    /// u16 sigmoid steepness; **not** divided by 65535 (typical range ~1–40).
+    RhoScale,
+    /// u64 burn cost in RAO; accept decimal TAO (e.g. `1.5`) or raw RAO integer.
+    RaoU64,
+    Bool,
+    /// Liquid-alpha bounds `(alpha_low, alpha_high)` as comma-separated normalized decimals or u16 pair.
+    AlphaValuesPair,
+}
+
 /// Whether the AdminUtils extrinsic takes `(netuid, value)` or only `(value)` (chain-wide).
 #[derive(Clone, Copy)]
 enum ParamArgs {
@@ -2851,9 +2974,199 @@ struct ParamDef {
     call: &'static str,
     /// Value type
     ty: ParamType,
+    /// How to parse `--value`
+    form: ParamValueForm,
     /// Short description
     desc: &'static str,
     args: ParamArgs,
+}
+
+const U16_NORM: f64 = 65535.0;
+
+fn format_normalized_u16(raw: u16) -> String {
+    format!("{} (norm {:.4})", raw, raw as f64 / U16_NORM)
+}
+
+fn format_rao(rao: u64) -> String {
+    format!(
+        "{} RAO ({:.9} τ)",
+        rao,
+        rao as f64 / crate::types::balance::RAO_PER_TAO as f64
+    )
+}
+
+fn value_form_label(form: ParamValueForm) -> &'static str {
+    match form {
+        ParamValueForm::Integer => "integer",
+        ParamValueForm::NormalizedU16 => "u16÷65535 or decimal 0–1",
+        ParamValueForm::RhoScale => "integer (sigmoid scale, not ÷65535)",
+        ParamValueForm::RaoU64 => "RAO or decimal TAO",
+        ParamValueForm::Bool => "bool",
+        ParamValueForm::AlphaValuesPair => {
+            "low,high (decimal 0–1 or u16 pair; requires liquid_alpha_enabled)"
+        }
+    }
+}
+
+fn parse_normalized_u16(name: &str, value_str: &str) -> Result<(u16, String)> {
+    if value_str.contains('.') {
+        let frac: f64 = value_str.parse().map_err(|_| {
+            anyhow::anyhow!(
+                "Invalid normalized value '{}' for '{}' — use decimal 0.0–1.0 or raw u16",
+                value_str,
+                name
+            )
+        })?;
+        if !frac.is_finite() || !(0.0..=1.0).contains(&frac) {
+            anyhow::bail!(
+                "Parameter '{}' expects normalized fraction 0.0–1.0 (on-chain u16 = round(fraction × 65535)); got {}",
+                name,
+                value_str
+            );
+        }
+        let raw = (frac * U16_NORM).round().min(U16_NORM) as u16;
+        Ok((raw, format!("fraction {} → u16 {}", frac, raw)))
+    } else {
+        let raw: u16 = value_str.parse().map_err(|_| {
+            anyhow::anyhow!(
+                "Invalid u16 value '{}' for '{}' (range: 0-65535, or use decimal 0.0–1.0)",
+                value_str,
+                name
+            )
+        })?;
+        Ok((
+            raw,
+            format!("raw u16 {} (norm {:.4})", raw, raw as f64 / U16_NORM),
+        ))
+    }
+}
+
+/// Parse `--value` for `subnet set-param` according to on-chain encoding rules.
+fn parse_set_param_value(
+    def: &ParamDef,
+    value_str: &str,
+) -> Result<(Vec<subxt::dynamic::Value>, String)> {
+    use subxt::dynamic::Value;
+    match def.form {
+        ParamValueForm::Bool => {
+            let v: bool = match value_str {
+                "true" | "1" | "yes" | "on" => true,
+                "false" | "0" | "no" | "off" => false,
+                _ => anyhow::bail!(
+                    "Invalid bool value '{}' for parameter '{}' (use: true/false, 1/0, yes/no, on/off)",
+                    value_str,
+                    def.name
+                ),
+            };
+            Ok((vec![Value::bool(v)], v.to_string()))
+        }
+        ParamValueForm::NormalizedU16 => {
+            let (raw, note) = parse_normalized_u16(def.name, value_str)?;
+            Ok((vec![Value::u128(raw as u128)], note))
+        }
+        ParamValueForm::AlphaValuesPair => {
+            let parts: Vec<&str> = value_str.split(',').map(str::trim).collect();
+            if parts.len() != 2 {
+                anyhow::bail!(
+                    "Parameter 'alpha_values' expects comma-separated low,high (e.g. `--value 0.7,0.9` or `45875,58982`)"
+                );
+            }
+            let (low, low_note) = parse_normalized_u16("alpha_low", parts[0])?;
+            let (high, high_note) = parse_normalized_u16("alpha_high", parts[1])?;
+            const MIN_ALPHA_U16: u16 = 1638; // u16::MAX / 40
+            if high < MIN_ALPHA_U16 {
+                anyhow::bail!(
+                    "alpha_high {} is below on-chain minimum {} (≈0.025 normalized). Raise high bound.",
+                    high,
+                    MIN_ALPHA_U16
+                );
+            }
+            if low < MIN_ALPHA_U16 || low > high {
+                anyhow::bail!(
+                    "alpha_low {} must satisfy {} ≤ low ≤ high {} (on-chain AlphaLowOutOfRange / AlphaHighTooLow)",
+                    low,
+                    MIN_ALPHA_U16,
+                    high
+                );
+            }
+            Ok((
+                vec![Value::u128(low as u128), Value::u128(high as u128)],
+                format!("{}; {}", low_note, high_note),
+            ))
+        }
+        ParamValueForm::RhoScale => {
+            let v: u16 = value_str.parse().map_err(|_| {
+                anyhow::anyhow!(
+                    "Invalid rho value '{}' — integer u16 sigmoid scale (typical 1–40). \
+                     Not normalized: runtime uses rho as-is, unlike kappa (÷65535).",
+                    value_str
+                )
+            })?;
+            Ok((
+                vec![Value::u128(v as u128)],
+                format!("rho u16 {} (not ÷65535; default chain value is 10)", v),
+            ))
+        }
+        ParamValueForm::RaoU64 => {
+            let (rao, note) = if value_str.contains('.') {
+                let tao: f64 = value_str.parse().map_err(|_| {
+                    anyhow::anyhow!(
+                        "Invalid TAO amount '{}' for '{}' — use decimal TAO or raw RAO integer",
+                        value_str,
+                        def.name
+                    )
+                })?;
+                let bal = crate::types::Balance::from_tao(tao);
+                (bal.rao(), format!("{:.9} τ → {} RAO", tao, bal.rao()))
+            } else {
+                let rao: u64 = value_str.parse().map_err(|_| {
+                    anyhow::anyhow!(
+                        "Invalid RAO value '{}' for parameter '{}'",
+                        value_str,
+                        def.name
+                    )
+                })?;
+                (rao, format!("{} RAO", rao))
+            };
+            Ok((vec![Value::u128(rao as u128)], note))
+        }
+        ParamValueForm::Integer => match def.ty {
+            ParamType::U16 => {
+                let v: u16 = value_str.parse().map_err(|_| {
+                    anyhow::anyhow!(
+                        "Invalid u16 value '{}' for parameter '{}' (range: 0-65535)",
+                        value_str,
+                        def.name
+                    )
+                })?;
+                Ok((vec![Value::u128(v as u128)], v.to_string()))
+            }
+            ParamType::U64 => {
+                let v: u64 = value_str.parse().map_err(|_| {
+                    anyhow::anyhow!(
+                        "Invalid u64 value '{}' for parameter '{}'",
+                        value_str,
+                        def.name
+                    )
+                })?;
+                Ok((vec![Value::u128(v as u128)], v.to_string()))
+            }
+            ParamType::Bool => unreachable!("bool uses ParamValueForm::Bool"),
+        },
+    }
+}
+
+macro_rules! subnet_hp_alpha_values {
+    ($name:literal, $call:literal, $desc:literal) => {
+        ParamDef {
+            name: $name,
+            call: $call,
+            ty: ParamType::U16,
+            form: ParamValueForm::AlphaValuesPair,
+            desc: $desc,
+            args: ParamArgs::Subnet,
+        }
+    };
 }
 
 macro_rules! subnet_hp {
@@ -2862,6 +3175,59 @@ macro_rules! subnet_hp {
             name: $name,
             call: $call,
             ty: ParamType::$ty,
+            form: ParamValueForm::Integer,
+            desc: $desc,
+            args: ParamArgs::Subnet,
+        }
+    };
+}
+
+macro_rules! subnet_hp_norm {
+    ($name:literal, $call:literal, $desc:literal) => {
+        ParamDef {
+            name: $name,
+            call: $call,
+            ty: ParamType::U16,
+            form: ParamValueForm::NormalizedU16,
+            desc: $desc,
+            args: ParamArgs::Subnet,
+        }
+    };
+}
+
+macro_rules! subnet_hp_rao {
+    ($name:literal, $call:literal, $desc:literal) => {
+        ParamDef {
+            name: $name,
+            call: $call,
+            ty: ParamType::U64,
+            form: ParamValueForm::RaoU64,
+            desc: $desc,
+            args: ParamArgs::Subnet,
+        }
+    };
+}
+
+macro_rules! subnet_hp_rho {
+    ($name:literal, $call:literal, $desc:literal) => {
+        ParamDef {
+            name: $name,
+            call: $call,
+            ty: ParamType::U16,
+            form: ParamValueForm::RhoScale,
+            desc: $desc,
+            args: ParamArgs::Subnet,
+        }
+    };
+}
+
+macro_rules! subnet_hp_bool {
+    ($name:literal, $call:literal, $desc:literal) => {
+        ParamDef {
+            name: $name,
+            call: $call,
+            ty: ParamType::Bool,
+            form: ParamValueForm::Bool,
             desc: $desc,
             args: ParamArgs::Subnet,
         }
@@ -2874,6 +3240,7 @@ macro_rules! chain_hp {
             name: $name,
             call: $call,
             ty: ParamType::$ty,
+            form: ParamValueForm::Integer,
             desc: $desc,
             args: ParamArgs::Chain,
         }
@@ -2883,8 +3250,16 @@ macro_rules! chain_hp {
 /// All supported subnet hyperparameters (AdminUtils `sudo_set_*`).
 const SUBNET_PARAMS: &[ParamDef] = &[
     subnet_hp!("tempo", "sudo_set_tempo", U16, "Blocks per epoch"),
-    subnet_hp!("rho", "sudo_set_rho", U16, "Consensus rho parameter"),
-    subnet_hp!("kappa", "sudo_set_kappa", U16, "Consensus kappa parameter"),
+    subnet_hp_rho!(
+        "rho",
+        "sudo_set_rho",
+        "Sigmoid steepness for bond consensus (raw u16, typical 1–40; NOT ÷65535)"
+    ),
+    subnet_hp_norm!(
+        "kappa",
+        "sudo_set_kappa",
+        "Weighted-median consensus threshold; on-chain u16, runtime uses value÷65535 (0–1)"
+    ),
     subnet_hp!(
         "immunity_period",
         "sudo_set_immunity_period",
@@ -2943,7 +3318,7 @@ const SUBNET_PARAMS: &[ParamDef] = &[
         "adjustment_alpha",
         "sudo_set_adjustment_alpha",
         U64,
-        "EMA smoothing for difficulty adjustment"
+        "Registration difficulty EMA weight (raw u64; chain default 0 = no prior weight)"
     ),
     subnet_hp!(
         "activity_cutoff",
@@ -2951,16 +3326,14 @@ const SUBNET_PARAMS: &[ParamDef] = &[
         U16,
         "Blocks of inactivity before deregistration"
     ),
-    subnet_hp!(
+    subnet_hp_bool!(
         "registration_allowed",
         "sudo_set_network_registration_allowed",
-        Bool,
         "Allow new registrations"
     ),
-    subnet_hp!(
+    subnet_hp_bool!(
         "pow_registration_allowed",
         "sudo_set_network_pow_registration_allowed",
-        Bool,
         "Allow POW registrations"
     ),
     subnet_hp!(
@@ -2969,18 +3342,8 @@ const SUBNET_PARAMS: &[ParamDef] = &[
         U16,
         "Target registrations per adjustment interval"
     ),
-    subnet_hp!(
-        "min_burn",
-        "sudo_set_min_burn",
-        U64,
-        "Minimum burn cost (RAO)"
-    ),
-    subnet_hp!(
-        "max_burn",
-        "sudo_set_max_burn",
-        U64,
-        "Maximum burn cost (RAO)"
-    ),
+    subnet_hp_rao!("min_burn", "sudo_set_min_burn", "Minimum registration burn (RAO; or decimal TAO)"),
+    subnet_hp_rao!("max_burn", "sudo_set_max_burn", "Maximum registration burn (RAO; or decimal TAO)"),
     subnet_hp!(
         "bonds_moving_average",
         "sudo_set_bonds_moving_average",
@@ -3005,10 +3368,9 @@ const SUBNET_PARAMS: &[ParamDef] = &[
         U64,
         "Current POW difficulty"
     ),
-    subnet_hp!(
+    subnet_hp_bool!(
         "commit_reveal_weights_enabled",
         "sudo_set_commit_reveal_weights_enabled",
-        Bool,
         "Enable commit-reveal for weights"
     ),
     subnet_hp!(
@@ -3017,22 +3379,24 @@ const SUBNET_PARAMS: &[ParamDef] = &[
         U64,
         "Blocks between commit-reveal phases"
     ),
-    subnet_hp!(
+    subnet_hp_bool!(
         "liquid_alpha_enabled",
         "sudo_set_liquid_alpha_enabled",
-        Bool,
         "Enable liquid alpha (dynamic dividends)"
     ),
-    subnet_hp!(
+    subnet_hp_alpha_values!(
+        "alpha_values",
+        "sudo_set_alpha_values",
+        "Liquid-alpha sigmoid bounds (low,high). Pass `0.7,0.9` or raw u16 pair. Requires liquid_alpha_enabled."
+    ),
+    subnet_hp_norm!(
         "bonds_penalty",
         "sudo_set_bonds_penalty",
-        U16,
-        "Bonds penalty factor"
+        "Bond pruning penalty; on-chain u16, runtime uses value÷65535 (0–1)"
     ),
-    subnet_hp!(
+    subnet_hp_bool!(
         "bonds_reset_enabled",
         "sudo_set_bonds_reset_enabled",
-        Bool,
         "Allow bonds reset"
     ),
     chain_hp!(
@@ -3041,10 +3405,9 @@ const SUBNET_PARAMS: &[ParamDef] = &[
         U16,
         "Commit-reveal protocol version (chain-wide, not per netuid)"
     ),
-    subnet_hp!(
+    subnet_hp_bool!(
         "yuma",
         "sudo_set_yuma3_enabled",
-        Bool,
         "Enable Yuma 3 consensus"
     ),
     subnet_hp!(
@@ -3068,8 +3431,8 @@ fn current_param_value(
 ) -> Option<String> {
     Some(match name {
         "tempo" => h.tempo.to_string(),
-        "rho" => h.rho.to_string(),
-        "kappa" => h.kappa.to_string(),
+        "rho" => format!("{} (sigmoid scale, not ÷65535)", h.rho),
+        "kappa" => format_normalized_u16(h.kappa),
         "immunity_period" => h.immunity_period.to_string(),
         "min_allowed_weights" => h.min_allowed_weights.to_string(),
         "max_weights_limit" => h.max_weights_limit.to_string(),
@@ -3085,8 +3448,8 @@ fn current_param_value(
         "registration_allowed" => h.registration_allowed.to_string(),
         "pow_registration_allowed" => return None,
         "target_regs_per_interval" => h.target_regs_per_interval.to_string(),
-        "min_burn" => h.min_burn.rao().to_string(),
-        "max_burn" => h.max_burn.rao().to_string(),
+        "min_burn" => format_rao(h.min_burn.rao()),
+        "max_burn" => format_rao(h.max_burn.rao()),
         "bonds_moving_average" => h.bonds_moving_avg.to_string(),
         "max_regs_per_block" => h.max_regs_per_block.to_string(),
         "serving_rate_limit" => h.serving_rate_limit.to_string(),
@@ -3094,6 +3457,7 @@ fn current_param_value(
         "commit_reveal_weights_enabled" => h.commit_reveal_weights_enabled.to_string(),
         "commit_reveal_weights_interval" => h.commit_reveal_weights_interval.to_string(),
         "liquid_alpha_enabled" => h.liquid_alpha_enabled.to_string(),
+        "alpha_values" => return None,
         "bonds_penalty"
         | "bonds_reset_enabled"
         | "commit_reveal_version"
@@ -3126,6 +3490,7 @@ async fn handle_subnet_set_param(
                     serde_json::json!({
                         "name": p.name,
                         "type": match p.ty { ParamType::U16 => "u16", ParamType::U64 => "u64", ParamType::Bool => "bool" },
+                        "value_encoding": value_form_label(p.form),
                         "scope": match p.args { ParamArgs::Subnet => "subnet", ParamArgs::Chain => "chain" },
                         "description": p.desc,
                     })
@@ -3135,7 +3500,13 @@ async fn handle_subnet_set_param(
         } else {
             println!("Available subnet hyperparameters:\n");
             let mut table = comfy_table::Table::new();
-            table.set_header(vec!["Parameter", "Type", "Scope", "Description"]);
+            table.set_header(vec![
+                "Parameter",
+                "Type",
+                "Value encoding",
+                "Scope",
+                "Description",
+            ]);
             for p in SUBNET_PARAMS {
                 table.add_row(vec![
                     p.name,
@@ -3144,6 +3515,7 @@ async fn handle_subnet_set_param(
                         ParamType::U64 => "u64",
                         ParamType::Bool => "bool",
                     },
+                    value_form_label(p.form),
                     match p.args {
                         ParamArgs::Subnet => "subnet",
                         ParamArgs::Chain => "chain",
@@ -3152,7 +3524,13 @@ async fn handle_subnet_set_param(
                 ]);
             }
             println!("{}", table);
-            println!("\nUsage: agcli subnet set-param --netuid <N> --param <name> --value <val>");
+            println!(
+                "\nUsage: agcli subnet set-param --netuid <N> --param <name> --value <val>\n\
+                 Normalized params (kappa, bonds_penalty): pass decimal 0.0–1.0 or raw u16.\n\
+                 Burns (min_burn, max_burn): pass decimal TAO or raw RAO.\n\
+                 alpha_values: comma-separated low,high (e.g. 0.7,0.9); enable liquid_alpha first.\n\
+                 rho: integer scale (not normalized)."
+            );
         }
         return Ok(());
     }
@@ -3198,49 +3576,29 @@ async fn handle_subnet_set_param(
     let value_str = match value {
         Some(v) => v,
         None => anyhow::bail!(
-            "Missing --value for parameter '{}' (type: {}, {})",
+            "Missing --value for parameter '{}' (encoding: {}, {})",
             def.name,
-            match def.ty {
-                ParamType::U16 => "u16",
-                ParamType::U64 => "u64",
-                ParamType::Bool => "bool",
-            },
+            value_form_label(def.form),
             def.desc,
         ),
     };
 
-    // Parse and build the dynamic Value
-    use subxt::dynamic::Value;
-    let val = match def.ty {
-        ParamType::U16 => {
-            let v: u16 = value_str.parse().map_err(|_| {
-                anyhow::anyhow!(
-                    "Invalid u16 value '{}' for parameter '{}' (range: 0-65535)",
-                    value_str,
-                    def.name
-                )
-            })?;
-            Value::u128(v as u128)
+    // Parse and build the dynamic Value(s)
+    let (vals, encode_note) = parse_set_param_value(def, value_str)?;
+
+    if def.name == "alpha_values" {
+        match client.get_subnet_hyperparams(nuid).await {
+            Ok(Some(h)) if !h.liquid_alpha_enabled => {
+                anyhow::bail!(
+                    "liquid_alpha_enabled is false on SN{}. Enable first:\n  \
+                     agcli subnet set-param --netuid {} --param liquid_alpha_enabled --value true",
+                    netuid,
+                    netuid
+                );
+            }
+            _ => {}
         }
-        ParamType::U64 => {
-            let v: u64 = value_str.parse().map_err(|_| {
-                anyhow::anyhow!(
-                    "Invalid u64 value '{}' for parameter '{}'",
-                    value_str,
-                    def.name
-                )
-            })?;
-            Value::u128(v as u128)
-        }
-        ParamType::Bool => {
-            let v: bool = match value_str {
-                "true" | "1" | "yes" | "on" => true,
-                "false" | "0" | "no" | "off" => false,
-                _ => anyhow::bail!("Invalid bool value '{}' for parameter '{}' (use: true/false, 1/0, yes/no, on/off)", value_str, def.name),
-            };
-            Value::bool(v)
-        }
-    };
+    }
 
     // Fetch current value for display (chain-wide params skip per-subnet query)
     let current_display = match def.args {
@@ -3256,12 +3614,12 @@ async fn handle_subnet_set_param(
     // Confirm
     match def.args {
         ParamArgs::Subnet => println!(
-            "Setting SN{} {} = {}{} (via AdminUtils::{})",
-            netuid, def.name, value_str, current_display, def.call
+            "Setting SN{} {} = {} ({}){} (via AdminUtils::{})",
+            netuid, def.name, value_str, encode_note, current_display, def.call
         ),
         ParamArgs::Chain => println!(
-            "Setting {} = {} chain-wide (via AdminUtils::{})",
-            def.name, value_str, def.call
+            "Setting {} = {} ({}) chain-wide (via AdminUtils::{})",
+            def.name, value_str, encode_note, def.call
         ),
     }
 
@@ -3282,9 +3640,14 @@ async fn handle_subnet_set_param(
     unlock_coldkey(&mut wallet, password)?;
     let pair = wallet.coldkey()?.clone();
 
+    use subxt::dynamic::Value;
     let fields = match def.args {
-        ParamArgs::Subnet => vec![Value::u128(netuid as u128), val],
-        ParamArgs::Chain => vec![val],
+        ParamArgs::Subnet => {
+            let mut f = vec![Value::u128(netuid as u128)];
+            f.extend(vals);
+            f
+        }
+        ParamArgs::Chain => vals,
     };
 
     // Submit (AdminUtils — matches subtensor localnet / finney metadata)
@@ -3317,6 +3680,106 @@ pub(super) fn commit_status(
     }
 }
 
+struct BurnRegisterContext {
+    pair: sp_core::sr25519::Pair,
+    hk: String,
+    burn: Balance,
+}
+
+/// Shared preflight for `register-neuron` and `register-limit` (burn registration paths).
+async fn preflight_burn_register(
+    client: &Client,
+    wallet_dir: &str,
+    wallet_name: &str,
+    hotkey_name: &str,
+    password: Option<&str>,
+    netuid: u16,
+    limit_rao: Option<u64>,
+) -> Result<BurnRegisterContext> {
+    validate_netuid(netuid)?;
+    if limit_rao == Some(0) {
+        anyhow::bail!("limit price must be positive (τ). Example: --limit-price 1.5");
+    }
+    let nuid = NetUid(netuid);
+    client.require_subnet_exists(nuid, None).await?;
+    let (pair, hk) = unlock_and_resolve(wallet_dir, wallet_name, hotkey_name, None, password)?;
+    let coldkey_ss58 = crate::wallet::keypair::to_ss58(&sp_core::Pair::public(&pair), 42);
+
+    let info = client.get_subnet_info(nuid).await?.ok_or_else(|| {
+        anyhow::anyhow!(
+            "Subnet {} not found.\n  List available subnets: agcli subnet list",
+            netuid
+        )
+    })?;
+    if !info.registration_allowed {
+        anyhow::bail!(
+            "Registration is disabled on SN{}.\n  Tip: subnet owner must enable via `agcli subnet set-param --netuid {} --param registration_allowed --value true`",
+            netuid, netuid
+        );
+    }
+    let burn = info.burn;
+    let balance = client.get_balance_ss58(&coldkey_ss58).await?;
+
+    if let Some(limit_rao) = limit_rao {
+        let limit_bal = Balance::from_rao(limit_rao);
+        println!(
+            "Limit-register on SN{}: hotkey {} | current burn {} | max willing {} | balance {}",
+            netuid,
+            crate::utils::short_ss58(&hk),
+            burn.display_tao(),
+            limit_bal.display_tao(),
+            balance.display_tao()
+        );
+        eprintln!(
+            "Note: `register_limit` rejects the tx if dynamic burn exceeds your cap (on-chain `RegistrationPriceLimitExceeded`). \
+             Current burn may rise before inclusion — set `--limit-price` above `agcli subnet cost --netuid {}` if needed.",
+            netuid
+        );
+        if burn.rao() > limit_rao {
+            anyhow::bail!(
+                "Current burn {} exceeds your limit {}.\n  \
+                 Wait for burn to decay, raise --limit-price, or use `agcli subnet register-neuron` without a cap.\n  \
+                 Check: agcli subnet cost --netuid {}",
+                burn.display_tao(),
+                limit_bal.display_tao(),
+                netuid
+            );
+        }
+    } else {
+        println!(
+            "Burn-register on SN{}: hotkey {} | burn cost {} (dynamic, not staked) | balance {}",
+            netuid,
+            crate::utils::short_ss58(&hk),
+            burn.display_tao(),
+            balance.display_tao()
+        );
+        eprintln!(
+            "Note: `burned_register` burns {} τ from the coldkey (recycled into subnet AMM). \
+             Cost changes after each registration in a block. Check bounds: `agcli subnet hyperparams --netuid {}` (min_burn/max_burn).",
+            burn.display_tao(),
+            netuid
+        );
+    }
+
+    if balance.rao() < burn.rao() {
+        anyhow::bail!(
+            "Insufficient balance: need {} τ for registration burn but coldkey has {}.\n  \
+             Check: agcli balance && agcli subnet cost --netuid {}",
+            burn.display_tao(),
+            balance.display_tao(),
+            netuid
+        );
+    }
+    if info.n >= info.max_n && info.max_n > 0 {
+        eprintln!(
+            "Warning: SN{} is at capacity ({}/{} UIDs). Registration may prune a low-stake neuron or fail with NoNeuronIdAvailable.",
+            netuid, info.n, info.max_n
+        );
+    }
+
+    Ok(BurnRegisterContext { pair, hk, burn })
+}
+
 #[cfg(test)]
 mod tests {
     use super::commit_status;
@@ -3347,6 +3810,52 @@ mod tests {
         let (status, blocks) = commit_status(301, 200, 300);
         assert_eq!(status, "EXPIRED");
         assert_eq!(blocks, None);
+    }
+
+    #[test]
+    fn parse_kappa_fraction_encodes_u16() {
+        use super::{parse_set_param_value, ParamArgs, ParamDef, ParamType, ParamValueForm};
+        let def = ParamDef {
+            name: "kappa",
+            call: "sudo_set_kappa",
+            ty: ParamType::U16,
+            form: ParamValueForm::NormalizedU16,
+            desc: "test",
+            args: ParamArgs::Subnet,
+        };
+        let (_vals, note) = parse_set_param_value(&def, "0.5").unwrap();
+        assert!(note.contains("32767") || note.contains("32768"));
+    }
+
+    #[test]
+    fn parse_min_burn_tao_to_rao() {
+        use super::{parse_set_param_value, ParamArgs, ParamDef, ParamType, ParamValueForm};
+        let def = ParamDef {
+            name: "min_burn",
+            call: "sudo_set_min_burn",
+            ty: ParamType::U64,
+            form: ParamValueForm::RaoU64,
+            desc: "test",
+            args: ParamArgs::Subnet,
+        };
+        let (_vals, note) = parse_set_param_value(&def, "1.0").unwrap();
+        assert!(note.contains("1000000000"));
+    }
+
+    #[test]
+    fn parse_rho_rejects_fraction() {
+        use super::{parse_set_param_value, ParamArgs, ParamDef, ParamType, ParamValueForm};
+        let def = ParamDef {
+            name: "rho",
+            call: "sudo_set_rho",
+            ty: ParamType::U16,
+            form: ParamValueForm::RhoScale,
+            desc: "test",
+            args: ParamArgs::Subnet,
+        };
+        assert!(parse_set_param_value(&def, "0.5").is_err());
+        let (_vals, note) = parse_set_param_value(&def, "10").unwrap();
+        assert!(note.contains("10"));
     }
 
     #[test]

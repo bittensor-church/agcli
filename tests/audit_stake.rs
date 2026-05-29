@@ -268,6 +268,7 @@ fn parse_stake_move_minimal() {
             from,
             to,
             hotkey: None,
+            dest_hotkey: None,
         } => {
             assert_eq!(*from, 1u16);
             assert_eq!(*to, 2u16);
@@ -1319,10 +1320,10 @@ fn insufficient_balance_classifies_as_chain_13() {
 }
 
 #[test]
-fn slippage_exceeded_classifies_as_chain_13() {
+fn slippage_exceeded_classifies_as_validation() {
     use agcli::error::{classify, exit_code};
     let err = anyhow::anyhow!("Slippage 5.00% exceeds maximum allowed 2.00% on SN1.");
-    assert_eq!(classify(&err), exit_code::CHAIN);
+    assert_eq!(classify(&err), exit_code::VALIDATION);
 }
 
 #[test]

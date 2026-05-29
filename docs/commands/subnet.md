@@ -124,7 +124,7 @@ All subnet subcommands use the global classifier:
 - JSON schema:
   `{ netuid, block, total_neurons, active, validators, miners, zero_emission, stale_neurons, price, commit_reveal, neurons[] }`
 - Pallet/runtime refs:
-  - Pinned block reads: `get_neurons_lite_at_block`, `get_dynamic_info_at_block`, `get_subnet_hyperparams_pinned`
+  - Pinned block reads: `get_neurons_lite_at_block`, `get_dynamic_info_at_block`, `get_subnet_hyperparams_at_block`
   - Subnet existence check first
 - Events emitted: none
 
@@ -211,9 +211,10 @@ All subnet subcommands use the global classifier:
   - Events: `NetworkAdded`, `SubnetIdentitySet` (when identity supplied)
 
 ### `subnet register-leased`
-- Flags: `[--end-block <u32>]`
+- Flags: `[--emissions-share <u8=100>] [--end-block <u32>]`
 - JSON schema: none (human text only)
-- Pallet call target: `SubtensorModule::register_leased_network(...)`
+- Pallet call: `SubtensorModule::register_leased_network(emissions_share, end_block)`
+- Signer: coldkey (not hotkey)
 - Storage/event intent:
   - lease maps `SubnetLeases`, `SubnetUidToLeaseId`, `SubnetLeaseShares`
   - events include `SubnetLeaseCreated` and subnet creation `NetworkAdded`
@@ -237,17 +238,31 @@ All subnet subcommands use the global classifier:
 ### `subnet register-neuron`
 - Flags: `--netuid <u16>`
 - JSON schema: none (human text only)
-- Pallet call: `SubtensorModule::burned_register(netuid, hotkey)`
+- Pallet call: `SubtensorModule::burned_register(netuid, hotkey)` → `do_register`
+- **Cost:** dynamic burn in **τ (TAO)** from coldkey free balance — **permanently burned/recycled**, not staked. Current price: `agcli subnet cost --netuid N`. Hyperparam bounds: `min_burn` / `max_burn` (RAO on-chain; set via `subnet set-param`).
+- **Preflight (client):** subnet exists, registration allowed, balance ≥ burn, capacity warning if full.
 - Storage touched: neuron registry maps (`Uids`, `Keys`, `IsNetworkMember`, stake/metric maps)
 - Events: `NeuronRegistered`
+- Common errors (exit 13): `NotEnoughBalanceToStake` (insufficient τ for burn), `HotKeyAlreadyRegisteredInSubNet`, `SubNetRegistrationDisabled`, `NoNeuronIdAvailable`, `TooManyRegistrationsThisBlock`
+
+### `subnet register-limit`
+- Flags: `--netuid <u16> --limit-price <f64>` (decimal **τ**; encoded as RAO u64 on-chain)
+- JSON schema: none (human text only)
+- Pallet call: `SubtensorModule::register_limit(netuid, hotkey, limit_price)` → `do_register_limit` → `do_register`
+- **Cost:** same burn semantics as `register-neuron`, but tx fails if `get_burn(netuid) > limit_price` at execution (`RegistrationPriceLimitExceeded`).
+- **Preflight (client):** same as `register-neuron`, plus current burn ≤ `--limit-price`.
+- Use when burn is volatile and you want a cap between quote and block inclusion.
 
 ### `subnet pow`
 - Flags: `--netuid <u16> [--threads <u32=4>]`
 - JSON schema: none
 - Pallet calls:
   - registration submit: `SubtensorModule::register(netuid, block_number, nonce, work, hotkey, coldkey)`
-  - prereads: `Difficulty`
+  - prereads: `Difficulty`, `NetworkPowRegistrationAllowed`, `registration_allowed`
+- **Preflight (client):** subnet exists, registration allowed, PoW registration allowed, difficulty bounds shown.
+- **Failure:** exits non-zero if PoW not found (was silent success before).
 - Events: `NeuronRegistered` on successful registration
+- Common errors: `InvalidWorkBlock` (template >3 blocks old), `InvalidDifficulty`, `POWRegistrationDisabled`
 
 ### `subnet dissolve`
 - Flags: `--netuid <u16>`
@@ -258,9 +273,16 @@ All subnet subcommands use the global classifier:
 ### `subnet set-param`
 - Flags: `--netuid <u16> --param <string> [--value <string>]`
 - JSON schema:
-  - `--param list`: `{ "parameters": [{ name, type, scope, description }] }`
+  - `--param list`: `{ "parameters": [{ name, type, value_encoding, scope, description }] }`
   - write success: `{ "tx_hash": "0x..." }`
 - Pallet call: dynamic `AdminUtils::<sudo_set_*>`
+- **Value encoding (critical for agents):**
+  - `kappa`, `bonds_penalty`: on-chain `u16`; runtime uses `value ÷ 65535` as float in [0, 1]. Pass `--value 0.5` (decimal) or raw u16 (e.g. `32767`).
+  - `rho`: on-chain `u16` sigmoid steepness; **not** divided by 65535 (default chain value 10; typical range ~1–40).
+  - `min_burn`, `max_burn`: on-chain RAO. Pass decimal TAO (e.g. `1.0`) or raw RAO integer.
+  - `alpha_values`: comma-separated `low,high` normalized decimals (e.g. `0.7,0.9`) or raw u16 pair. Requires `liquid_alpha_enabled`.
+  - Most other params: plain integer (blocks, counts, version keys).
+  - Run `agcli subnet set-param --netuid N --param list` for the full table with `value_encoding` column.
 - Storage/events:
   - depends on param; maps to Subtensor storage keys like `Tempo`, `Rho`, `Kappa`, `MaxAllowedUids`,
     `MinBurn`, `MaxBurn`, `WeightsSetRateLimit`, `MechanismCountCurrent`, etc.
@@ -326,13 +348,10 @@ All subnet subcommands use the global classifier:
 
 These are implementation facts discovered while tracing `src/cli/subnet_cmds.rs` into subxt payloads:
 
-1. `register-leased` in agcli submits `register_leased_network(hotkey, end_block)`, while
-   `pallet_subtensor` currently defines `register_leased_network(emissions_share, end_block)`.
-2. `terminate-lease` in agcli submits one numeric field from `--netuid`, while pallet call
-   signature is `terminate_lease(lease_id, hotkey)`.
-3. `register-with-identity` builds `SubnetIdentity` without `logo_url`, but current
+1. `terminate-lease` accepts `--netuid` at the CLI; `Client::terminate_lease` resolves `lease_id` and lease `hotkey` from storage before submitting `terminate_lease(lease_id, hotkey)`.
+2. `register-with-identity` builds `SubnetIdentity` without `logo_url`, but current
    `SubnetIdentityV3` includes `logo_url`.
-4. `dissolve` command is labeled owner flow in CLI UX, but the called dispatchable
+3. `dissolve` command is labeled owner flow in CLI UX, but the called dispatchable
    `dissolve_network(origin, _coldkey, netuid)` is root-gated in current pallet code.
 
 ---
@@ -341,5 +360,4 @@ These are implementation facts discovered while tracing `src/cli/subnet_cmds.rs`
 
 Within the audited dispatchables list, these are not directly surfaced as `agcli subnet ...` commands:
 
-- `SubtensorModule::register_limit` (no `subnet register-limit` CLI command)
 - `SubtensorModule::set_subnet_identity` (available under identity command group, not subnet group)

@@ -26,6 +26,16 @@ pub fn require_confirm_prompt_capability() -> Result<()> {
     );
 }
 
+/// For flows that use `dialoguer::Input` (not just confirm): fail fast without a TTY.
+pub fn require_tty_for_input(missing_flag: &str) -> Result<()> {
+    if stdin_is_tty() || is_yes_mode() || is_batch_mode() {
+        return Ok(());
+    }
+    anyhow::bail!(
+        "Cannot prompt for input: stdin is not a TTY. Pass {missing_flag}, or use --yes / --batch for non-interactive mode."
+    );
+}
+
 /// Common context passed to all command handlers, reducing parameter sprawl.
 ///
 /// Instead of passing 6-9 individual parameters to every handler,
@@ -176,6 +186,34 @@ pub fn validate_amount(amount: f64, label: &str) -> Result<()> {
 /// Uses the same saturating logic as `Balance::from_tao()` to prevent silent truncation.
 pub fn safe_rao(amount: f64) -> u64 {
     crate::types::Balance::from_tao(amount).rao()
+}
+
+/// Parse CLI `--amount` as **free TAO** (coldkey balance) for `add_stake` and similar.
+pub fn parse_cli_tao_amount(amount: f64, label: &str) -> Result<crate::types::Balance> {
+    validate_amount(amount, label)?;
+    Ok(crate::types::Balance::from_tao(amount))
+}
+
+/// Parse CLI `--amount` as **subnet alpha** (NOT TAO). Use for remove/move/swap/transfer/recycle/burn.
+pub fn parse_cli_alpha_amount(
+    amount: f64,
+    label: &str,
+) -> Result<crate::types::balance::AlphaBalance> {
+    validate_amount(amount, label)?;
+    crate::types::balance::AlphaBalance::try_from_units(amount)
+        .map_err(|e| anyhow::anyhow!("Invalid {label}: {e}"))
+}
+
+/// Parse limit-order `--price` as TAO per alpha (on-chain RAO/α = price × 1e9).
+pub fn parse_cli_limit_price(
+    price: f64,
+    label: &str,
+) -> Result<crate::types::balance::LimitPriceRao> {
+    validate_amount(price, label)?;
+    validate_limit_price(price, label)?;
+    Ok(crate::types::balance::LimitPriceRao::from_rao(safe_rao(
+        price,
+    )))
 }
 
 /// Validate childkey take percentage is in the allowed range [0, 18].
@@ -566,7 +604,7 @@ pub fn validate_netuid(netuid: u16) -> Result<()> {
 
 /// Validate a batch-axon JSON file structure. Returns a vec of errors found.
 /// Each entry should have: netuid (u16), ip (valid IPv4), port (u16).
-/// Optional fields: protocol (u8, default 4), version (u32, default 0).
+/// Optional fields: protocol (u8, default 0 = TCP), version (u32, default 0).
 pub fn validate_batch_axon_json(json_str: &str) -> Result<Vec<serde_json::Value>> {
     let entries: Vec<serde_json::Value> = serde_json::from_str(json_str).map_err(|e| {
         anyhow::anyhow!(
@@ -631,7 +669,7 @@ pub fn validate_batch_axon_json(json_str: &str) -> Result<Vec<serde_json::Value>
                 port_val
             );
         }
-        // Optional: protocol (u8, default 4)
+        // Optional: protocol (u8, default 0 = TCP)
         if let Some(proto) = obj.get("protocol") {
             let proto_val = proto.as_u64().ok_or_else(|| {
                 anyhow::anyhow!(
@@ -712,49 +750,21 @@ pub fn check_spending_limit(netuid: u16, tao_amount: f64) -> Result<()> {
 
 /// Check spending limits for a raw pallet call (used by batch, scheduler, multisig).
 ///
-/// Inspects the pallet/call name and args to extract the TAO amount and netuid
-/// for known staking operations. Unknown calls are allowed through (they may not
-/// involve TAO spending).
-///
-/// Known staking calls on SubtensorModule:
-///   add_stake(hotkey, netuid, amount_rao)
-///   remove_stake(hotkey, netuid, amount_rao)
-///   move_stake(hotkey_origin, hotkey_dest, origin_netuid, dest_netuid, amount_rao)
-///   swap_stake(hotkey, origin_netuid, dest_netuid, amount_rao)
-///   transfer_stake(dest, hotkey, origin_netuid, dest_netuid, amount_rao)
-///   add_stake_limit(hotkey, netuid, amount_rao, limit_price, allow_partial)
-///   remove_stake_limit(hotkey, netuid, amount_rao, limit_price, allow_partial)
-///   swap_stake_limit(hotkey, origin_netuid, dest_netuid, amount_rao, limit_price, allow_partial)
+/// Uses [`crate::chain::extrinsic_args::ExtrinsicSpec`] for TAO-spending arg indices.
+/// Alpha-denominated staking ops skip spending limits (config is in τ).
 pub fn check_spending_limit_for_raw_call(
     pallet: &str,
     call: &str,
     args: &[serde_json::Value],
 ) -> Result<()> {
-    if pallet != "SubtensorModule" {
+    let Some(spec) = crate::chain::ExtrinsicSpec::find(pallet, call) else {
         return Ok(());
-    }
-
-    // Extract (netuid_index, amount_rao_index) for each known call
-    let (netuid_idx, amount_idx) = match call {
-        // add_stake(hotkey, netuid, amount_rao)
-        // remove_stake(hotkey, netuid, amount_rao)
-        "add_stake" | "remove_stake" => (1, 2),
-        // add_stake_limit(hotkey, netuid, amount_rao, limit_price, allow_partial)
-        // remove_stake_limit(hotkey, netuid, amount_rao, limit_price, allow_partial)
-        "add_stake_limit" | "remove_stake_limit" => (1, 2),
-        // move_stake(hotkey_o, hotkey_d, origin_netuid, dest_netuid, amount_rao)
-        "move_stake" => (2, 4), // check origin_netuid (funds leave this subnet)
-        // swap_stake(hotkey, origin_netuid, dest_netuid, amount_rao)
-        "swap_stake" => (1, 3), // check origin_netuid (funds leave this subnet)
-        // transfer_stake(dest, hotkey, origin_netuid, dest_netuid, amount_rao)
-        "transfer_stake" => (2, 4), // check origin_netuid (funds leave this subnet)
-        // swap_stake_limit(hotkey, origin_netuid, dest_netuid, amount_rao, ...)
-        "swap_stake_limit" => (1, 3), // check origin_netuid (funds leave this subnet)
-        _ => return Ok(()),           // unknown call, no spending limit to check
+    };
+    let Some((netuid_idx, amount_idx)) = spec.tao_spending_indices() else {
+        return Ok(());
     };
 
     if args.len() <= amount_idx {
-        // Not enough args to extract amount — let the call fail at encoding time
         return Ok(());
     }
 
@@ -987,14 +997,53 @@ pub fn parse_weight_pairs(weights_str: &str) -> Result<(Vec<u16>, Vec<u16>)> {
     Ok((uids, weights))
 }
 
+/// Encode a child proportion for `set_children` (on-chain u64; runtime uses value ÷ u64::MAX).
+fn encode_child_proportion(proportion_str: &str) -> Result<(u64, String)> {
+    if proportion_str.contains('.') {
+        let frac: f64 = proportion_str.parse().map_err(|_| {
+            anyhow::anyhow!(
+                "Invalid proportion '{}' — use decimal 0.0–1.0 (e.g. 0.5) or raw u64",
+                proportion_str
+            )
+        })?;
+        if !frac.is_finite() || frac <= 0.0 || frac > 1.0 {
+            anyhow::bail!(
+                "Proportion '{}' must be a fraction 0.0–1.0 exclusive of 0 (e.g. 0.5) or raw u64",
+                proportion_str
+            );
+        }
+        let raw = (frac * u64::MAX as f64).round().min(u64::MAX as f64) as u64;
+        if raw == 0 {
+            anyhow::bail!(
+                "Proportion '{}' rounds to zero on-chain — use a larger fraction or raw u64",
+                proportion_str
+            );
+        }
+        Ok((raw, format!("fraction {frac} → u64 {raw}")))
+    } else {
+        let raw: u64 = proportion_str.parse().map_err(|_| {
+            anyhow::anyhow!(
+                "Invalid proportion '{}' — must be positive integer u64 or decimal 0.0–1.0",
+                proportion_str
+            )
+        })?;
+        if raw == 0 {
+            anyhow::bail!("Invalid proportion: 0. Each child must have a non-zero proportion.");
+        }
+        let pct = (raw as f64 / u64::MAX as f64) * 100.0;
+        Ok((raw, format!("raw u64 {raw} (≈{pct:.2}% of full weight)")))
+    }
+}
+
 pub fn parse_children(children_str: &str) -> Result<Vec<(u64, String)>> {
     let trimmed = children_str.trim();
     if trimmed.is_empty() {
         anyhow::bail!(
-            "Children list cannot be empty.\n  Format: 'proportion:hotkey_ss58' (e.g., '50000:5Cai...,50000:5Dqw...')"
+            "Children list cannot be empty.\n  Format: 'proportion:hotkey_ss58' — proportion is u64 on-chain (use 0.5 for 50% or raw u64 up to u64::MAX)"
         );
     }
     let mut result = Vec::new();
+    let mut notes = Vec::new();
     for pair in trimmed.split(',') {
         let pair_trimmed = pair.trim();
         if pair_trimmed.is_empty() {
@@ -1003,29 +1052,32 @@ pub fn parse_children(children_str: &str) -> Result<Vec<(u64, String)>> {
         // SS58 addresses contain colons in some edge cases, so split on first colon only
         let colon_pos = pair_trimmed.find(':').ok_or_else(|| {
             anyhow::anyhow!(
-                "Invalid child pair '{}'. Format: 'proportion:hotkey_ss58' (e.g., '50000:5Cai...')",
+                "Invalid child pair '{}'. Format: 'proportion:hotkey_ss58' (e.g. '0.5:5Cai...' or '9223372036854775807:5Cai...')",
                 pair_trimmed
             )
         })?;
         let proportion_str = &pair_trimmed[..colon_pos].trim();
         let hotkey_str = &pair_trimmed[colon_pos + 1..].trim();
-        let proportion = proportion_str.parse::<u64>().map_err(|_| {
-            anyhow::anyhow!(
-                "Invalid proportion '{}' — must be a positive integer (u64)",
-                proportion_str
-            )
-        })?;
-        if proportion == 0 {
-            anyhow::bail!("Invalid proportion: 0. Each child must have a non-zero proportion.");
-        }
+        let (proportion, note) = encode_child_proportion(proportion_str)?;
         // Validate the hotkey is a valid SS58 address
         validate_ss58(hotkey_str, "child hotkey")?;
+        notes.push(format!("{} → {}", hotkey_str, note));
         result.push((proportion, hotkey_str.to_string()));
     }
     if result.is_empty() {
         anyhow::bail!(
-            "No valid children provided.\n  Format: 'proportion:hotkey_ss58' (e.g., '50000:5Cai...')"
+            "No valid children provided.\n  Format: 'proportion:hotkey_ss58' (e.g. '0.5:5Cai...,0.5:5Dqw...')"
         );
+    }
+    let total: u128 = result.iter().map(|(p, _)| *p as u128).sum();
+    if total > u64::MAX as u128 {
+        anyhow::bail!(
+            "Child proportions overflow u64::MAX (sum={total}). \
+             Reduce proportions — on-chain limit is total ≤ u64::MAX (100% = u64::MAX)."
+        );
+    }
+    for note in notes {
+        tracing::debug!(note = %note, "set_children proportion encoding");
     }
     Ok(result)
 }
@@ -2196,6 +2248,15 @@ pub fn validate_limit_price(price: f64, label: &str) -> Result<()> {
     Ok(())
 }
 
+/// Parse `--emissions-share` (0–100) for clap `value_parser`.
+pub fn parse_emissions_share(raw: &str) -> std::result::Result<u8, String> {
+    let value: u8 = raw
+        .parse()
+        .map_err(|e| format!("invalid emissions share {raw:?}: {e}"))?;
+    crate::utils::validate_emissions_share(value).map_err(|e| e.to_string())?;
+    Ok(value)
+}
+
 /// Validate scheduler block number. Must be > 0 (block 0 is genesis, not schedulable).
 pub fn validate_block_number(block: u32, label: &str) -> Result<()> {
     if block == 0 {
@@ -2843,28 +2904,24 @@ mod tests {
         );
     }
 
-    // --- Issue 154: spending limit checks origin_netuid not dest_netuid for move/swap/transfer ---
+    // Alpha-denominated stake ops skip τ spending limits in batch/scheduler paths.
 
     #[test]
-    fn spending_limit_move_stake_uses_origin_netuid() {
-        // move_stake(hotkey_o, hotkey_d, origin_netuid=1, dest_netuid=2, amount_rao=1000)
-        // The spending limit should be checked against netuid 1 (origin), not netuid 2 (dest)
+    fn spending_limit_skips_alpha_denominated_move_stake() {
         use serde_json::json;
         let args = vec![
             json!("5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY"),
             json!("5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty"),
-            json!(1),                // origin_netuid
-            json!(2),                // dest_netuid
-            json!(1_000_000_000u64), // 1 TAO in rao
+            json!(1),
+            json!(2),
+            json!(1_000_000_000u64),
         ];
-        // This test verifies the function extracts netuid from index 2 (origin), not 3 (dest).
-        // Without a spending limit configured, the call should succeed.
         let result = check_spending_limit_for_raw_call("SubtensorModule", "move_stake", &args);
         assert!(result.is_ok());
     }
 
     #[test]
-    fn spending_limit_swap_stake_uses_origin_netuid() {
+    fn spending_limit_skips_alpha_denominated_swap_stake() {
         // swap_stake(hotkey, origin_netuid=1, dest_netuid=2, amount_rao=1000)
         use serde_json::json;
         let args = vec![
@@ -2878,8 +2935,8 @@ mod tests {
     }
 
     #[test]
-    fn spending_limit_transfer_stake_uses_origin_netuid() {
-        // transfer_stake(dest, hotkey, origin_netuid=1, dest_netuid=2, amount_rao=1000)
+    fn spending_limit_transfer_stake_skips_alpha_amount() {
+        // transfer_stake amount is alpha raw — spending limits apply to τ (add_stake only)
         use serde_json::json;
         let args = vec![
             json!("5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty"),

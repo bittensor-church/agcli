@@ -4,7 +4,7 @@
 use anyhow::{Context, Result};
 use sp_core::{sr25519, Pair as _};
 
-use crate::types::balance::Balance;
+use crate::types::balance::{AlphaBalance, Balance, LimitPriceRao};
 use crate::types::chain_data::*;
 use crate::types::network::NetUid;
 use crate::{api, AccountId};
@@ -23,6 +23,8 @@ impl Client {
     // All extrinsics use sign_submit() to reduce boilerplate.
 
     /// Transfer TAO from coldkey to destination.
+    ///
+    /// **Units:** `amount` is free **TAO** (`Balance` / RAO).
     pub async fn transfer(
         &self,
         pair: &sr25519::Pair,
@@ -54,6 +56,8 @@ impl Client {
     // ──────── Staking ────────
 
     /// Add stake to a hotkey on a subnet.
+    ///
+    /// **Units:** `amount` is free **TAO** from the coldkey (`Balance` / RAO).
     pub async fn add_stake(
         &self,
         pair: &sr25519::Pair,
@@ -81,35 +85,39 @@ impl Client {
         self.sign_submit_or_mev(&tx, pair, mev).await
     }
 
-    /// Remove stake from a hotkey on a subnet.
+    /// Remove alpha stake from a hotkey on a subnet (`SubtensorModule::remove_stake`).
+    ///
+    /// `amount` is **alpha** (`AlphaBalance`), not TAO — the chain burns alpha and credits free TAO.
     pub async fn remove_stake(
         &self,
         pair: &sr25519::Pair,
         hotkey_ss58: &str,
         netuid: NetUid,
-        amount: Balance,
+        amount: AlphaBalance,
     ) -> Result<String> {
         self.remove_stake_mev(pair, hotkey_ss58, netuid, amount, false)
             .await
     }
 
-    /// Remove stake, optionally wrapping through MEV shield.
+    /// Remove alpha stake, optionally wrapping through MEV shield.
     pub async fn remove_stake_mev(
         &self,
         pair: &sr25519::Pair,
         hotkey_ss58: &str,
         netuid: NetUid,
-        amount: Balance,
+        amount: AlphaBalance,
         mev: bool,
     ) -> Result<String> {
         let hk = Self::ss58_to_account_id(hotkey_ss58)?;
         let tx = api::tx()
             .subtensor_module()
-            .remove_stake(hk, netuid.0, amount.rao());
+            .remove_stake(hk, netuid.0, amount.raw());
         self.sign_submit_or_mev(&tx, pair, mev).await
     }
 
-    /// Register on a subnet via burned TAO.
+    /// Register on a subnet via burned TAO (`burned_register` → `do_register`).
+    ///
+    /// Burns dynamic `get_burn(netuid)` from the coldkey (τ recycled, not staked).
     pub async fn burned_register(
         &self,
         pair: &sr25519::Pair,
@@ -124,64 +132,95 @@ impl Client {
         .await
     }
 
-    /// Move stake between subnets (same coldkey).
+    /// Register with a maximum burn cap (`register_limit` → `do_register_limit`).
+    ///
+    /// Fails on-chain if dynamic `get_burn(netuid)` exceeds `limit_price_rao` (both RAO/τ units).
+    pub async fn register_limit(
+        &self,
+        pair: &sr25519::Pair,
+        netuid: NetUid,
+        hotkey_ss58: &str,
+        limit_price_rao: u64,
+    ) -> Result<String> {
+        let hk = Self::ss58_to_account_id(hotkey_ss58)?;
+        use subxt::dynamic::Value;
+        self.submit_raw_call(
+            pair,
+            "SubtensorModule",
+            "register_limit",
+            vec![
+                Value::u128(netuid.0 as u128),
+                Value::from_bytes(hk.0),
+                Value::u128(limit_price_rao as u128),
+            ],
+        )
+        .await
+    }
+
+    /// Move alpha stake between subnets (same or different hotkey).
+    ///
+    /// **Units:** `amount` is **alpha** (`AlphaBalance`), not TAO.
     pub async fn move_stake(
         &self,
         pair: &sr25519::Pair,
         hotkey_ss58: &str,
         from: NetUid,
         to: NetUid,
-        amount: Balance,
+        amount: AlphaBalance,
     ) -> Result<String> {
-        self.move_stake_mev(pair, hotkey_ss58, from, to, amount, false)
+        self.move_stake_mev(pair, hotkey_ss58, hotkey_ss58, from, to, amount, false)
             .await
     }
 
-    /// Move stake, optionally wrapping through MEV shield.
+    /// Move alpha stake, optionally wrapping through MEV shield.
     pub async fn move_stake_mev(
         &self,
         pair: &sr25519::Pair,
-        hotkey_ss58: &str,
+        origin_hotkey_ss58: &str,
+        dest_hotkey_ss58: &str,
         from: NetUid,
         to: NetUid,
-        amount: Balance,
+        amount: AlphaBalance,
         mev: bool,
     ) -> Result<String> {
-        let hk = Self::ss58_to_account_id(hotkey_ss58)?;
+        let origin_hk = Self::ss58_to_account_id(origin_hotkey_ss58)?;
+        let dest_hk = Self::ss58_to_account_id(dest_hotkey_ss58)?;
         let tx =
             api::tx()
                 .subtensor_module()
-                .move_stake(hk.clone(), hk, from.0, to.0, amount.rao());
+                .move_stake(origin_hk, dest_hk, from.0, to.0, amount.raw());
         self.sign_submit_or_mev(&tx, pair, mev).await
     }
 
-    /// Swap stake between subnets (same hotkey).
+    /// Swap alpha stake between subnets (same hotkey).
+    ///
+    /// **Units:** `amount` is **alpha** (`AlphaBalance`), not TAO.
     pub async fn swap_stake(
         &self,
         pair: &sr25519::Pair,
         hotkey_ss58: &str,
         from: NetUid,
         to: NetUid,
-        amount: Balance,
+        amount: AlphaBalance,
     ) -> Result<String> {
         self.swap_stake_mev(pair, hotkey_ss58, from, to, amount, false)
             .await
     }
 
-    /// Swap stake, optionally wrapping through MEV shield.
+    /// Swap alpha stake, optionally wrapping through MEV shield.
     pub async fn swap_stake_mev(
         &self,
         pair: &sr25519::Pair,
         hotkey_ss58: &str,
         from: NetUid,
         to: NetUid,
-        amount: Balance,
+        amount: AlphaBalance,
         mev: bool,
     ) -> Result<String> {
         let hk = Self::ss58_to_account_id(hotkey_ss58)?;
         let tx = api::tx()
             .subtensor_module()
-            .swap_stake(hk, from.0, to.0, amount.rao());
+            .swap_stake(hk, from.0, to.0, amount.raw());
         self.sign_submit_or_mev(&tx, pair, mev).await
     }
 
@@ -192,7 +231,9 @@ impl Client {
             .await
     }
 
-    /// Transfer stake to another coldkey.
+    /// Transfer alpha stake to another coldkey (optionally cross-subnet).
+    ///
+    /// **Units:** `amount` is **alpha** (`AlphaBalance`), not TAO.
     pub async fn transfer_stake(
         &self,
         pair: &sr25519::Pair,
@@ -200,13 +241,13 @@ impl Client {
         hotkey_ss58: &str,
         from: NetUid,
         to: NetUid,
-        amount: Balance,
+        amount: AlphaBalance,
     ) -> Result<String> {
         self.transfer_stake_mev(pair, dest_ss58, hotkey_ss58, from, to, amount, false)
             .await
     }
 
-    /// Transfer stake, optionally wrapping through MEV shield.
+    /// Transfer alpha stake, optionally wrapping through MEV shield.
     pub async fn transfer_stake_mev(
         &self,
         pair: &sr25519::Pair,
@@ -214,24 +255,26 @@ impl Client {
         hotkey_ss58: &str,
         from: NetUid,
         to: NetUid,
-        amount: Balance,
+        amount: AlphaBalance,
         mev: bool,
     ) -> Result<String> {
         let dest = Self::ss58_to_account_id(dest_ss58)?;
         let hk = Self::ss58_to_account_id(hotkey_ss58)?;
         let tx = api::tx()
             .subtensor_module()
-            .transfer_stake(dest, hk, from.0, to.0, amount.rao());
+            .transfer_stake(dest, hk, from.0, to.0, amount.raw());
         self.sign_submit_or_mev(&tx, pair, mev).await
     }
 
     /// Recycle alpha for TAO.
+    ///
+    /// **Units:** `amount` is **alpha** (`AlphaBalance`).
     pub async fn recycle_alpha(
         &self,
         pair: &sr25519::Pair,
         hotkey_ss58: &str,
         netuid: NetUid,
-        amount: u64,
+        amount: AlphaBalance,
     ) -> Result<String> {
         self.recycle_alpha_mev(pair, hotkey_ss58, netuid, amount, false)
             .await
@@ -243,13 +286,13 @@ impl Client {
         pair: &sr25519::Pair,
         hotkey_ss58: &str,
         netuid: NetUid,
-        amount: u64,
+        amount: AlphaBalance,
         mev: bool,
     ) -> Result<String> {
         let hk = Self::ss58_to_account_id(hotkey_ss58)?;
         let tx = api::tx()
             .subtensor_module()
-            .recycle_alpha(hk, amount, netuid.0);
+            .recycle_alpha(hk, amount.raw(), netuid.0);
         self.sign_submit_or_mev(&tx, pair, mev).await
     }
 
@@ -263,13 +306,15 @@ impl Client {
     }
 
     /// Add stake with limit order.
+    ///
+    /// **Units:** `amount` is **TAO**; `limit_price` is **TAO per alpha** (RAO/α on-chain).
     pub async fn add_stake_limit(
         &self,
         pair: &sr25519::Pair,
         hotkey_ss58: &str,
         netuid: NetUid,
         amount: Balance,
-        limit_price: u64,
+        limit_price: LimitPriceRao,
         allow_partial: bool,
     ) -> Result<String> {
         self.add_stake_limit_mev(
@@ -291,7 +336,7 @@ impl Client {
         hotkey_ss58: &str,
         netuid: NetUid,
         amount: Balance,
-        limit_price: u64,
+        limit_price: LimitPriceRao,
         allow_partial: bool,
         mev: bool,
     ) -> Result<String> {
@@ -300,20 +345,22 @@ impl Client {
             hk,
             netuid.0,
             amount.rao(),
-            limit_price,
+            limit_price.rao(),
             allow_partial,
         );
         self.sign_submit_or_mev(&tx, pair, mev).await
     }
 
-    /// Remove stake with limit order.
+    /// Remove alpha stake with limit order.
+    ///
+    /// **Units:** `amount` is **alpha**; `limit_price` is minimum **TAO per alpha** (RAO/α).
     pub async fn remove_stake_limit(
         &self,
         pair: &sr25519::Pair,
         hotkey_ss58: &str,
         netuid: NetUid,
-        amount: u64,
-        limit_price: u64,
+        amount: AlphaBalance,
+        limit_price: LimitPriceRao,
         allow_partial: bool,
     ) -> Result<String> {
         self.remove_stake_limit_mev(
@@ -328,14 +375,14 @@ impl Client {
         .await
     }
 
-    /// Remove stake limit, optionally wrapping through MEV shield.
+    /// Remove alpha stake limit, optionally wrapping through MEV shield.
     pub async fn remove_stake_limit_mev(
         &self,
         pair: &sr25519::Pair,
         hotkey_ss58: &str,
         netuid: NetUid,
-        amount: u64,
-        limit_price: u64,
+        amount: AlphaBalance,
+        limit_price: LimitPriceRao,
         allow_partial: bool,
         mev: bool,
     ) -> Result<String> {
@@ -343,8 +390,8 @@ impl Client {
         let tx = api::tx().subtensor_module().remove_stake_limit(
             hk,
             netuid.0,
-            amount,
-            limit_price,
+            amount.raw(),
+            limit_price.rao(),
             allow_partial,
         );
         self.sign_submit_or_mev(&tx, pair, mev).await
@@ -362,11 +409,13 @@ impl Client {
     }
 
     /// Burn alpha tokens (permanently remove from supply).
+    ///
+    /// **Units:** `amount` is **alpha** (`AlphaBalance`).
     pub async fn burn_alpha(
         &self,
         pair: &sr25519::Pair,
         hotkey_ss58: &str,
-        amount: u64,
+        amount: AlphaBalance,
         netuid: NetUid,
     ) -> Result<String> {
         self.burn_alpha_mev(pair, hotkey_ss58, amount, netuid, false)
@@ -378,18 +427,20 @@ impl Client {
         &self,
         pair: &sr25519::Pair,
         hotkey_ss58: &str,
-        amount: u64,
+        amount: AlphaBalance,
         netuid: NetUid,
         mev: bool,
     ) -> Result<String> {
         let hk = Self::ss58_to_account_id(hotkey_ss58)?;
         let tx = api::tx()
             .subtensor_module()
-            .burn_alpha(hk, amount, netuid.0);
+            .burn_alpha(hk, amount.raw(), netuid.0);
         self.sign_submit_or_mev(&tx, pair, mev).await
     }
 
-    /// Swap stake between subnets with a limit price.
+    /// Swap alpha stake between subnets with a limit price.
+    ///
+    /// **Units:** `amount` is **alpha**; `limit_price` is minimum **TAO per alpha** (RAO/α).
     #[allow(clippy::too_many_arguments)]
     pub async fn swap_stake_limit(
         &self,
@@ -397,8 +448,8 @@ impl Client {
         hotkey_ss58: &str,
         from: NetUid,
         to: NetUid,
-        amount: u64,
-        limit_price: u64,
+        amount: AlphaBalance,
+        limit_price: LimitPriceRao,
         allow_partial: bool,
     ) -> Result<String> {
         self.swap_stake_limit_mev(
@@ -414,7 +465,7 @@ impl Client {
         .await
     }
 
-    /// Swap stake limit, optionally wrapping through MEV shield.
+    /// Swap alpha stake limit, optionally wrapping through MEV shield.
     #[allow(clippy::too_many_arguments)]
     pub async fn swap_stake_limit_mev(
         &self,
@@ -422,8 +473,8 @@ impl Client {
         hotkey_ss58: &str,
         from: NetUid,
         to: NetUid,
-        amount: u64,
-        limit_price: u64,
+        amount: AlphaBalance,
+        limit_price: LimitPriceRao,
         allow_partial: bool,
         mev: bool,
     ) -> Result<String> {
@@ -432,8 +483,8 @@ impl Client {
             hk,
             from.0,
             to.0,
-            amount,
-            limit_price,
+            amount.raw(),
+            limit_price.rao(),
             allow_partial,
         );
         self.sign_submit_or_mev(&tx, pair, mev).await
@@ -621,6 +672,22 @@ impl Client {
         }
     }
 
+    /// Whether PoW registration is enabled for a subnet (`NetworkPowRegistrationAllowed`).
+    pub async fn get_pow_registration_allowed(&self, netuid: NetUid) -> Result<bool> {
+        let addr = api::storage()
+            .subtensor_module()
+            .network_pow_registration_allowed(netuid.0);
+        let val = self.inner.storage().at_latest().await?.fetch(&addr).await?;
+        Ok(val.unwrap_or(true))
+    }
+
+    /// Liquid-alpha sigmoid bounds (`AlphaValues`: u16 pair, runtime ÷65535 → [0,1]).
+    pub async fn get_alpha_values(&self, netuid: NetUid) -> Result<(u16, u16)> {
+        let addr = api::storage().subtensor_module().alpha_values(netuid.0);
+        let val = self.inner.storage().at_latest().await?.fetch(&addr).await?;
+        Ok(val.unwrap_or((45875, 58982))) // chain defaults ≈ (0.7, 0.9)
+    }
+
     // ──────── Child Keys ────────
 
     /// Set childkey take.
@@ -715,8 +782,8 @@ impl Client {
 
     // ──────── Key Swap ────────
 
-    /// Schedule coldkey swap.
-    pub async fn schedule_swap_coldkey(
+    /// Announce coldkey swap (step 1 of two-phase rotation).
+    pub async fn announce_swap_coldkey(
         &self,
         pair: &sr25519::Pair,
         new_coldkey_ss58: &str,
@@ -725,6 +792,33 @@ impl Client {
         let new_hash = subxt::utils::H256::from(sp_core::hashing::blake2_256(&new_id.0));
         self.sign_submit(
             &api::tx().subtensor_module().announce_coldkey_swap(new_hash),
+            pair,
+        )
+        .await
+    }
+
+    /// Backward-compatible alias for [`Self::announce_swap_coldkey`].
+    #[deprecated(
+        since = "0.1.0",
+        note = "use `announce_swap_coldkey` instead; will be removed in 0.2.0"
+    )]
+    pub async fn schedule_swap_coldkey(
+        &self,
+        pair: &sr25519::Pair,
+        new_coldkey_ss58: &str,
+    ) -> Result<String> {
+        self.announce_swap_coldkey(pair, new_coldkey_ss58).await
+    }
+
+    /// Execute an announced coldkey swap (step 2 of two-phase rotation).
+    pub async fn execute_swap_coldkey(
+        &self,
+        pair: &sr25519::Pair,
+        new_coldkey_ss58: &str,
+    ) -> Result<String> {
+        let new_id = Self::ss58_to_account_id(new_coldkey_ss58)?;
+        self.sign_submit(
+            &api::tx().subtensor_module().swap_coldkey_announced(new_id),
             pair,
         )
         .await
@@ -2133,13 +2227,22 @@ impl Client {
     }
 
     /// Force enter safe mode (requires privilege) via sudo.
-    pub async fn safe_mode_force_enter(
+    pub async fn safe_mode_force_enter(&self, pair: &sr25519::Pair) -> Result<String> {
+        self.submit_sudo_raw_call_checked(pair, "SafeMode", "force_enter", vec![])
+            .await
+    }
+
+    /// Backward-compatible wrapper; `duration` is ignored (set by chain config).
+    #[deprecated(
+        since = "0.1.0",
+        note = "use `safe_mode_force_enter(pair)` without duration; will be removed in 0.2.0"
+    )]
+    pub async fn safe_mode_force_enter_with_duration(
         &self,
         pair: &sr25519::Pair,
         _duration: u32,
     ) -> Result<String> {
-        self.submit_sudo_raw_call_checked(pair, "SafeMode", "force_enter", vec![])
-            .await
+        self.safe_mode_force_enter(pair).await
     }
 
     /// Force exit safe mode (requires privilege) via sudo.
@@ -2253,21 +2356,38 @@ impl Client {
         self.sign_submit(&tx, pair).await
     }
 
-    /// Associate an EVM key with the signer's SS58 account.
+    /// Associate an EVM key with the signer's SS58 account on a subnet.
     pub async fn associate_evm_key(
+        &self,
+        pair: &sr25519::Pair,
+        netuid: u16,
+        evm_address: [u8; 20],
+        block_number: u64,
+        signature: [u8; 65],
+    ) -> Result<String> {
+        let tx = api::tx().subtensor_module().associate_evm_key(
+            netuid,
+            subxt::utils::H160::from(evm_address),
+            block_number,
+            signature,
+        );
+        self.sign_submit(&tx, pair).await
+    }
+
+    /// Backward-compatible wrapper using subnet 0 and a u32 block number.
+    #[deprecated(
+        since = "0.1.0",
+        note = "use `associate_evm_key` with `netuid` and u64 `block_number`; will be removed in 0.2.0"
+    )]
+    pub async fn associate_evm_key_legacy(
         &self,
         pair: &sr25519::Pair,
         evm_address: [u8; 20],
         block_number: u32,
         signature: [u8; 65],
     ) -> Result<String> {
-        let tx = api::tx().subtensor_module().associate_evm_key(
-            0u16,
-            subxt::utils::H160::from(evm_address),
-            block_number as u64,
-            signature,
-        );
-        self.sign_submit(&tx, pair).await
+        self.associate_evm_key(pair, 0, evm_address, block_number as u64, signature)
+            .await
     }
 
     /// Start call for subnet initialization.
@@ -2282,14 +2402,15 @@ impl Client {
         .await
     }
 
-    /// Remove stake with full limit (no partial fills).
+    /// Remove all alpha on a subnet with a limit price (raw call; `alpha_amount` must be 0 on-chain).
+    ///
+    /// **Units:** `limit_price` is minimum **TAO per alpha** (RAO/α).
     pub async fn remove_stake_full_limit(
         &self,
         pair: &sr25519::Pair,
         hotkey_ss58: &str,
         netuid: NetUid,
-        amount: u64,
-        limit_price: u64,
+        limit_price: LimitPriceRao,
     ) -> Result<String> {
         use subxt::dynamic::Value;
         let hk = Self::ss58_to_account_id(hotkey_ss58)?;
@@ -2300,8 +2421,8 @@ impl Client {
             vec![
                 Value::from_bytes(hk.0),
                 Value::u128(netuid.0 as u128),
-                Value::u128(amount as u128),
-                Value::u128(limit_price as u128),
+                Value::u128(0),
+                Value::u128(limit_price.rao() as u128),
             ],
         )
         .await
@@ -2439,17 +2560,31 @@ impl Client {
     pub async fn register_leased_network(
         &self,
         pair: &sr25519::Pair,
-        hotkey_ss58: &str,
+        emissions_share: u8,
         end_block: Option<u32>,
     ) -> Result<String> {
-        // Legacy CLI still resolves a hotkey for this command; validate format even
-        // though the runtime call now takes emissions_share + end_block.
-        let _ = Self::ss58_to_account_id(hotkey_ss58)?;
-        let emissions_share = api::runtime_types::sp_arithmetic::per_things::Percent(100u8);
+        crate::utils::validate_emissions_share(emissions_share)?;
+        let emissions_share =
+            api::runtime_types::sp_arithmetic::per_things::Percent(emissions_share);
         let tx = api::tx()
             .subtensor_module()
             .register_leased_network(emissions_share, end_block);
         self.sign_submit(&tx, pair).await
+    }
+
+    /// Backward-compatible wrapper; validates `hotkey_ss58` format but signs with `pair` (coldkey).
+    #[deprecated(
+        since = "0.1.0",
+        note = "use `register_leased_network(pair, emissions_share, end_block)` with coldkey signer; will be removed in 0.2.0"
+    )]
+    pub async fn register_leased_network_with_hotkey(
+        &self,
+        pair: &sr25519::Pair,
+        hotkey_ss58: &str,
+        end_block: Option<u32>,
+    ) -> Result<String> {
+        let _ = Self::ss58_to_account_id(hotkey_ss58)?;
+        self.register_leased_network(pair, 100, end_block).await
     }
 
     /// Terminate a subnet lease.

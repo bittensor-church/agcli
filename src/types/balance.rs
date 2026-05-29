@@ -92,14 +92,60 @@ impl AlphaBalance {
         Self { raw }
     }
 
+    /// Create from human-readable alpha units (9 decimals, same scale as TAO/RAO).
+    ///
+    /// On-chain `remove_stake`, `move_stake`, and `swap_stake` take `AlphaBalance`, not TAO.
+    /// Invalid input maps to zero; prefer [`Self::try_from_units`] for SDK callers.
+    pub fn from_units(units: f64) -> Self {
+        Self::try_from_units(units).unwrap_or(Self::ZERO)
+    }
+
+    /// Like [`Self::from_units`] but errors on non-finite or negative input.
+    pub fn try_from_units(units: f64) -> anyhow::Result<Self> {
+        if !units.is_finite() || units < 0.0 {
+            anyhow::bail!("invalid alpha amount: must be finite and non-negative, got {units}");
+        }
+        let raw_f = (units * RAO_PER_TAO as f64).round();
+        let raw = if raw_f >= u64::MAX as f64 {
+            u64::MAX
+        } else {
+            raw_f as u64
+        };
+        Ok(Self { raw })
+    }
+
     pub fn raw(&self) -> u64 {
         self.raw
+    }
+
+    /// Human-readable alpha units (9 decimals).
+    pub fn units(&self) -> f64 {
+        self.raw as f64 / RAO_PER_TAO as f64
     }
 }
 
 impl fmt::Display for AlphaBalance {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{:.4} α", self.raw as f64 / RAO_PER_TAO as f64)
+    }
+}
+
+/// AMM limit-order price: **TAO per alpha**, on-chain as RAO/α (`limit_price` u64).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct LimitPriceRao(u64);
+
+impl LimitPriceRao {
+    pub fn from_rao(rao: u64) -> Self {
+        Self(rao)
+    }
+
+    pub fn rao(&self) -> u64 {
+        self.0
+    }
+
+    /// Human TAO/α for display.
+    pub fn tao_per_alpha(&self) -> f64 {
+        self.0 as f64 / RAO_PER_TAO as f64
     }
 }
 
@@ -175,6 +221,20 @@ mod tests {
         assert_eq!(b.raw(), 1_000_000_000);
         let display = format!("{}", b);
         assert!(display.contains("α"));
+    }
+
+    #[test]
+    fn alpha_from_units_matches_tao_scale() {
+        let a = AlphaBalance::from_units(1.5);
+        assert_eq!(a.raw(), 1_500_000_000);
+        assert!((a.units() - 1.5).abs() < 1e-9);
+    }
+
+    #[test]
+    fn try_from_units_rejects_invalid() {
+        assert!(AlphaBalance::try_from_units(-1.0).is_err());
+        assert!(AlphaBalance::try_from_units(f64::NAN).is_err());
+        assert!(AlphaBalance::try_from_units(f64::INFINITY).is_err());
     }
 
     #[test]

@@ -215,7 +215,13 @@ pub enum Commands {
     },
 
     // ──── Staking ────
-    /// Staking operations
+    /// Staking operations (TAO in, alpha out)
+    ///
+    /// **Units:** `stake add` spends **free TAO** from the coldkey (`--amount` in τ).
+    /// `stake remove`, `stake move`, and `stake swap` operate on **subnet alpha** (`--amount`
+    /// in α, 9 decimals — same numeric scale as TAO but a different token). Check positions with
+    /// `agcli stake list` (columns `Stake (τ)` vs `Alpha`). Limit prices are **TAO per alpha**
+    /// (RAO/α on-chain).
     #[command(subcommand)]
     Stake(StakeCommands),
 
@@ -588,9 +594,9 @@ pub enum StakeCommands {
         #[arg(long)]
         max_slippage: Option<f64>,
     },
-    /// Remove stake from a hotkey on a subnet
+    /// Remove alpha stake from a hotkey on a subnet (returns free TAO via AMM)
     Remove {
-        /// Amount to unstake
+        /// Amount of **alpha** to unstake (α, 9 decimals — NOT TAO). See `agcli stake list`.
         #[arg(long)]
         amount: f64,
         /// Subnet UID
@@ -612,9 +618,13 @@ pub enum StakeCommands {
         #[arg(long)]
         at_block: Option<u32>,
     },
-    /// Move stake between subnets
+    /// Move alpha stake between subnets (same or different hotkey on-chain).
+    ///
+    /// On-chain `move_stake` accepts separate origin/destination hotkeys. Omit `--dest-hotkey`
+    /// to move on the same hotkey (matches `stake swap` when hotkeys match). Cross-coldkey
+    /// moves use `stake transfer-stake`.
     Move {
-        /// Amount of alpha to move
+        /// Amount of **alpha** to move (α, 9 decimals — NOT TAO). See `agcli stake list`.
         #[arg(long)]
         amount: f64,
         /// Source subnet
@@ -623,13 +633,20 @@ pub enum StakeCommands {
         /// Destination subnet
         #[arg(long)]
         to: u16,
-        /// Hotkey SS58
+        /// Origin hotkey SS58 (source of alpha)
         #[arg(long = "hotkey-address")]
         hotkey: Option<String>,
+        /// Destination hotkey SS58 (defaults to origin hotkey)
+        #[arg(long = "dest-hotkey")]
+        dest_hotkey: Option<String>,
     },
-    /// Swap stake between subnets for the same hotkey
+    /// Swap alpha between subnets for one hotkey (`swap_stake` extrinsic).
+    ///
+    /// Same-hotkey cross-subnet rebalance. When origin and destination hotkey are the same
+    /// (always, in this CLI), on-chain logic matches `stake move` — pick either command.
+    /// Use `stake move` only if you need the distinct `StakeMoved` event / extrinsic name.
     Swap {
-        /// Amount of alpha to swap (same `Balance::from_tao` scale as `stake move`)
+        /// Amount of **alpha** to swap (α, 9 decimals — NOT TAO). See `agcli stake list`.
         #[arg(long)]
         amount: f64,
         /// Source subnet
@@ -654,15 +671,15 @@ pub enum StakeCommands {
         #[arg(long)]
         netuid: u16,
     },
-    /// Add stake with a limit price
+    /// Add stake with a limit price (TAO per alpha; on-chain `limit_price` in RAO/α)
     AddLimit {
-        /// Amount of TAO
+        /// Amount of TAO to stake (τ)
         #[arg(long)]
         amount: f64,
         /// Subnet UID
         #[arg(long)]
         netuid: u16,
-        /// Limit price
+        /// Limit price in TAO per alpha (τ/α). Encoded as RAO/α on-chain (`price × 1e9`).
         #[arg(long)]
         price: f64,
         /// Allow partial fill
@@ -672,15 +689,15 @@ pub enum StakeCommands {
         #[arg(long = "hotkey-address")]
         hotkey: Option<String>,
     },
-    /// Remove stake with limit price
+    /// Remove alpha stake with a limit price (minimum TAO received per alpha unstaked)
     RemoveLimit {
-        /// Amount of alpha
+        /// Amount of **alpha** to remove (α, 9 decimals — NOT TAO). See `agcli stake list`.
         #[arg(long)]
         amount: f64,
         /// Subnet UID
         #[arg(long)]
         netuid: u16,
-        /// Limit price
+        /// Minimum price in TAO per alpha (τ/α). Encoded as RAO/α on-chain (`price × 1e9`).
         #[arg(long)]
         price: f64,
         /// Allow partial fill
@@ -690,9 +707,9 @@ pub enum StakeCommands {
         #[arg(long = "hotkey-address")]
         hotkey: Option<String>,
     },
-    /// Set childkey take
+    /// Set childkey take (parent hotkey emission share before child delegation)
     ChildkeyTake {
-        /// Take percentage (0-18)
+        /// Take percentage 0–18% (runtime max 11796 = 18% on u16÷65535 scale)
         #[arg(long)]
         take: f64,
         /// Subnet UID
@@ -702,12 +719,17 @@ pub enum StakeCommands {
         #[arg(long = "hotkey-address")]
         hotkey: Option<String>,
     },
-    /// Set children for hotkey
+    /// Delegate emission weight to child hotkeys (scheduled via `PendingChildKeys` cooldown).
+    ///
+    /// Proportions are **u64 on-chain**; runtime divides by u64::MAX (100% = u64::MAX).
+    /// Pass decimal fractions in `--children` (e.g. `0.5:5FHne...,0.5:5Grwv...`) or raw u64.
     SetChildren {
         /// Subnet UID
         #[arg(long)]
         netuid: u16,
-        /// Children as "proportion:hotkey_ss58" pairs, comma-separated
+        /// Children as `proportion:hotkey_ss58` pairs, comma-separated.
+        /// Proportion: decimal 0.0–1.0 (50% = `0.5`) or raw u64 (50% ≈ `9223372036854775807`).
+        /// Sum of raw proportions must be ≤ u64::MAX. Max 5 children.
         #[arg(long)]
         children: String,
         /// Hotkey SS58 (defaults to wallet hotkey)
@@ -744,9 +766,9 @@ pub enum StakeCommands {
         #[arg(long = "hotkey-address")]
         hotkey: Option<String>,
     },
-    /// Swap stake between subnets with a limit price
+    /// Swap alpha between subnets with a limit price (minimum TAO per alpha on destination)
     SwapLimit {
-        /// Amount of alpha to swap
+        /// Amount of **alpha** to swap (α, 9 decimals — NOT TAO). See `agcli stake list`.
         #[arg(long)]
         amount: f64,
         /// Source subnet
@@ -755,7 +777,7 @@ pub enum StakeCommands {
         /// Destination subnet
         #[arg(long)]
         to: u16,
-        /// Limit price
+        /// Minimum price in TAO per alpha (τ/α). Encoded as RAO/α on-chain (`price × 1e9`).
         #[arg(long)]
         price: f64,
         /// Allow partial fill
@@ -780,7 +802,10 @@ pub enum StakeCommands {
         #[arg(long)]
         address: Option<String>,
     },
-    /// Process pending root emission claims across subnets
+    /// Batch `claim_root_dividends` for every subnet where the hotkey has stake.
+    ///
+    /// Unlike `stake claim-root` (coldkey-level `claim_root`), this targets a specific hotkey per
+    /// subnet. Exits non-zero if any per-subnet claim fails (exit 13 when chain rejects).
     ProcessClaim {
         /// Hotkey SS58 (defaults to wallet hotkey)
         #[arg(long = "hotkey-address")]
@@ -789,21 +814,21 @@ pub enum StakeCommands {
         #[arg(long)]
         netuids: Option<String>,
     },
-    /// Set root claim type (how root emissions are handled)
+    /// Set how root-network alpha dividends are handled for this coldkey (`RootClaimType` storage)
     SetClaim {
-        /// Claim type: swap (alpha→TAO), keep (keep alpha), keep-subnets (keep for specific subnets)
+        /// `swap`: auto-swap root alpha→TAO; `keep`: retain all alpha; `keep-subnets`: keep listed SNs, swap rest
         #[arg(long, value_parser = ["swap", "keep", "keep-subnets"])]
         claim_type: String,
-        /// Subnet UIDs to keep alpha for (only with --claim-type keep-subnets, comma-separated)
+        /// Required with `keep-subnets`: comma-separated netuids whose alpha to keep (others swapped to TAO)
         #[arg(long)]
         subnets: Option<String>,
     },
-    /// Transfer stake to a different coldkey owner
+    /// Transfer **alpha stake** to another coldkey (optionally cross-subnet; same hotkey on-chain)
     TransferStake {
         /// Destination coldkey SS58 address
         #[arg(long)]
         dest: String,
-        /// Amount of TAO to transfer
+        /// Amount of **alpha** to transfer (α, 9 decimals — NOT TAO). See `agcli stake list`.
         #[arg(long)]
         amount: f64,
         /// Source subnet UID
@@ -821,14 +846,16 @@ pub enum StakeCommands {
         /// Subnet UID
         #[arg(long)]
         netuid: u16,
-        /// Limit price (minimum TAO per alpha)
+        /// Minimum price in TAO per alpha (τ/α). Encoded as RAO/α on-chain (`price × 1e9`).
         #[arg(long)]
         price: f64,
         /// Hotkey SS58
         #[arg(long = "hotkey-address")]
         hotkey: Option<String>,
     },
-    /// Full staking wizard (interactive or non-interactive with flags)
+    /// Full staking wizard (interactive or non-interactive with flags).
+    ///
+    /// Non-interactive (no TTY): pass `--netuid`, `--amount`, and `--yes` (or `--batch`).
     Wizard {
         /// Subnet UID (skip interactive subnet selection)
         #[arg(long)]
@@ -968,6 +995,9 @@ pub enum SubnetCommands {
     },
     /// Register a leased subnet (temporary subnet with optional end block)
     RegisterLeased {
+        /// Emissions share for the lease (0–100 percent)
+        #[arg(long, default_value = "100", value_parser = crate::cli::helpers::parse_emissions_share)]
+        emissions_share: u8,
         /// End block for the lease (omit for permanent)
         #[arg(long)]
         end_block: Option<u32>,
@@ -984,13 +1014,30 @@ pub enum SubnetCommands {
         #[arg(long)]
         netuid: u16,
     },
-    /// Register a neuron on a subnet (burn)
+    /// Register a neuron on a subnet by burning TAO (`burned_register` → `do_register`).
+    ///
+    /// Cost is the **dynamic burn price** from `get_burn(netuid)` (τ, not staked — permanently
+    /// burned/recycled). Check first: `agcli subnet cost --netuid N`. Bounded by hyperparams
+    /// `min_burn` / `max_burn`. Requires free coldkey balance ≥ current burn.
     RegisterNeuron {
         /// Subnet UID
         #[arg(long)]
         netuid: u16,
     },
-    /// Register via POW
+    /// Register a neuron with a max burn cap (`register_limit` → `do_register_limit`).
+    ///
+    /// Same registration as `register-neuron`, but aborts if dynamic burn exceeds
+    /// `--limit-price` (decimal τ). Useful when burn is rising between quote and submit.
+    RegisterLimit {
+        /// Subnet UID
+        #[arg(long)]
+        netuid: u16,
+        /// Maximum τ willing to burn (decimal TAO, e.g. `1.5`; on-chain RAO u64)
+        #[arg(long, value_name = "TAO")]
+        limit_price: f64,
+    },
+    /// Register via POW (`register` extrinsic). Requires `pow_registration_allowed`.
+    /// Work must match subnet difficulty and be submitted within ~3 blocks of the template block.
     Pow {
         /// Subnet UID
         #[arg(long)]
@@ -1060,15 +1107,20 @@ pub enum SubnetCommands {
         hotkey: Option<String>,
     },
     /// Set a subnet hyperparameter via AdminUtils (subnet owner for owner-allowed params; root-only
-    /// params such as `tempo` or `weights_rate_limit` require `agcli admin` with `--sudo-key` on localnet)
+    /// params such as `tempo` or `weights_rate_limit` require `agcli admin` with `--sudo-key` on localnet).
+    ///
+    /// **Value encoding varies by parameter** — run `--param list` for the full table. Notable rules:
+    /// `kappa` / `bonds_penalty`: decimal 0.0–1.0 (normalized) or raw u16; runtime divides by 65535.
+    /// `rho`: raw integer sigmoid scale (typical 1–40), **not** normalized.
+    /// `min_burn` / `max_burn`: decimal TAO or raw RAO.
     SetParam {
         /// Subnet UID
         #[arg(long)]
         netuid: u16,
-        /// Parameter name (e.g., tempo, max_allowed_uids, min_burn). Use --param list to see all.
+        /// Parameter name (e.g., tempo, kappa, min_burn). Use --param list to see encoding rules.
         #[arg(long)]
         param: String,
-        /// Value to set (interpreted based on parameter type)
+        /// Value to set (encoding depends on parameter — see --param list)
         #[arg(long)]
         value: Option<String>,
     },
@@ -1166,9 +1218,9 @@ pub enum WeightCommands {
         /// Subnet UID
         #[arg(long)]
         netuid: u16,
-        /// Weights as "uid:weight" pairs, comma-separated.
-        /// Use "-" to read from stdin, or "@path" to read from a JSON file.
-        /// JSON format: [{"uid": 0, "weight": 100}, ...] or {"0": 100, "1": 200}
+        /// Weights as "uid:weight" pairs, comma-separated (each weight is u16, 0–65535).
+        /// Values are **rationals**, not percentages: the chain normalizes the vector to sum
+        /// 65535 (1.0), preserving ratios (100:200 ≡ 32768:65535). Use "-" for stdin or "@file".
         #[arg(long)]
         weights: String,
         /// Version key
@@ -1546,14 +1598,15 @@ pub enum ServeCommands {
         /// Port number
         #[arg(long)]
         port: u16,
-        /// Protocol version (default 4)
-        #[arg(long, default_value = "4")]
+        /// Transport protocol: 0 = TCP, 1 = UDP (on-chain `serve_axon` field — not IPv4/IPv6).
+        #[arg(long, default_value = "0")]
         protocol: u8,
         /// Axon version
         #[arg(long, default_value = "0")]
         version: u32,
     },
-    /// Reset axon information for a neuron (clears serving endpoint)
+    /// Cannot clear an axon via `serve_axon` — the pallet rejects `port=0` (`InvalidPort`).
+    /// To stop serving, point axon at a closed endpoint or deregister; there is no on-chain "unset".
     Reset {
         /// Subnet UID
         #[arg(long)]
@@ -1562,7 +1615,8 @@ pub enum ServeCommands {
     /// Batch update axon endpoints from a JSON file
     BatchAxon {
         /// Path to JSON file with axon updates.
-        /// Format: [{"netuid": 1, "ip": "1.2.3.4", "port": 8091, "protocol": 4, "version": 0}, ...]
+        /// Format: [{"netuid": 1, "ip": "1.2.3.4", "port": 8091, "protocol": 0, "version": 0}, ...]
+        /// `protocol`: 0 = TCP, 1 = UDP (defaults to 0 if omitted).
         #[arg(long)]
         file: String,
     },
@@ -1592,8 +1646,8 @@ pub enum ServeCommands {
         /// Port number
         #[arg(long)]
         port: u16,
-        /// Protocol version (default 4)
-        #[arg(long, default_value = "4")]
+        /// Transport protocol: 0 = TCP, 1 = UDP (on-chain `serve_axon` field — not IPv4/IPv6).
+        #[arg(long, default_value = "0")]
         protocol: u8,
         /// Axon version
         #[arg(long, default_value = "0")]
@@ -1732,21 +1786,31 @@ pub enum SwapCommands {
         #[arg(long)]
         new_hotkey: String,
     },
-    /// Schedule coldkey swap
+    /// Announce a coldkey swap (step 1 of two-phase rotation)
     Coldkey {
         /// New coldkey SS58
+        #[arg(long)]
+        new_coldkey: String,
+    },
+    /// Execute an announced coldkey swap (step 2 of two-phase rotation)
+    #[command(name = "coldkey-exec")]
+    ColdkeyExec {
+        /// New coldkey SS58 (must match the announced coldkey)
         #[arg(long)]
         new_coldkey: String,
     },
     /// Associate an EVM (Ethereum) address with your SS58 account
     #[command(name = "evm-key")]
     EvmKey {
+        /// Subnet UID where the hotkey is registered (signatures are scoped per netuid)
+        #[arg(long)]
+        netuid: u16,
         /// EVM address (0x-prefixed hex, 20 bytes)
         #[arg(long)]
         evm_address: String,
         /// Block number used when creating the signature
         #[arg(long)]
-        block_number: u32,
+        block_number: u64,
         /// EVM signature (0x-prefixed hex, 65 bytes: r+s+v)
         #[arg(long)]
         signature: String,
@@ -2046,12 +2110,8 @@ pub enum SafeModeCommands {
     Enter,
     /// Extend safe mode duration
     Extend,
-    /// Force enter safe mode (requires sudo)
-    ForceEnter {
-        /// Duration in blocks
-        #[arg(long)]
-        duration: u32,
-    },
+    /// Force enter safe mode (requires sudo; duration is set by chain config)
+    ForceEnter,
     /// Force exit safe mode (requires sudo)
     ForceExit,
 }
@@ -2563,7 +2623,8 @@ pub enum AdminCommands {
         #[arg(long)]
         sudo_key: Option<String>,
     },
-    /// Set kappa (bonds moving average)
+    /// Set kappa (bonds moving average). On-chain u16; runtime uses value÷65535 as [0,1] float.
+    /// Pass raw u16 (e.g. 32767 ≈ 0.5). Subnet owners: prefer `subnet set-param --param kappa --value 0.5`.
     SetKappa {
         #[arg(long)]
         netuid: u16,
@@ -2572,7 +2633,7 @@ pub enum AdminCommands {
         #[arg(long)]
         sudo_key: Option<String>,
     },
-    /// Set rho (weight discount factor)
+    /// Set rho (weight discount factor). On-chain u16 sigmoid scale (default ~10; not ÷65535).
     SetRho {
         #[arg(long)]
         netuid: u16,
@@ -2581,7 +2642,7 @@ pub enum AdminCommands {
         #[arg(long)]
         sudo_key: Option<String>,
     },
-    /// Set minimum burn registration cost
+    /// Set minimum burn registration cost (on-chain RAO u64). Prefer `subnet set-param --param min_burn --value 1.0` (TAO).
     SetMinBurn {
         #[arg(long)]
         netuid: u16,
@@ -2590,7 +2651,7 @@ pub enum AdminCommands {
         #[arg(long)]
         sudo_key: Option<String>,
     },
-    /// Set maximum burn registration cost
+    /// Set maximum burn registration cost (on-chain RAO u64). Prefer `subnet set-param --param max_burn --value 1.0` (TAO).
     SetMaxBurn {
         #[arg(long)]
         netuid: u16,
@@ -2608,7 +2669,8 @@ pub enum AdminCommands {
         #[arg(long)]
         sudo_key: Option<String>,
     },
-    /// Set alpha high/low values
+    /// Set alpha high/low values (on-chain u16 pair; runtime ÷65535 → [0,1]). Pass raw u16 or use
+    /// `subnet set-param --param alpha_values --value 0.7,0.9`. Requires liquid_alpha_enabled.
     SetAlphaValues {
         #[arg(long)]
         netuid: u16,

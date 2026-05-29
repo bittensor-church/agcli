@@ -2923,33 +2923,17 @@ fn parse_safe_mode_extend() {
 
 #[test]
 fn parse_safe_mode_force_enter() {
-    let cli =
-        agcli::cli::Cli::try_parse_from(["agcli", "safe-mode", "force-enter", "--duration", "100"]);
+    let cli = agcli::cli::Cli::try_parse_from(["agcli", "safe-mode", "force-enter"]);
     assert!(cli.is_ok(), "safe-mode force-enter: {:?}", cli.err());
 }
 
 #[test]
-fn parse_safe_mode_force_enter_missing_duration() {
-    let cli = agcli::cli::Cli::try_parse_from(["agcli", "safe-mode", "force-enter"]);
+fn parse_safe_mode_force_enter_rejects_duration() {
+    let cli =
+        agcli::cli::Cli::try_parse_from(["agcli", "safe-mode", "force-enter", "--duration", "100"]);
     assert!(
         cli.is_err(),
-        "safe-mode force-enter without --duration should fail"
-    );
-}
-
-#[test]
-fn parse_safe_mode_force_enter_large_duration() {
-    let cli = agcli::cli::Cli::try_parse_from([
-        "agcli",
-        "safe-mode",
-        "force-enter",
-        "--duration",
-        "4294967295",
-    ]);
-    assert!(
-        cli.is_ok(),
-        "safe-mode force-enter max u32: {:?}",
-        cli.err()
+        "safe-mode force-enter must not accept --duration"
     );
 }
 

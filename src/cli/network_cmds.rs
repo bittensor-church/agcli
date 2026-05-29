@@ -312,19 +312,45 @@ pub(super) async fn handle_swap(cmd: SwapCommands, client: &Client, ctx: &Ctx<'_
             validate_ss58(&new_coldkey, "new coldkey")?;
             let mut wallet = open_wallet(wallet_dir, wallet_name)?;
             unlock_coldkey(&mut wallet, password)?;
-            tracing::info!(new_coldkey = %crate::utils::short_ss58(&new_coldkey), "Scheduling coldkey swap");
+            tracing::info!(new_coldkey = %crate::utils::short_ss58(&new_coldkey), "Announcing coldkey swap");
             println!(
-                "Scheduling coldkey swap to {}",
+                "Announcing coldkey swap to {}",
                 crate::utils::short_ss58(&new_coldkey)
             );
             let hash = client
-                .schedule_swap_coldkey(wallet.coldkey()?, &new_coldkey)
+                .announce_swap_coldkey(wallet.coldkey()?, &new_coldkey)
                 .await?;
-            tracing::info!(tx = %hash, "Coldkey swap scheduled");
-            println!("Coldkey swap scheduled to {}. Check status with `agcli wallet check-swap`.\n  Tx: {}", crate::utils::short_ss58(&new_coldkey), hash);
+            tracing::info!(tx = %hash, "Coldkey swap announced");
+            println!(
+                "Coldkey swap announced to {}. After the cooldown, run `agcli swap coldkey-exec --new-coldkey {}`. Check status with `agcli wallet check-swap`.\n  Tx: {}",
+                crate::utils::short_ss58(&new_coldkey),
+                new_coldkey,
+                hash
+            );
+            Ok(())
+        }
+        SwapCommands::ColdkeyExec { new_coldkey } => {
+            validate_ss58(&new_coldkey, "new coldkey")?;
+            let mut wallet = open_wallet(wallet_dir, wallet_name)?;
+            unlock_coldkey(&mut wallet, password)?;
+            tracing::info!(new_coldkey = %crate::utils::short_ss58(&new_coldkey), "Executing coldkey swap");
+            println!(
+                "Executing announced coldkey swap to {}",
+                crate::utils::short_ss58(&new_coldkey)
+            );
+            let hash = client
+                .execute_swap_coldkey(wallet.coldkey()?, &new_coldkey)
+                .await?;
+            tracing::info!(tx = %hash, "Coldkey swap executed");
+            println!(
+                "Coldkey swap executed to {}.\n  Tx: {}",
+                crate::utils::short_ss58(&new_coldkey),
+                hash
+            );
             Ok(())
         }
         SwapCommands::EvmKey {
+            netuid,
             evm_address,
             block_number,
             signature,
@@ -347,9 +373,18 @@ pub(super) async fn handle_swap(cmd: SwapCommands, client: &Client, ctx: &Ctx<'_
                 })?;
             let mut wallet = open_wallet(wallet_dir, wallet_name)?;
             unlock_coldkey(&mut wallet, password)?;
-            println!("Associating EVM address 0x{} with your account", addr_hex);
+            println!(
+                "Associating EVM address 0x{} on subnet {} with your account",
+                addr_hex, netuid
+            );
             let hash = client
-                .associate_evm_key(wallet.coldkey()?, addr_bytes, block_number, sig_bytes)
+                .associate_evm_key(
+                    wallet.coldkey()?,
+                    netuid,
+                    addr_bytes,
+                    block_number,
+                    sig_bytes,
+                )
                 .await?;
             print_tx_result(
                 ctx.output,
@@ -1100,13 +1135,11 @@ pub(super) async fn handle_safe_mode(
             println!("Safe mode extended. Tx: {}", tx_hash);
             Ok(())
         }
-        SafeModeCommands::ForceEnter { duration } => {
+        SafeModeCommands::ForceEnter => {
             let mut wallet = open_wallet(ctx.wallet_dir, ctx.wallet_name)?;
             unlock_coldkey(&mut wallet, ctx.password)?;
-            println!("Force entering safe mode for {} blocks (sudo)...", duration);
-            let tx_hash = client
-                .safe_mode_force_enter(wallet.coldkey()?, duration)
-                .await?;
+            println!("Force entering safe mode (sudo; duration is set by chain config)...");
+            let tx_hash = client.safe_mode_force_enter(wallet.coldkey()?).await?;
             println!("Safe mode force-entered. Tx: {}", tx_hash);
             Ok(())
         }
@@ -1169,6 +1202,12 @@ pub(super) async fn handle_serve(cmd: ServeCommands, client: &Client, ctx: &Ctx<
             crate::cli::helpers::validate_port(port, "axon")?;
             let (pair, _hk) =
                 unlock_and_resolve(wallet_dir, wallet_name, hotkey_name, None, password)?;
+            if protocol > 1 {
+                eprintln!(
+                    "Warning: protocol {} is unusual — on-chain values are 0=TCP, 1=UDP (not IPv4/IPv6; ip_type is always 4 for IPv4).",
+                    protocol
+                );
+            }
             let axon = crate::types::chain_data::AxonInfo {
                 block: 0,
                 version,
@@ -1227,7 +1266,7 @@ pub(super) async fn handle_serve(cmd: ServeCommands, client: &Client, ctx: &Ctx<
                 let protocol: u8 =
                     entry["protocol"]
                         .as_u64()
-                        .unwrap_or(4)
+                        .unwrap_or(0)
                         .try_into()
                         .map_err(|_| {
                             anyhow::anyhow!(
@@ -1262,30 +1301,12 @@ pub(super) async fn handle_serve(cmd: ServeCommands, client: &Client, ctx: &Ctx<
         }
         ServeCommands::Reset { netuid } => {
             validate_netuid(netuid)?;
-            let (pair, hk) =
-                unlock_and_resolve(wallet_dir, wallet_name, hotkey_name, None, password)?;
-            println!(
-                "Resetting axon info for hotkey {} on SN{}",
-                crate::utils::short_ss58(&hk),
-                netuid
+            anyhow::bail!(
+                "Cannot reset/clear axon on SN{netuid} via `serve reset`.\n  \
+                 On-chain `serve_axon` rejects port=0 (`InvalidPort`) — there is no unset extrinsic.\n  \
+                 Workarounds: serve a closed endpoint (`agcli serve axon --ip 127.0.0.1 --port 65535 ...`) or stop mining/validating without clearing storage.\n  \
+                 See docs/commands/serve.md (serve reset)."
             );
-            // Reset axon by setting all fields to zero
-            let axon = crate::types::chain_data::AxonInfo {
-                block: 0,
-                version: 0,
-                ip: "0".to_string(),
-                port: 0,
-                ip_type: 4,
-                protocol: 0,
-            };
-            let hash = client.serve_axon(&pair, NetUid(netuid), &axon).await?;
-            println!(
-                "Axon reset for {} on SN{}.\n  Tx: {}",
-                crate::utils::short_ss58(&hk),
-                netuid,
-                hash
-            );
-            Ok(())
         }
         ServeCommands::Prometheus {
             netuid,
@@ -2053,6 +2074,7 @@ pub(super) async fn handle_liquidity(
     }
 
     let hotkey_name = ctx.hotkey_name;
+    let output = ctx.output;
     let mut wallet = open_wallet(ctx.wallet_dir, ctx.wallet_name)?;
     unlock_coldkey(&mut wallet, ctx.password)?;
 
@@ -2075,16 +2097,22 @@ pub(super) async fn handle_liquidity(
                     price_high
                 );
             }
-            println!(
-                "Adding liquidity on SN{}: range [{:.6}, {:.6}] (ticks [{}, {}]), amount={} RAO",
-                netuid, price_low, price_high, tick_low, tick_high, amount
-            );
+            if !output.is_json() {
+                println!(
+                    "Adding liquidity on SN{}: range [{:.6}, {:.6}] (ticks [{}, {}]), amount={} RAO",
+                    netuid, price_low, price_high, tick_low, tick_high, amount
+                );
+            }
             let hash = client
                 .add_liquidity(pair, &hk, NetUid(netuid), tick_low, tick_high, amount)
                 .await?;
-            println!(
-                "Liquidity added on SN{}: {} RAO in range [{:.6}, {:.6}].\n  Tx: {}",
-                netuid, amount, price_low, price_high, hash
+            print_tx_result(
+                output,
+                &hash,
+                &format!(
+                    "Liquidity added on SN{}: {} RAO in range [{:.6}, {:.6}].",
+                    netuid, amount, price_low, price_high
+                ),
             );
         }
         LiquidityCommands::Remove {
@@ -2094,16 +2122,22 @@ pub(super) async fn handle_liquidity(
         } => {
             let hk = resolve_hotkey_ss58(hotkey, &mut wallet, hotkey_name)?;
             let pair = wallet.coldkey()?;
-            println!(
-                "Removing liquidity position {} on SN{}",
-                position_id, netuid
-            );
+            if !output.is_json() {
+                println!(
+                    "Removing liquidity position {} on SN{}",
+                    position_id, netuid
+                );
+            }
             let hash = client
                 .remove_liquidity(pair, &hk, NetUid(netuid), position_id)
                 .await?;
-            println!(
-                "Liquidity position {} removed from SN{}.\n  Tx: {}",
-                position_id, netuid, hash
+            print_tx_result(
+                output,
+                &hash,
+                &format!(
+                    "Liquidity position {} removed from SN{}.",
+                    position_id, netuid
+                ),
             );
         }
         LiquidityCommands::Modify {
@@ -2115,39 +2149,49 @@ pub(super) async fn handle_liquidity(
             let hk = resolve_hotkey_ss58(hotkey, &mut wallet, hotkey_name)?;
             let pair = wallet.coldkey()?;
             let action = if delta > 0 { "Adding" } else { "Removing" };
-            println!(
-                "{} {} RAO liquidity on position {} (SN{})",
-                action,
-                delta.unsigned_abs(),
-                position_id,
-                netuid
-            );
+            if !output.is_json() {
+                println!(
+                    "{} {} RAO liquidity on position {} (SN{})",
+                    action,
+                    delta.unsigned_abs(),
+                    position_id,
+                    netuid
+                );
+            }
             let hash = client
                 .modify_liquidity(pair, &hk, NetUid(netuid), position_id, delta)
                 .await?;
-            println!(
-                "Position {} modified on SN{}: {} {} RAO.\n  Tx: {}",
-                position_id,
-                netuid,
-                action.to_lowercase(),
-                delta.unsigned_abs(),
-                hash
+            print_tx_result(
+                output,
+                &hash,
+                &format!(
+                    "Position {} modified on SN{}: {} {} RAO.",
+                    position_id,
+                    netuid,
+                    action.to_lowercase(),
+                    delta.unsigned_abs()
+                ),
             );
         }
         LiquidityCommands::Toggle { netuid, enable } => {
             let pair = wallet.coldkey()?;
             let action = if enable { "Enabling" } else { "Disabling" };
-            println!(
-                "{} user liquidity on SN{} (subnet owner only)",
-                action, netuid
-            );
+            if !output.is_json() {
+                println!(
+                    "{} user liquidity on SN{} (subnet owner only)",
+                    action, netuid
+                );
+            }
             let hash = client
                 .toggle_user_liquidity(pair, NetUid(netuid), enable)
                 .await?;
-            println!(
-                "User liquidity {}. Tx: {}",
-                if enable { "enabled" } else { "disabled" },
-                hash
+            print_tx_result(
+                output,
+                &hash,
+                &format!(
+                    "User liquidity {}.",
+                    if enable { "enabled" } else { "disabled" }
+                ),
             );
         }
     }

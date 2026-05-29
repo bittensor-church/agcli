@@ -41,7 +41,7 @@ pub async fn handle_view(cmd: ViewCommands, client: &Client, ctx: &Ctx<'_>) -> R
             at_block,
         } => {
             validate_netuid(netuid)?;
-            handle_neuron(client, netuid, uid, at_block).await
+            handle_neuron(client, output, netuid, uid, at_block).await
         }
         ViewCommands::Validators {
             netuid,
@@ -441,6 +441,7 @@ async fn handle_dynamic_at_block(
 
 async fn handle_neuron(
     client: &Client,
+    output: OutputFormat,
     netuid: u16,
     uid: u16,
     at_block: Option<u32>,
@@ -453,35 +454,81 @@ async fn handle_neuron(
     };
     match neuron {
         Some(n) => {
-            println!("Neuron UID {} on SN{}", uid, netuid);
-            println!("  Hotkey:          {}", n.hotkey);
-            println!("  Coldkey:         {}", n.coldkey);
-            println!("  Active:          {}", n.active);
-            println!("  Stake:           {}", n.stake.display_tao());
-            println!("  Rank:            {:.6}", n.rank);
-            println!("  Trust:           {:.6}", n.trust);
-            println!("  Consensus:       {:.6}", n.consensus);
-            println!("  Incentive:       {:.6}", n.incentive);
-            println!("  Dividends:       {:.6}", n.dividends);
-            println!("  Emission:        {:.4} τ", n.emission / 1e9);
-            println!("  Val. Trust:      {:.6}", n.validator_trust);
-            println!("  Val. Permit:     {}", n.validator_permit);
-            println!("  Pruning Score:   {:.6}", n.pruning_score);
-            println!("  Last Update:     {}", n.last_update);
-            if let Some(axon) = &n.axon_info {
+            if output.is_json() {
+                print_json_ser(&n);
+            } else if output.is_csv() {
+                let axon = n
+                    .axon_info
+                    .as_ref()
+                    .map(|a| format!("{}:{}", a.ip, a.port))
+                    .unwrap_or_default();
+                let prom = n
+                    .prometheus_info
+                    .as_ref()
+                    .map(|p| format!("{}:{}", p.ip, p.port))
+                    .unwrap_or_default();
                 println!(
-                    "  Axon:            {}:{} (v{}, proto {})",
-                    axon.ip, axon.port, axon.version, axon.protocol
+                    "uid,netuid,hotkey,coldkey,active,stake_rao,rank,trust,consensus,incentive,dividends,emission,validator_trust,validator_permit,pruning_score,last_update,axon,prometheus"
                 );
-            }
-            if let Some(prom) = &n.prometheus_info {
                 println!(
-                    "  Prometheus:      {}:{} (v{})",
-                    prom.ip, prom.port, prom.version
+                    "{},{},{},{},{},{},{:.6},{:.6},{:.6},{:.6},{:.6},{:.0},{:.6},{},{:.6},{},{},{}",
+                    n.uid,
+                    netuid,
+                    csv_escape(&n.hotkey),
+                    csv_escape(&n.coldkey),
+                    n.active,
+                    n.stake.rao(),
+                    n.rank,
+                    n.trust,
+                    n.consensus,
+                    n.incentive,
+                    n.dividends,
+                    n.emission,
+                    n.validator_trust,
+                    n.validator_permit,
+                    n.pruning_score,
+                    n.last_update,
+                    csv_escape(&axon),
+                    csv_escape(&prom),
                 );
+            } else {
+                println!("Neuron UID {} on SN{}", uid, netuid);
+                println!("  Hotkey:          {}", n.hotkey);
+                println!("  Coldkey:         {}", n.coldkey);
+                println!("  Active:          {}", n.active);
+                println!("  Stake:           {}", n.stake.display_tao());
+                println!("  Rank:            {:.6}", n.rank);
+                println!("  Trust:           {:.6}", n.trust);
+                println!("  Consensus:       {:.6}", n.consensus);
+                println!("  Incentive:       {:.6}", n.incentive);
+                println!("  Dividends:       {:.6}", n.dividends);
+                println!("  Emission:        {:.4} τ", n.emission / 1e9);
+                println!("  Val. Trust:      {:.6}", n.validator_trust);
+                println!("  Val. Permit:     {}", n.validator_permit);
+                println!("  Pruning Score:   {:.6}", n.pruning_score);
+                println!("  Last Update:     {}", n.last_update);
+                if let Some(axon) = &n.axon_info {
+                    println!(
+                        "  Axon:            {}:{} (v{}, proto {})",
+                        axon.ip, axon.port, axon.version, axon.protocol
+                    );
+                }
+                if let Some(prom) = &n.prometheus_info {
+                    println!(
+                        "  Prometheus:      {}:{} (v{})",
+                        prom.ip, prom.port, prom.version
+                    );
+                }
             }
         }
-        None => println!("Neuron UID {} not found on SN{}", uid, netuid),
+        None => {
+            anyhow::bail!(
+                "Neuron UID {} not found on SN{}.\n  Tip: agcli subnet metagraph --netuid {}",
+                uid,
+                netuid,
+                netuid
+            );
+        }
     }
     Ok(())
 }
@@ -778,8 +825,8 @@ async fn handle_account_explorer(
     let pin = client.pin_latest_block().await?;
     let (balance, stakes, identity, dynamic, delegate) = tokio::try_join!(
         client.get_balance_at_hash(address, pin),
-        client.get_stake_for_coldkey_pinned(address, pin),
-        client.get_identity_pinned(address, pin),
+        client.get_stake_for_coldkey_at_block(address, pin),
+        client.get_identity_at_block(address, pin),
         async {
             match client.get_all_dynamic_info().await {
                 Ok(d) => Ok::<_, anyhow::Error>(d),
@@ -790,7 +837,7 @@ async fn handle_account_explorer(
             }
         },
         async {
-            Ok::<_, anyhow::Error>(match client.get_delegate_pinned(address, pin).await {
+            Ok::<_, anyhow::Error>(match client.get_delegate_at_block(address, pin).await {
                 Ok(v) => v,
                 Err(e) => {
                     tracing::debug!(error = %e, "get_delegate failed (non-fatal)");
@@ -908,7 +955,7 @@ async fn handle_subnet_analytics(client: &Client, netuid: u16, output: OutputFor
     // Pin a single block for consistency and to save 4 redundant at_latest() RPC round-trips.
     let pin = client.pin_latest_block().await?;
     let (info, dynamic, neurons, hyperparams, subnet_identity) = tokio::try_join!(
-        client.get_subnet_info_pinned(nuid, pin),
+        client.get_subnet_info_at_block(nuid, pin),
         async {
             Ok::<_, anyhow::Error>(match client.get_dynamic_info_at_block(nuid, pin).await {
                 Ok(v) => v,
@@ -921,7 +968,7 @@ async fn handle_subnet_analytics(client: &Client, netuid: u16, output: OutputFor
         client.get_neurons_lite(nuid),
         async {
             Ok::<_, anyhow::Error>(
-                match client.get_subnet_hyperparams_pinned(nuid, pin).await {
+                match client.get_subnet_hyperparams_at_block(nuid, pin).await {
                     Ok(v) => v,
                     Err(e) => {
                         tracing::debug!(netuid = nuid.0, error = %e, "get_subnet_hyperparams failed (non-fatal)");
@@ -931,7 +978,7 @@ async fn handle_subnet_analytics(client: &Client, netuid: u16, output: OutputFor
             )
         },
         async {
-            Ok::<_, anyhow::Error>(match client.get_subnet_identity_pinned(nuid, pin).await {
+            Ok::<_, anyhow::Error>(match client.get_subnet_identity_at_block(nuid, pin).await {
                 Ok(v) => v,
                 Err(e) => {
                     tracing::debug!(netuid = nuid.0, error = %e, "get_subnet_identity failed (non-fatal)");
@@ -1368,7 +1415,37 @@ async fn handle_swap_sim(
 async fn handle_nominations(client: &Client, hotkey: &str, output: OutputFormat) -> Result<()> {
     let delegates = client.get_delegated(hotkey).await?;
     if output.is_json() {
-        print_json_ser(&delegates);
+        print_json(&serde_json::json!({
+            "hotkey": hotkey,
+            "delegates": delegates,
+        }));
+        return Ok(());
+    }
+    if output.is_csv() {
+        println!("delegate_hotkey,owner,take_pct,total_stake_rao,nominator,stake_rao");
+        for d in &delegates {
+            if d.nominators.is_empty() {
+                println!(
+                    "{},{},{:.6},{},,",
+                    csv_escape(&d.hotkey),
+                    csv_escape(&d.owner),
+                    d.take * 100.0,
+                    d.total_stake.rao(),
+                );
+            } else {
+                for (nominator, stake) in &d.nominators {
+                    println!(
+                        "{},{},{:.6},{},{},{}",
+                        csv_escape(&d.hotkey),
+                        csv_escape(&d.owner),
+                        d.take * 100.0,
+                        d.total_stake.rao(),
+                        csv_escape(nominator),
+                        stake.rao(),
+                    );
+                }
+            }
+        }
         return Ok(());
     }
 
@@ -1415,11 +1492,11 @@ pub async fn handle_audit(client: &Client, address: &str, output: OutputFormat) 
     let pin = client.pin_latest_block().await?;
     let (balance, stakes, identity, proxies, delegate, dynamic, coldkey_swap) = tokio::try_join!(
         client.get_balance_at_hash(address, pin),
-        client.get_stake_for_coldkey_pinned(address, pin),
-        client.get_identity_pinned(address, pin),
-        client.list_proxies_pinned(address, pin),
+        client.get_stake_for_coldkey_at_block(address, pin),
+        client.get_identity_at_block(address, pin),
+        client.list_proxies_at_block(address, pin),
         async {
-            Ok::<_, anyhow::Error>(match client.get_delegate_pinned(address, pin).await {
+            Ok::<_, anyhow::Error>(match client.get_delegate_at_block(address, pin).await {
                 Ok(v) => v,
                 Err(e) => {
                     tracing::debug!(error = %e, "get_delegate failed (non-fatal)");
@@ -1438,7 +1515,10 @@ pub async fn handle_audit(client: &Client, address: &str, output: OutputFormat) 
         },
         async {
             Ok::<_, anyhow::Error>(
-                match client.get_coldkey_swap_scheduled_pinned(address, pin).await {
+                match client
+                    .get_coldkey_swap_scheduled_at_block(address, pin)
+                    .await
+                {
                     Ok(v) => v,
                     Err(e) => {
                         tracing::debug!(error = %e, "get_coldkey_swap_scheduled failed (non-fatal)");
@@ -1460,12 +1540,12 @@ pub async fn handle_audit(client: &Client, address: &str, output: OutputFormat) 
                 let (children, pending) = tokio::join!(
                     async {
                         client
-                            .get_child_keys_pinned(&hotkey, netuid, pin)
+                            .get_child_keys_at_block(&hotkey, netuid, pin)
                             .await
                             .unwrap_or_default()
                     },
                     async {
-                        match client.get_pending_child_keys_pinned(&hotkey, netuid, pin).await {
+                        match client.get_pending_child_keys_at_block(&hotkey, netuid, pin).await {
                             Ok(v) => v,
                             Err(e) => {
                                 tracing::debug!(hotkey = %crate::utils::short_ss58(&hotkey), netuid = netuid.0, error = %e, "Failed to fetch pending child keys");

@@ -10,6 +10,8 @@ Rust CLI + SDK for Bittensor. Manage wallets, stake TAO, transfer tokens, regist
 cargo install --git https://github.com/unarbos/agcli
 ```
 
+Breaking CLI/SDK changes: see [CHANGELOG.md](../CHANGELOG.md) (unreleased section).
+
 ### Common Tasks (intent → command)
 ```
 Check my balance          → agcli balance
@@ -124,6 +126,19 @@ Batch/JSON mode: `{"error": true, "message": "..."}` on stderr.
 - **Commit-reveal** = privacy weight setting (blake2 hash → reveal)
 - **Commitment** = miner endpoint publication (replaces Axon)
 
+### Units cheat sheet (τ vs α — same decimals, different tokens)
+
+| Unit | CLI parser / type | On-chain | Commands |
+|------|-------------------|----------|----------|
+| τ (TAO) | `parse_cli_tao_amount` → `Balance` | RAO u64 | `stake add`, `add-limit`, `transfer`, `crowdloan contribute` |
+| α (alpha) | `parse_cli_alpha_amount` → `AlphaBalance` | raw u64 | `stake remove/move/swap/transfer-stake`, recycle/burn, limit unstake/swap |
+| τ/α limit price | `parse_cli_limit_price` → `LimitPriceRao` | RAO/α u64 | `add-limit`, `remove-limit`, `swap-limit`, `remove-full-limit` |
+| Weight u16 | 0–65535 per UID | normalized | `weights set`, commit/reveal |
+| Hyperparam fraction | decimal 0–1 or u16 | ÷65535 | kappa, bonds_penalty, delegate/childkey take |
+| Child proportion | decimal 0–1 or u64 | ÷u64::MAX | `stake set-children` |
+
+**Trap:** 1.5 τ and 1.5 α encode the **same u64** on-wire — use `stake list` Alpha column for α ops; batch spending limits apply to τ (`add_stake*`) only. See `agcli explain --topic units`.
+
 ---
 
 ## Tier 2: Full Command Reference
@@ -153,7 +168,7 @@ Detailed per-command docs: `docs/commands/*.md` (on-chain behavior, pallet refs,
 | Proxy | [proxy.md](commands/proxy.md) | add, remove, list, list-announcements, create-pure, kill-pure, announce, remove-all, remove-announcement, reject-announcement, proxy-announced |
 | Multisig | [multisig.md](commands/multisig.md) | address, submit, approve, execute, cancel, list |
 | Batch | [batch.md](commands/batch.md) | --file (atomic/non-atomic/force) |
-| Swap | [swap.md](commands/swap.md) | hotkey, coldkey, evm-key |
+| Swap | [swap.md](commands/swap.md) | hotkey, coldkey, coldkey-exec, evm-key |
 | Liquidity | [swap.md](commands/swap.md) | add, remove, modify, toggle |
 | Crowdloan | [crowdloan.md](commands/crowdloan.md) | create, contribute, withdraw, finalize, refund, dissolve, info, list, contributors, update-min-contribution, update-end, update-cap |
 | Localnet | [localnet.md](commands/localnet.md) | start, stop, status, reset, logs, scaffold |
@@ -210,21 +225,22 @@ agcli config set --key spending_limit.* --value 500.0     # Global max
 - `transfer-keep-alive --dest SS58 --amount TAO` → safe transfer that fails rather than reap the account
 
 ### Staking
+**Units:** `stake add` / `add-limit` use **TAO (τ)**. `stake remove`, `move`, `swap`, `transfer-stake`, `remove-limit`, `swap-limit`, `recycle-alpha`, and `burn-alpha` use **alpha (α)** — same 9-decimal scale, different token. Use `stake list` (Alpha column). Alpha commands run client-side preflight before submit. Batch spending limits apply to τ add-stake only.
 - `stake add --amount AMT --netuid N [--hotkey-address SS58] [--max-slippage PCT]` → validate_netuid → validate_amount → check_spending_limit → unlock → balance check → optional slippage sim
-- `stake remove --amount AMT --netuid N [--hotkey-address SS58] [--max-slippage PCT]` → validate_netuid → validate_amount → unlock → optional slippage sim; no spending-limit preflight
+- `stake remove --amount AMT --netuid N [--hotkey-address SS58] [--max-slippage PCT]` → `--amount` is **alpha (α)**; alpha preflight → optional slippage sim
 - `stake list [--address SS58] [--at-block N]` → JSON array of `StakeInfo`; exit 12 with hint when `--address` is missing and no wallet found
-- `stake move --amount AMT --from SRC --to DST [--hotkey-address SS58]` → moves alpha cross-subnet (same hotkey); no `--dest-hotkey` flag — both origin and destination use same hotkey
-- `stake swap --amount AMT --from SRC --to DST [--hotkey-address SS58]` → AMM-path cross-subnet swap
+- `stake move --amount AMT --from SRC --to DST [--hotkey-address SS58]` → `--amount` is **alpha (α)**; alpha preflight on source subnet
+- `stake swap --amount AMT --from SRC --to DST [--hotkey-address SS58]` → `--amount` is **alpha (α)**; AMM-path cross-subnet swap
 - `stake unstake-all [--hotkey-address SS58]` — unstake all alpha from all subnets for the hotkey
 - `stake unstake-all-alpha` — unstake all alpha across all subnets
 - `stake claim-root --netuid N` → claim root dividends for single subnet (pallet supports batch; CLI is single-subnet only)
-- `stake process-claim --netuid N --hotkey-address SS58` → process root dividend claim for specific hotkey; exit 0 even on per-subnet partial failure
+- `stake process-claim --netuid N --hotkey-address SS58` → process root dividend claim for specific hotkey; **bails with exit 1 if any subnet claim fails** (per-subnet errors printed)
 - `stake add-limit --amount AMT --netuid N --price P [--partial]` → add limit-order stake
-- `stake remove-limit --amount AMT --netuid N --price P [--partial]` → remove limit-order stake; `--amount` is in TAO-scale (× 1e9), not alpha
+- `stake remove-limit --amount AMT --netuid N --price P [--partial]` → `--amount` is **alpha (α)**; alpha preflight
 - `stake remove-full-limit --netuid N` → cancel all limit orders on subnet
-- `stake swap-limit --amount AMT --netuid N --price P [--partial]` → swap via limit order
-- `stake recycle-alpha --amount AMT --netuid N` → recycle alpha; `--amount` is TAO-scale (× 1e9)
-- `stake burn-alpha --amount AMT --netuid N` → burn alpha; `--amount` is TAO-scale (× 1e9)
+- `stake swap-limit --amount AMT --from SRC --to DST --price P [--partial]` → `--amount` is **alpha (α)**
+- `stake recycle-alpha --amount AMT --netuid N` → `--amount` is **alpha (α)**; alpha preflight
+- `stake burn-alpha --amount AMT --netuid N` → `--amount` is **alpha (α)**; alpha preflight
 - `stake childkey-take --take PCT --netuid N` → set childkey take rate (0–18%)
 - `stake set-children --netuid N --children "proportion:hotkey,..."` → configure childkeys
 - `stake set-auto --netuid N --hotkey-address SS58` → auto-stake configuration
@@ -241,7 +257,7 @@ agcli config set --key spending_limit.* --value 500.0     # Global max
 - `subnet register` — create new subnet (burn lock cost)
 - `subnet register-with-identity --name ...` — register + subnet identity in one call
 - `subnet create-cost` — read-only subnet creation lock (TAO)
-- `subnet register-leased [--end-block N]` — create leased subnet
+- `subnet register-leased [--emissions-share 0-100=100] [--end-block N]` — create leased subnet (coldkey signer)
 - `subnet register-neuron --netuid N` — burn registration
 - `subnet pow --netuid N [--threads 8]` — POW registration
 - `subnet dissolve --netuid N` — schedule dissolve (owner; pallet is root-gated)
@@ -330,8 +346,9 @@ agcli config set --key spending_limit.* --value 500.0     # Global max
 - `proxy add/remove/list/list-announcements/create-pure/kill-pure/announce/remove-all/remove-announcement/reject-announcement/proxy-announced` — proxy account delegation; 18 valid proxy types
 - `multisig address/submit/approve/execute/cancel/list` — multi-signature; approve requires `--timepoint-height`/`--timepoint-index` for non-first approvals (missing flags → chain NoTimepoint error)
 - `swap hotkey --new-hotkey SS58` — swap hotkey across all subnets (no per-subnet option)
-- `swap coldkey --new-coldkey SS58` — schedule coldkey swap (calls deprecated `schedule_swap_coldkey`; use chain announcement flow instead)
-- `swap evm-key --evm-address 0x... --block-number N --signature 0x...` — associate EVM key (note: `--netuid` arg absent; `--block-number` parsed as u32 but pallet expects u64)
+- `swap coldkey --new-coldkey SS58` — announce coldkey swap (step 1: `announce_coldkey_swap`)
+- `swap coldkey-exec --new-coldkey SS58` — execute announced coldkey swap (step 2: `swap_coldkey_announced`)
+- `swap evm-key --netuid N --evm-address 0x... --block-number N --signature 0x...` — associate EVM key on subnet N
 - `batch --file calls.json [--no-atomic] [--force]` — bulk extrinsics; 1000-call limit; `--no-atomic` and `--force` can coexist but `--force` wins silently
 - `crowdloan create/contribute/withdraw/finalize/refund/dissolve/info/list/contributors/update-min-contribution/update-end/update-cap`
 - `liquidity add/remove/modify/toggle` — liquidity management (`add` currently fails on-chain: UserLiquidityDisabled)

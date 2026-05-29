@@ -45,6 +45,7 @@ pub fn explain(topic: &str) -> Option<&'static str> {
         "archive" | "archivenode" | "historical" | "wayback" => Some(ARCHIVE),
         "diff" | "compare" | "historicaldiff" => Some(DIFF),
         "ownerworkflow" | "ow" | "subnetowner" | "ownerguide" => Some(OWNER_WORKFLOW),
+        "units" | "unit" | "amountunits" | "extrinsicunits" => Some(UNITS),
         topics if !topics.is_empty() => {
             // Fuzzy: check if the topic is a substring of any key
             let all = list_topics();
@@ -74,6 +75,10 @@ pub fn list_topics() -> Vec<(&'static str, &'static str)> {
         ("amm", "Automated Market Maker (Dynamic TAO pools)"),
         ("bootstrap", "Getting started as a new subnet owner"),
         ("alpha", "Subnet-specific alpha tokens"),
+        (
+            "units",
+            "τ vs α vs limit price vs u16 scales — CLI amount cheat sheet",
+        ),
         ("emission", "How TAO emissions are distributed"),
         ("registration", "Registering neurons on subnets"),
         ("subnets", "What subnets are and how they work"),
@@ -133,6 +138,32 @@ Practical impact:
 - Weight changes only take effect at the next tempo boundary.
 - If you set weights right after a tempo, you wait the full cycle.
 - Plan your weight updates to land before the next tempo.";
+
+const UNITS: &str = "\
+EXTRINSIC UNITS (agcli cheat sheet)
+===================================
+τ and α both use 9 decimals and encode as u64 on-chain — the **same number can mean
+different tokens**. agcli enforces units at the SDK boundary (Balance vs AlphaBalance)
+and via `parse_cli_*` helpers; see `src/chain/extrinsic_args.rs` manifest.
+
+| Unit class | Symbol / label | CLI / SDK | On-chain | Used by |
+|------------|----------------|-----------|----------|---------|
+| Free TAO | τ (TAO) | `parse_cli_tao_amount` → `Balance` | RAO u64 | `stake add`, `add-limit`, `transfer`, `crowdloan contribute` |
+| Subnet alpha | α (alpha) | `parse_cli_alpha_amount` → `AlphaBalance` | raw u64 | `stake remove/move/swap/transfer-stake`, recycle/burn, limit unstake/swap |
+| Limit price | τ/α | `parse_cli_limit_price` → `LimitPriceRao` | RAO per α u64 | `add-limit`, `remove-limit`, `swap-limit`, `remove-full-limit` |
+| Weight | u16 | 0–65535 per UID | normalized on-chain | `weights set`, commit/reveal |
+| Hyperparam fraction | u16÷65535 | decimal 0–1 or raw u16 | ÷65535 | kappa, bonds_penalty, delegate/childkey take input |
+| Rho | u16 scale | raw u16 | **not** ÷65535 | subnet rho (sigmoid steepness) |
+| Child proportion | u64÷MAX | decimal 0–1 or raw u64 | ÷u64::MAX | `stake set-children` |
+| Childkey take | u16÷65535 | decimal or u16 (18% = 11796) | ÷65535 | `stake childkey-take`, delegate take |
+
+Rules of thumb:
+- **Stake list Alpha column** = α available for remove/move/swap/transfer-stake.
+- **Coldkey free balance** = τ for add-stake and transfers only.
+- Batch `--spending-limit` applies to manifest `TaoRao` args only (add_stake*), not α ops.
+- Wrong unit often **succeeds on-chain** with wrong economics — use typed Client methods, not raw u64.
+
+Related: `agcli explain --topic alpha`, `docs/commands/stake.md`, `agcli stake --help`.";
 
 const COMMIT_REVEAL: &str = "\
 COMMIT-REVEAL
@@ -1317,9 +1348,9 @@ PHASE 6: ONGOING OPERATIONS
   agcli transfer --dest SS58 --amount τ   # transfer_allow_death; validate_ss58 + validate_amount + get_balance_ss58 preflight; `transfer-all` / `transfer-keep-alive` variants; invalid dest/amount → exit 12; e2e Phase 20 `transfer_preflight` in `test_transfer_preflight`
   agcli stake list [--address SS58]   # get_stake_for_coldkey; --at-block → get_block_hash + get_stake_for_coldkey_at_block; invalid --address → exit 12 + stake.md hint; e2e Phase 20 `stake_list_preflight` in `test_stake_list_preflight`
   agcli stake add --amount τ --netuid N [--max-slippage PCT]   # validate_netuid + validate_amount + check_spending_limit → unlock → get_balance → optional slippage try_join (alpha price + sim swap); insufficient/slippage → exit 13; e2e Phase 20 `stake_add_preflight` in `test_stake_add_preflight`
-  agcli stake remove --amount τ --netuid N [--max-slippage PCT]   # validate_netuid + validate_amount (`unstake amount`) → unlock → optional sell-path slippage try_join (`current_alpha_price` + `sim_swap_alpha_for_tao`); slippage → exit 13; e2e Phase 20 `stake_remove_preflight` in `test_stake_remove_preflight`
-  agcli stake move --amount α --from SRC --to DST [--hotkey-address SS58]   # validate_netuid×2 → same SN bail → validate_amount (`move amount`) → check_spending_limit(`--to`) → unlock → move_stake; no slippage/balance pre-read; invalid amount → exit 12 + stake.md hint; e2e Phase 20 `stake_move_preflight` in `test_stake_move_preflight`
-  agcli stake swap --amount α --from SRC --to DST [--hotkey-address SS58]   # validate_netuid×2 → same SN bail → validate_amount (`swap amount`) → check_spending_limit(`--to`) → unlock → swap_stake; no slippage/balance pre-read; invalid amount → exit 12 + stake.md hint; e2e Phase 20 `stake_swap_preflight` in `test_stake_swap_preflight`
+  agcli stake remove --amount α --netuid N [--max-slippage PCT]   # validate_netuid + validate_amount (`unstake amount (alpha, α)`) → unlock → alpha preflight → optional sell-path slippage try_join (`current_alpha_price` + `sim_swap_alpha_for_tao`); slippage → exit 13; e2e Phase 20 `stake_remove_preflight` in `test_stake_remove_preflight`
+  agcli stake move --amount α --from SRC --to DST [--hotkey-address SS58]   # validate_netuid×2 → same SN bail → validate_amount → alpha preflight → move_stake; no spending-limit check (α not τ); invalid amount → exit 12 + stake.md hint; e2e Phase 20 `stake_move_preflight` in `test_stake_move_preflight`
+  agcli stake swap --amount α --from SRC --to DST [--hotkey-address SS58]   # validate_netuid×2 → same SN bail → validate_amount → alpha preflight → swap_stake; no spending-limit check (α not τ); invalid amount → exit 12 + stake.md hint; e2e Phase 20 `stake_swap_preflight` in `test_stake_swap_preflight`
   agcli stake unstake-all [--hotkey-address SS58]   # unlock_and_resolve only (validate_ss58 `hotkey-address` when flag set); no netuid/amount/spending-limit pre-read; bad hotkey SS58 → exit 12 + stake.md hint; e2e Phase 20 `stake_unstake_all_preflight` in `test_stake_unstake_all_preflight`
   agcli view portfolio [--address SS58]   # resolve/validate coldkey; latest: pin_latest_block → try_join(balance, stakes, dynamic); --at-block: get_block_hash → try_join(balance, stakes); invalid --address → exit 12 + view.md hint; e2e Phase 20 `view_portfolio_preflight` in `test_view_portfolio_preflight`
 
@@ -1452,6 +1483,14 @@ mod tests {
     #[test]
     fn known_topic_alpha() {
         assert!(explain("alpha").is_some());
+    }
+
+    #[test]
+    fn known_topic_units() {
+        assert!(explain("units").is_some());
+        let text = explain("units").expect("units topic");
+        assert!(text.contains("AlphaBalance"));
+        assert!(text.contains("TaoRao"));
     }
 
     #[test]

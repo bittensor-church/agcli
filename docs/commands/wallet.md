@@ -385,9 +385,19 @@ agcli wallet check-swap [--address <SS58>]
   "address": "<SS58>",
   "swap_scheduled": true,
   "execution_block": 12345,
-  "new_coldkey_hash": "0x<64 hex chars>"
+  "new_coldkey_hash": "0x<64 hex chars>",
+  "execution_ready": false,
+  "next_step": "agcli swap coldkey-exec --new-coldkey <SS58 from step 1>"
 }
 ```
+
+`execution_ready` is `true` when the current chain head has reached `execution_block`. Text output includes block countdown and the step-2 command when not yet ready.
+
+**Two-phase flow**
+
+1. `agcli swap coldkey --new-coldkey SS58` — announce (`announce_coldkey_swap`)
+2. Wait until `execution_block` (check with `agcli wallet check-swap`)
+3. `agcli swap coldkey-exec --new-coldkey SS58` — execute (`swap_coldkey_announced`)
 
 **Output (JSON, no swap)**
 ```json
@@ -398,7 +408,7 @@ agcli wallet check-swap [--address <SS58>]
 
 **Pallet reference**: `SubtensorModule` (`pallets/subtensor`)
 **Storage map**: `SubtensorModule::ColdkeySwapAnnouncements` — key: coldkey AccountId, value: `(execution_block: u32, new_coldkey_hash: H256)`.
-**Dispatchable (write path)**: Swap is initiated via `SubtensorModule::swap_coldkey` (separate `agcli swap coldkey` command, not under `wallet`).
+**Dispatchable (write path)**: Two-phase rotation via `agcli swap coldkey` (announce) then `agcli swap coldkey-exec` (execute). See [swap.md](swap.md) and [CHANGELOG.md](../../CHANGELOG.md).
 
 **Exit codes**
 
@@ -512,5 +522,6 @@ Exit codes are defined in `src/error.rs::exit_code`:
 
 - `agcli balance` — Check wallet balance
 - `agcli stake list` — View stakes for wallet
-- `agcli swap coldkey` — Schedule coldkey swap (separate command group)
+- `agcli swap coldkey` — Announce coldkey swap (step 1; separate command group)
+- `agcli swap coldkey-exec` — Execute announced coldkey swap (step 2)
 - `agcli proxy add` — Delegate signing to another key

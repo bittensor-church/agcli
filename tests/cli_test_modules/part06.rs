@@ -569,8 +569,7 @@ fn parse_safe_mode_force_exit_s18() {
 
 #[test]
 fn parse_safe_mode_force_enter_s18() {
-    let cli =
-        agcli::cli::Cli::try_parse_from(["agcli", "safe-mode", "force-enter", "--duration", "100"]);
+    let cli = agcli::cli::Cli::try_parse_from(["agcli", "safe-mode", "force-enter"]);
     assert!(cli.is_ok(), "safe-mode force-enter: {:?}", cli.err());
 }
 

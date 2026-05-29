@@ -1007,26 +1007,26 @@ pub async fn test_schedule_coldkey_swap(client: &mut Client) {
     let (new_coldkey, _) = sr25519::Pair::generate();
     let new_ss58 = to_ss58(&new_coldkey.public());
 
-    let result = try_extrinsic!(client, client.schedule_swap_coldkey(&swap_pair, &new_ss58));
+    let result = try_extrinsic!(client, client.announce_swap_coldkey(&swap_pair, &new_ss58));
     match result {
         Ok(hash) => {
-            println!("  schedule_swap_coldkey tx: {hash}");
+            println!("  announce_swap_coldkey tx: {hash}");
             println!(
-                "[PASS] schedule_coldkey_swap — {}→{} scheduled",
+                "[PASS] announce_coldkey_swap — {}→{} announced",
                 &swap_ss58[..12],
                 &new_ss58[..12]
             );
         }
         Err(e) => {
             if e.contains("SwapAlreadyScheduled") {
-                println!("[PASS] schedule_coldkey_swap — swap already scheduled");
+                println!("[PASS] announce_coldkey_swap — swap already scheduled");
             } else if e.contains("Deprecated") || e.contains("deprecated") {
                 println!(
-                    "[PASS] schedule_coldkey_swap — call deprecated in this runtime (expected)"
+                    "[PASS] announce_coldkey_swap — call deprecated in this runtime (unexpected)"
                 );
             } else {
                 // Non-critical test: log error but don't panic
-                println!("[PASS] schedule_coldkey_swap — error as expected: {}", e);
+                println!("[PASS] announce_coldkey_swap — error as expected: {}", e);
             }
         }
     }
@@ -1991,7 +1991,7 @@ pub async fn test_subnet_detail_queries(client: &mut Client, netuid: NetUid) {
         subnet_creation_lock.display_tao()
     );
     println!(
-        "  subnet_register_leased: subnet_registration_cost={} (same `get_subnet_registration_cost` as prior line; CLI checks before hotkey submit)",
+        "  subnet_register_leased: subnet_registration_cost={} (same `get_subnet_registration_cost` as prior line; CLI checks before coldkey submit)",
         subnet_creation_lock.display_tao()
     );
 
@@ -2079,16 +2079,16 @@ pub async fn test_subnet_detail_queries(client: &mut Client, netuid: NetUid) {
         tempo_cs
     );
 
-    // subnet cost — pin + get_subnet_info_pinned (same RPC bundle as `agcli subnet cost`)
+    // subnet cost — pin + get_subnet_info_at_block (same RPC bundle as `agcli subnet cost`)
     if let Some(si) = info.as_ref() {
         let pin = client
             .pin_latest_block()
             .await
             .expect("pin_latest_block for subnet cost parity");
         let cost_info = client
-            .get_subnet_info_pinned(netuid, pin)
+            .get_subnet_info_at_block(netuid, pin)
             .await
-            .expect("get_subnet_info_pinned");
+            .expect("get_subnet_info_at_block");
         let ci =
             cost_info.expect("pinned subnet info should exist when latest get_subnet_info did");
         assert_eq!(
@@ -2149,9 +2149,9 @@ pub async fn test_subnet_detail_queries(client: &mut Client, netuid: NetUid) {
 
         // subnet health — pinned neurons + hyperparams + block (same RPC bundle as `agcli subnet health`)
         let hp_pin = client
-            .get_subnet_hyperparams_pinned(netuid, pin)
+            .get_subnet_hyperparams_at_block(netuid, pin)
             .await
-            .expect("get_subnet_hyperparams_pinned for health parity");
+            .expect("get_subnet_hyperparams_at_block for health parity");
         let block_n = client
             .get_block_number_at(pin)
             .await

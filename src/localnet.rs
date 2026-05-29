@@ -68,6 +68,7 @@ pub struct LocalnetStatus {
     /// ISO 8601 timestamp when the container was started (from Docker inspect `StartedAt`).
     /// Named `started_at` rather than `uptime` to reflect the raw Docker value; callers
     /// can compute wall-clock uptime by subtracting this from the current time.
+    #[serde(alias = "uptime")]
     pub started_at: Option<String>,
 }
 

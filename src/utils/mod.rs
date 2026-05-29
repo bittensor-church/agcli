@@ -6,6 +6,14 @@ pub mod pow;
 
 pub use format::*;
 
+/// Validate subnet lease emissions share (0–100 percent).
+pub fn validate_emissions_share(value: u8) -> anyhow::Result<()> {
+    if value > 100 {
+        anyhow::bail!("emissions_share must be 0–100, got {value}");
+    }
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     // Verify that re-exported format module functions are accessible
@@ -30,6 +38,17 @@ mod tests {
     fn re_export_u16_to_float_accessible() {
         let result = super::u16_to_float(0);
         assert_eq!(result, 0.0);
+    }
+
+    #[test]
+    fn validate_emissions_share_accepts_range() {
+        assert!(super::validate_emissions_share(0).is_ok());
+        assert!(super::validate_emissions_share(100).is_ok());
+    }
+
+    #[test]
+    fn validate_emissions_share_rejects_over_100() {
+        assert!(super::validate_emissions_share(101).is_err());
     }
 
     #[test]

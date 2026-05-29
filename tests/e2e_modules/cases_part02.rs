@@ -1443,8 +1443,8 @@ pub async fn test_add_remove_stake(client: &mut Client) {
         netuid.0, alice_stake_on_bob_before, alice_stake_on_bob_after
     );
 
-    // Now remove some stake
-    let remove_amount = Balance::from_tao(2.0);
+    // Now remove some stake (alpha units — chain arg is AlphaBalance)
+    let remove_amount = AlphaBalance::from_units(2.0);
     let hash = retry_extrinsic!(
         client,
         client.remove_stake(&alice, &bob_ss58, netuid, remove_amount)
@@ -1541,7 +1541,7 @@ pub async fn test_stake_move(client: &mut Client) {
         .unwrap_or(0);
 
     // Move 1 TAO worth of alpha from SN1 to target SN
-    let move_amount = Balance::from_tao(1.0);
+    let move_amount = AlphaBalance::from_units(1.0);
     match try_extrinsic!(
         client,
         client.move_stake(&alice, &bob_ss58, from_netuid, to_netuid, move_amount)
@@ -1840,7 +1840,7 @@ pub async fn test_stake_edge_cases(client: &mut Client) {
     wait_blocks(client, 2).await;
 
     // Edge case 2: Remove more than we have (should fail gracefully)
-    let huge = Balance::from_tao(999999.0);
+    let huge = AlphaBalance::from_units(999999.0);
     match try_extrinsic!(client, client.remove_stake(&alice, &bob_ss58, netuid, huge)) {
         Ok(hash) => println!("  remove > balance: tx {} (unexpected success)", hash),
         Err(e) => println!("  remove > balance: correctly rejected — {}", e),
@@ -1860,7 +1860,7 @@ pub async fn test_stake_edge_cases(client: &mut Client) {
     wait_blocks(client, 2).await;
 
     // Edge case 4: Add stake then immediately remove the exact same amount
-    let exact = Balance::from_tao(2.0);
+    let exact = AlphaBalance::from_units(2.0);
     let before = client
         .get_stake_for_coldkey(ALICE_SS58)
         .await

@@ -11,7 +11,7 @@
 //!
 //! **Transfers**: transfer (transfer_allow_death)
 //!
-//! **Registration**: burned_register, pow_register, root_register, register_network
+//! **Registration**: burned_register, register_limit, pow_register, root_register, register_network
 //!
 //! **Weights**: set_weights, commit_weights, reveal_weights, batch_set_weights,
 //! batch_commit_weights, batch_reveal_weights
@@ -20,7 +20,7 @@
 //!
 //! **Delegation**: decrease_take, increase_take
 //!
-//! **Keys**: swap_hotkey, schedule_swap_coldkey
+//! **Keys**: swap_hotkey, announce_swap_coldkey, swap_coldkey_announced
 //!
 //! **Dynamic**: submit_raw_call (for EVM, MEV Shield, Contracts, etc.)
 

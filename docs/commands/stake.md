@@ -145,11 +145,13 @@ agcli stake add --amount 5.0 --netuid 1 --max-slippage 2.0 --password p --yes
 
 Burn **alpha** on a subnet for a hotkey, receiving **free TAO** on the coldkey via AMM `swap_alpha_for_tao`. No client-side balance preflight (unlike `stake add`).
 
+**Important — units:** `--amount` is **alpha (α)**, not TAO. The chain extrinsic `remove_stake` takes `alpha_unstaked: AlphaBalance`. One α uses the same 9-decimal scale as TAO (1 α = 1_000_000_000 raw), but α and τ are different tokens — do not pass a TAO balance as `--amount`. Use `agcli stake list` and read the **Alpha** column.
+
 ### Flags
 
 | Flag | Type | Required | Description |
 |------|------|----------|-------------|
-| `--amount` | `f64` (TAO-scale) | **Yes** | Amount to unstake. |
+| `--amount` | `f64` (α) | **Yes** | Amount of **alpha** to unstake (NOT TAO). |
 | `--netuid` | `u16` | **Yes** | Source subnet UID. |
 | `--hotkey-address` | `String` (SS58) | No | Hotkey. Defaults to wallet hotkey. |
 | `--max-slippage` | `f64` (%) | No | Abort if slippage exceeds this %. |
@@ -164,10 +166,11 @@ agcli stake remove --amount 2.0 --netuid 1 --max-slippage 2.0 --password p --yes
 ### Validation sequence
 
 1. `validate_netuid(netuid)` — rejects netuid 0
-2. `validate_amount(amount, "unstake amount")` — positive, finite
+2. `validate_amount(amount, "unstake amount (alpha, α)")` — positive, finite
 3. `unlock_and_resolve` — wallet unlock
-4. If `--max-slippage`: `check_slippage(..., is_buy=false)` using `sim_swap_alpha_for_tao`
-5. `remove_stake_mev(&pair, &hk, NetUid(netuid), Balance::from_tao(amount), mev)`
+4. Alpha preflight: compare `--amount` to `alpha_stake` from `get_stake_for_coldkey` (client-side; bails before submit if amount > position)
+5. If `--max-slippage`: `check_slippage(..., is_buy=false)` using `sim_swap_alpha_for_tao`
+6. `remove_stake_mev(&pair, &hk, NetUid(netuid), AlphaBalance::from_units(amount), mev)`
 
 **No `check_spending_limit`** — unstaking returns funds.
 
@@ -179,37 +182,45 @@ agcli stake remove --amount 2.0 --netuid 1 --max-slippage 2.0 --password p --yes
 | **2** | Clap / invalid global flags. |
 | **10** | Network failure. |
 | **11** | Auth. |
-| **12** | Validation: invalid netuid, negative amount (`unstake amount` label). |
+| **12** | Validation: invalid netuid, negative amount (`unstake amount (alpha, α)` label), no position / amount exceeds alpha preflight. |
 | **13** | Chain: slippage exceeded; `NotEnoughStakeToWithdraw`, `StakingRateLimitExceeded`. |
 | **15** | Timeout. |
 | **1** | Uncategorized. |
 
 ### Pallet ref
 
-`SubtensorModule::remove_stake(origin, hotkey, netuid, amount_unstaked)` → AMM `swap_alpha_for_tao()`.
+`SubtensorModule::remove_stake(origin, hotkey, netuid, alpha_unstaked: AlphaBalance)` → AMM `swap_alpha_for_tao()`.
+
+**On-chain arg:** `alpha_unstaked` (alpha tokens), **not** TAO. See `subtensor/pallets/subtensor/src/staking/remove_stake.rs`.
 
 **Events emitted**: `StakeRemoved(coldkey, hotkey, netuid, alpha, tao)`.
 
 ---
 
-## stake move — Move alpha between subnets (same hotkey, same coldkey)
+## stake move — Move alpha between subnets (same or different hotkey)
 
-Move alpha from one subnet to another for the **same hotkey** via `move_stake`. Internally: alpha out of source pool, TAO through coldkey, alpha into destination pool. No slippage guard.
+Move **alpha** from one subnet to another. On-chain `move_stake` accepts separate `origin_hotkey` and `destination_hotkey`; use `--dest-hotkey` when they differ (defaults to origin hotkey). Cross-**coldkey** moves require `stake transfer-stake`.
+
+When origin and destination hotkey are the same, the chain path is identical to `stake swap`: both call `transition_stake_internal` (unstake α on source → AMM swap → restake on destination). Choose `move` vs `swap` based on which extrinsic/event you need (`StakeMoved` vs `StakeSwapped`).
+
+**Units:** `--amount` is **alpha (α)**, not TAO (see `stake list` → Alpha column).
 
 ### Flags
 
 | Flag | Type | Required | Description |
 |------|------|----------|-------------|
-| `--amount` | `f64` | **Yes** | Amount to move (TAO-scale; actually alpha amount). |
+| `--amount` | `f64` (α) | **Yes** | Amount of **alpha** to move (NOT TAO). |
 | `--from` | `u16` | **Yes** | Source subnet UID. |
 | `--to` | `u16` | **Yes** | Destination subnet UID. |
-| `--hotkey-address` | `String` (SS58) | No | Hotkey. Defaults to wallet hotkey. |
+| `--hotkey-address` | `String` (SS58) | No | Origin hotkey (source of alpha). Defaults to wallet hotkey. |
+| `--dest-hotkey` | `String` (SS58) | No | Destination hotkey. Defaults to origin hotkey (same as `stake swap`). |
 
 ### Examples
 
 ```bash
 agcli stake move --amount 1.0 --from 1 --to 2 --password p --yes
 agcli stake move --amount 0.5 --from 1 --to 2 --hotkey-address 5FHne... --password p --yes
+agcli stake move --amount 1.0 --from 1 --to 2 --hotkey-address 5FHne... --dest-hotkey 5Grwva... --password p --yes
 ```
 
 ### Exit codes
@@ -220,7 +231,7 @@ agcli stake move --amount 0.5 --from 1 --to 2 --hotkey-address 5FHne... --passwo
 | **2** | Clap / invalid global flags. |
 | **10** | Network failure. |
 | **11** | Auth. |
-| **12** | Validation: invalid `--from`/`--to` (SN0), negative amount (`move amount`), spending limit. |
+| **12** | Validation: invalid `--from`/`--to` (SN0), negative amount (`move amount (alpha, α)`), alpha preflight, spending limit. |
 | **13** | Chain: `NotEnoughStakeToWithdraw`, `SubnetNotExists`, etc. |
 | **1** | `--from == --to` (same-subnet bail). |
 
@@ -228,7 +239,7 @@ agcli stake move --amount 0.5 --from 1 --to 2 --hotkey-address 5FHne... --passwo
 
 `SubtensorModule::move_stake(origin, origin_hotkey, destination_hotkey, origin_netuid, dest_netuid, alpha_amount)`.
 
-**Note (Finding #1)**: The CLI passes the same hotkey for both `origin_hotkey` and `destination_hotkey`. There is no `--dest-hotkey` flag. Cross-hotkey moves require `stake transfer-stake`.
+Alpha preflight checks the **origin** hotkey balance. Cross-coldkey moves still require `stake transfer-stake`.
 
 **Events emitted**: `StakeMoved(coldkey, origin_hotkey, origin_netuid, dest_hotkey, dest_netuid, tao_equivalent)`.
 
@@ -236,13 +247,17 @@ agcli stake move --amount 0.5 --from 1 --to 2 --hotkey-address 5FHne... --passwo
 
 ## stake swap — Swap alpha between subnets (same hotkey)
 
-Same-hotkey cross-subnet rebalance via `swap_stake`. Semantically similar to `stake move`; uses a different on-chain path that may differ in liquidity treatment.
+Same-hotkey cross-subnet rebalance via `swap_stake`.
+
+**On-chain equivalence:** With the same hotkey (as this CLI always uses), `swap_stake` and `move_stake` invoke the same `transition_stake_internal` logic — unstake α on `--from`, restake on `--to` through the AMM. The only differences are extrinsic name and event (`StakeSwapped` vs `StakeMoved`). There is no separate liquidity path.
+
+**Units:** `--amount` is **alpha (α)**, not TAO.
 
 ### Flags
 
 | Flag | Type | Required | Description |
 |------|------|----------|-------------|
-| `--amount` | `f64` | **Yes** | Amount (TAO-scale). |
+| `--amount` | `f64` (α) | **Yes** | Amount of **alpha** to swap (NOT TAO). |
 | `--from` | `u16` | **Yes** | Source subnet UID. |
 | `--to` | `u16` | **Yes** | Destination subnet UID. |
 | `--hotkey-address` | `String` (SS58) | No | Hotkey. Defaults to wallet hotkey. |
@@ -255,7 +270,7 @@ agcli stake swap --amount 1.0 --from 1 --to 2 --password p --yes
 
 ### Exit codes
 
-Same as `stake move`.
+Same as `stake move` (including alpha preflight on source subnet).
 
 ### Pallet ref
 
@@ -363,7 +378,7 @@ agcli stake add-limit --amount 10.0 --netuid 1 --price 0.5 --partial --password 
 | **0** | Limit order submitted. |
 | **11** | Auth. |
 | **12** | Invalid netuid, invalid amount, invalid price, spending limit. |
-| **13** | Chain errors. |
+| **13** | Chain errors: `ZeroMaxStakeAmount` (price too low), `SlippageTooHigh`, `InsufficientLiquidity`, rate limits. |
 
 ### Pallet ref
 
@@ -379,7 +394,7 @@ Remove stake with a minimum price constraint. Executes when the AMM price exceed
 
 | Flag | Type | Required | Description |
 |------|------|----------|-------------|
-| `--amount` | `f64` | **Yes** | Amount of alpha to remove. |
+| `--amount` | `f64` (α) | **Yes** | Amount of **alpha** to remove (NOT TAO). |
 | `--netuid` | `u16` | **Yes** | Source subnet UID. |
 | `--price` | `f64` | **Yes** | Limit price (minimum TAO per alpha). Must be positive. |
 | `--partial` | `bool` (flag) | No | Allow partial fills. Default: false. |
@@ -394,7 +409,7 @@ agcli stake remove-limit --amount 5.0 --netuid 1 --price 0.8 --partial --passwor
 
 ### Notes
 
-Amount is encoded via `safe_rao(amount)` = `Balance::from_tao(amount).rao()`. This converts the f64 as if it were TAO, not raw alpha. See **Finding #2** for implications.
+`--amount` is **alpha (α)**, encoded via `AlphaBalance::from_units(amount)`. Alpha preflight runs before submit (same as `stake remove`).
 
 ### Pallet ref
 
@@ -581,17 +596,32 @@ agcli stake process-claim --hotkey-address 5FHne... --netuids "5,10" --password 
 1. Opens wallet, queries `get_stake_for_coldkey` to enumerate subnets where the hotkey has stake.
 2. Filters to `--netuids` if provided; logs warnings for non-u16 IDs.
 3. Submits `claim_root_dividends(hotkey_bytes, netuid)` raw calls in parallel via `futures::future::join_all`.
-4. Prints per-subnet success/failure, then a totals line.
+4. Prints per-subnet success/failure, then a totals line (human mode).
+
+### JSON output (`--output json`)
+
+```json
+{
+  "hotkey": "5FHne...",
+  "claimed": [{ "netuid": 1, "tx_hash": "0x..." }],
+  "failed": [{ "netuid": 2, "error": "..." }],
+  "success_count": 1,
+  "failed_count": 1
+}
+```
+
+JSON is emitted even when some claims fail; exit code is still non-zero if `failed_count > 0`.
 
 ### Exit codes
 
 | Code | When |
 |------|------|
-| **0** | All claims submitted (some may fail individually; process exits 0). |
+| **0** | All subnet claims succeeded. |
 | **11** | Auth. |
 | **10** | Network error querying stakes. |
+| **13** | One or more `claim_root_dividends` extrinsics failed (partial or total failure). |
 
-**Note**: Individual per-subnet failures do not affect the overall exit code (currently always 0 on partial failure). See **Finding #5**.
+If any subnet fails, the command exits non-zero after printing per-subnet errors. Retry failed subnets with `agcli stake claim-root --netuid <N>`.
 
 ### Pallet ref
 
@@ -648,19 +678,28 @@ agcli stake childkey-take --take 0.0 --netuid 1 --password p --yes    # reset
 
 Set child hotkeys for a parent hotkey on a subnet. Children are **not applied immediately** — they are scheduled via `PendingChildKeys` with a cooldown period.
 
+**Proportions (critical):** On-chain `set_children` takes `(proportion: u64, child)`. The runtime normalizes each proportion as `proportion ÷ u64::MAX` when computing emission splits (see `get_self_contribution` in the subtensor pallet). **100% weight = `u64::MAX`**, not `100` or `1`.
+
+| Input style | Example | Encoded u64 |
+|-------------|---------|-------------|
+| Decimal fraction | `0.5:5FHne...` | ≈ half of u64::MAX |
+| Raw u64 | `9223372036854775807:5FHne...` | explicit on-chain value |
+
+Sum of all child proportions must be **≤ u64::MAX**. Maximum **5** children.
+
 ### Flags
 
 | Flag | Type | Required | Description |
 |------|------|----------|-------------|
 | `--netuid` | `u16` | **Yes** | Subnet UID. |
-| `--children` | `String` | **Yes** | `"proportion:hotkey_ss58"` pairs, comma-separated. Proportions sum to ≤1.0. |
+| `--children` | `String` | **Yes** | `proportion:hotkey_ss58` pairs, comma-separated (decimal or raw u64). |
 | `--hotkey-address` | `String` (SS58) | No | Parent hotkey. Defaults to wallet hotkey. |
 
 ### Examples
 
 ```bash
 agcli stake set-children --netuid 1 \
-  --children "0.5:5FHne...,0.3:5GrwvaEF..." \
+  --children "0.5:5FHne...,0.5:5GrwvaEF..." \
   --password p --yes
 ```
 
@@ -736,7 +775,18 @@ agcli stake show-auto --address 5GrwvaEF...
 
 ### Output
 
-Human table (`SN1   → 5FHne...`). No `--output json` support for this command — JSON output flag is silently treated as default (human text). See **Finding #6**.
+With `--output json`:
+
+```json
+{
+  "address": "5GrwvaEF...",
+  "auto_stake": [
+    { "netuid": 1, "hotkey": "5FHne..." }
+  ]
+}
+```
+
+Human mode prints a table (`SN1   → 5FHne...`).
 
 ### Pallet ref
 
@@ -746,7 +796,15 @@ Storage: `SubtensorModule::ColdkeyAutoStakeHotkey(coldkey, netuid) → Option<Ac
 
 ## stake set-claim — Set root emission handling mode
 
-Configure how root network emissions are handled for a coldkey: swap to TAO, keep as alpha, or keep for specific subnets.
+Configure how **root network (SN0) alpha dividends** are handled for the signing coldkey. Stored in `RootClaimType(coldkey)`.
+
+| `--claim-type` | On-chain variant | Effect |
+|----------------|------------------|--------|
+| `swap` | `Swap` (default) | Root alpha emissions are swapped to free TAO on the coldkey |
+| `keep` | `Keep` | All root alpha is retained (no auto-swap) |
+| `keep-subnets` | `KeepSubnets { subnets }` | Keep alpha only for listed netuids; swap alpha from all other subnets to TAO |
+
+**Requires `--subnets`** when using `keep-subnets` (at least one netuid). Empty lists fail on-chain with `InvalidSubnetNumber`.
 
 ### Flags
 
@@ -765,7 +823,16 @@ agcli stake set-claim --claim-type keep-subnets --subnets "1,2,3" --password p -
 
 ### Notes
 
-Invalid `--claim-type` values are rejected at parse time by clap's `value_parser`. Invalid subnet IDs in `--subnets` warn and are skipped (no exit code ≥ 1).
+Invalid `--claim-type` values are rejected at parse time by clap's `value_parser`. Invalid subnet IDs in `--subnets` warn and are skipped; if none remain, the command fails before submit.
+
+### Exit codes
+
+| Code | When |
+|------|------|
+| **0** | Extrinsic finalized. |
+| **11** | Auth. |
+| **12** | `keep-subnets` without valid `--subnets`, or invalid netuid in list. |
+| **13** | Chain: `InvalidSubnetNumber` (empty keep-subnets set submitted despite preflight). |
 
 ### Pallet ref
 
@@ -775,16 +842,18 @@ Invalid `--claim-type` values are rejected at parse time by clap's `value_parser
 
 ---
 
-## stake transfer-stake — Transfer stake to a different coldkey
+## stake transfer-stake — Transfer alpha stake to a different coldkey
 
-Move a stake position to a different destination coldkey, optionally changing the subnet.
+Move **alpha** from your coldkey to another coldkey's stake position on the same hotkey (optionally changing subnet). On-chain `transfer_stake` takes `alpha_amount: AlphaBalance`, not free TAO.
+
+**Units:** `--amount` is **alpha (α)**, same as `stake move` / `stake remove`. Check the Alpha column in `agcli stake list`.
 
 ### Flags
 
 | Flag | Type | Required | Description |
 |------|------|----------|-------------|
 | `--dest` | `String` (SS58) | **Yes** | Destination coldkey address. |
-| `--amount` | `f64` (TAO) | **Yes** | Amount to transfer (`Balance::from_tao`). |
+| `--amount` | `f64` (α) | **Yes** | Alpha to transfer (`AlphaBalance::from_units`). |
 | `--from` | `u16` | **Yes** | Source subnet UID. |
 | `--to` | `u16` | **Yes** | Destination subnet UID. |
 | `--hotkey-address` | `String` (SS58) | No | Hotkey. Defaults to wallet hotkey. |
@@ -801,9 +870,9 @@ agcli stake transfer-stake \
 
 1. `validate_netuid(from)`, `validate_netuid(to)`
 2. `validate_ss58(&dest, "destination")` — errors classify as VALIDATION (12)
-3. `validate_amount(amount, "transfer stake amount")`
-4. `check_spending_limit(to, amount)`
-5. Amount encoded as `Balance::from_tao(amount)`
+3. `validate_amount(amount, "transfer stake amount (alpha, α)")`
+4. Alpha preflight on source subnet (`preflight_alpha_stake`)
+5. Amount encoded as `AlphaBalance::from_units(amount)` → `.raw()` (u64 alpha)
 
 ### Exit codes
 
@@ -811,8 +880,8 @@ agcli stake transfer-stake \
 |------|------|
 | **0** | Extrinsic finalized. |
 | **11** | Auth. |
-| **12** | Invalid dest SS58, invalid netuid, invalid amount, spending limit. |
-| **13** | Chain: `NotEnoughStakeToWithdraw`, `SubnetNotExists`, etc. |
+| **12** | Invalid dest SS58, invalid netuid, invalid amount, insufficient alpha (preflight). |
+| **13** | Chain: `NotEnoughStakeToWithdraw`, `TransferDisallowed`, `SubnetNotExists`, etc. |
 
 ### Pallet ref
 
@@ -887,46 +956,44 @@ agcli stake wizard --netuid 1 --amount 5.0 --hotkey-address 5FHne... --yes
 | `InvalidNetuid` / netuid 0 | 12 | SN0 reserved for root; client-side guard | Use netuid ≥ 1 |
 | `Insufficient balance` | 13 | Client-side balance preflight (stake add only) | Fund coldkey |
 | Slippage `exceeds maximum allowed` | 13 | AMM slippage > `--max-slippage` | Reduce trade size or use limit order |
+| `ZeroMaxStakeAmount` | 13 | Limit price too low for any AMM fill at current liquidity | Raise `--price` (τ/α); check `agcli view price --netuid N` |
+| `InvalidSubnetNumber` | 13 | Empty or invalid subnet set (e.g. `keep-subnets` without `--subnets`) | Pass at least one netuid in `--subnets` |
 
 ---
 
 ## Audit findings
 
-### Finding #1 — `stake move` hardcodes same hotkey for both source and destination
+### Finding #1 — ~~`stake move` hardcodes same hotkey for both source and destination~~ (fixed)
 
-`move_stake_mev` in `src/chain/extrinsics.rs` calls:
-```rust
-api::tx().subtensor_module().move_stake(hk.clone(), hk, from.0, to.0, amount.rao())
-```
-Both `origin_hotkey` and `destination_hotkey` are the same value. The pallet's `move_stake` accepts distinct origin/destination hotkeys, but the CLI provides no `--dest-hotkey` flag. Agents cannot move stake to a different hotkey using `stake move`; they must use `stake transfer-stake` (which changes the coldkey).
+`stake move` accepts optional `--dest-hotkey` (defaults to origin hotkey). `move_stake_mev` passes distinct origin/destination account IDs to the pallet.
 
-### Finding #2 — `stake remove-limit` interprets amount as TAO, not alpha
+### Finding #2 — ~~`stake remove-limit` interprets amount as TAO, not alpha~~ (fixed)
 
-The `RemoveLimit` handler uses `safe_rao(amount)` = `Balance::from_tao(amount).rao()` to encode the amount for the `remove_stake_limit` extrinsic. The clap help says "Amount of alpha" but the conversion treats it as TAO-scale (×1e9). An agent trying to remove 100 alpha tokens would pass `--amount 100` and submit 100 × 10^9 raw units — likely overshooting the available position. Consistent with `RemoveLimit` docstring but not with `RecycleAlpha` / `BurnAlpha` which have the same issue.
+Alpha-denominated stake commands (`remove`, `move`, `swap`, `remove-limit`, `swap-limit`, `recycle-alpha`, `burn-alpha`) now encode amounts with `AlphaBalance::from_units` and run client-side alpha preflight where applicable.
 
 ### Finding #3 — `stake claim-root` and `stake process-claim` call different pallet functions
 
 `stake claim-root` uses the typed API call `claim_root(subnets: Vec<u16>)` signed by the coldkey with no hotkey argument. `stake process-claim` uses `submit_raw_call("claim_root_dividends", [hotkey_bytes, netuid])` — a different on-chain function taking a hotkey parameter. These are not the same operation. Agents seeking to claim root dividends for a specific hotkey should use `process-claim`; `claim-root` operates at coldkey+subnet granularity without targeting a specific hotkey.
 
-### Finding #4 — `stake process-claim` exits 0 on partial per-subnet failure
+### Finding #4 — ~~`stake process-claim` exits 0 on partial per-subnet failure~~ (fixed)
 
-The `ProcessClaim` handler collects results and prints per-subnet success/error but always returns `Ok(())`. If some subnet claims fail (chain error), the overall process exits 0. An agent relying on exit codes for scripted automation will not detect partial failures.
+The handler now bails with a summary listing failed subnet IDs when any `claim_root_dividends` call fails, so scripted agents get a non-zero exit (typically 13 for chain errors).
 
-### Finding #5 — Write commands do not emit JSON output; `--output json` is silently ignored
+### Finding #5 — ~~Write commands do not emit JSON output~~ (fixed)
 
-All write commands (`stake add`, `stake remove`, `stake move`, etc.) print human-readable text and do not check `ctx.output` for JSON formatting. The global `--output json` flag has no effect on write-command success output. Only `stake list` and `stake remove-full-limit` (which calls `print_tx_result`) respond to the output flag. Agents expecting JSON from write commands will receive plain text.
+Write commands now emit `{"tx_hash": "0x..."}` (and `"action"` where applicable) when `--output json` is set. Progress lines are suppressed in JSON mode for most handlers.
 
-### Finding #6 — `stake show-auto` has no JSON output mode
+### Finding #6 — ~~`stake show-auto` has no JSON output mode~~ (fixed)
 
-`show-auto` always prints human text. The `output` field from `ctx` is not read. An agent passing `--output json` gets no JSON back.
+`show-auto` emits `{"address", "auto_stake": [{netuid, hotkey}, ...]}` with `--output json`.
 
-### Finding #7 — `stake swap` vs `stake move` semantic difference is undocumented
+### Finding #7 — ~~`stake swap` vs `stake move` semantic difference is undocumented~~ (fixed)
 
-The pallet has both `swap_stake` and `move_stake` as distinct dispatchables. The CLI exposes both but the docs do not clearly differentiate their on-chain behavior. From the extrinsics: `move_stake` takes separate `origin_hotkey` and `dest_hotkey` (though both are hardcoded to the same value — see Finding #1); `swap_stake` takes a single `hotkey`. The actual liquidity mechanics differ at the pallet level. Agents choosing between them lack clear guidance.
+Docs and `--help` now state that with the same hotkey (CLI default), both extrinsics use the same `transition_stake_internal` path; difference is extrinsic name/event only.
 
-### Finding #8 — `stake wizard` uses `dialoguer` and panics without a TTY
+### Finding #8 — ~~`stake wizard` uses `dialoguer` and panics without a TTY~~ (fixed)
 
-The `staking_wizard` function calls `dialoguer::Input::new().interact_text()` and `dialoguer::Confirm::new().interact()`. These panic if stdin is not a TTY (e.g., in a piped agent workflow). Non-interactive use requires all three flags (`--netuid`, `--amount`) and `--yes`. Missing any one triggers the interactive prompt, which panics in non-TTY environments.
+Missing `--netuid` or `--amount` in a non-TTY environment now exits with a clear error (`require_tty_for_input`). Confirmation uses `require_confirm_prompt_capability` (pass `--yes` / `--batch`). Non-interactive: `agcli stake wizard --netuid N --amount X --yes`.
 
 ---
 

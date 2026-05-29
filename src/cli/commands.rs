@@ -162,17 +162,35 @@ pub async fn execute(cli: Cli) -> Result<()> {
             let swap = client.get_coldkey_swap_scheduled(&addr).await?;
             match swap {
                 Some((block, new_ck_hash)) => {
+                    let current_block = client.get_block_number().await.ok();
+                    let ready = current_block.is_some_and(|n| n >= block as u64);
                     if ctx.output.is_json() {
                         print_json(&serde_json::json!({
                             "address": addr,
                             "swap_scheduled": true,
                             "execution_block": block,
                             "new_coldkey_hash": new_ck_hash,
+                            "execution_ready": ready,
+                            "next_step": "agcli swap coldkey-exec --new-coldkey <SS58 from step 1>",
                         }));
                     } else {
-                        println!("Coldkey swap scheduled for {}", addr);
+                        println!("Coldkey swap announced for {}", addr);
                         println!("  Execution block: {}", block);
                         println!("  New coldkey hash: {}", new_ck_hash);
+                        if ready {
+                            println!(
+                                "  Ready now — execute step 2:\n    agcli swap coldkey-exec --new-coldkey <SS58 from step 1>"
+                            );
+                        } else if let Some(current) = current_block {
+                            let wait = block.saturating_sub(current as u32);
+                            println!(
+                                "  Wait ~{wait} block(s) (current: {current}), then run step 2:\n    agcli swap coldkey-exec --new-coldkey <SS58 from step 1>"
+                            );
+                        } else {
+                            println!(
+                                "  After block {block}, run step 2:\n    agcli swap coldkey-exec --new-coldkey <SS58 from step 1>"
+                            );
+                        }
                     }
                 }
                 None => {

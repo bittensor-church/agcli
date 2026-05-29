@@ -3,8 +3,9 @@
 use crate::chain::Client;
 use crate::cli::helpers::*;
 use crate::cli::{OutputFormat, StakeCommands};
-use crate::types::{Balance, NetUid};
-use anyhow::Result;
+use crate::types::balance::AlphaBalance;
+use crate::types::NetUid;
+use anyhow::{Context, Result};
 
 pub async fn handle_stake(cmd: StakeCommands, client: &Client, ctx: &Ctx<'_>) -> Result<()> {
     let (wallet_dir, wallet_name, hotkey_name) = (ctx.wallet_dir, ctx.wallet_name, ctx.hotkey_name);
@@ -105,12 +106,11 @@ pub async fn handle_stake(cmd: StakeCommands, client: &Client, ctx: &Ctx<'_>) ->
             max_slippage,
         } => {
             validate_netuid(netuid)?;
-            validate_amount(amount, "stake amount")?;
+            let bal = parse_cli_tao_amount(amount, "stake amount")?;
             // Spending limit check
             check_spending_limit(netuid, amount)?;
             let (pair, hk) =
                 unlock_and_resolve(wallet_dir, wallet_name, hotkey_name, hotkey, password)?;
-            let bal = Balance::from_tao(amount);
             let pubkey = sp_core::Pair::public(&pair);
             // Pre-flight checks: balance + slippage in parallel when both needed
             if let Some(max_slip) = max_slippage {
@@ -134,6 +134,7 @@ pub async fn handle_stake(cmd: StakeCommands, client: &Client, ctx: &Ctx<'_>) ->
                 tracing::info!("MEV shield: encrypting stake operation");
             }
             stake_op(
+                output,
                 "Adding",
                 "added",
                 &hk,
@@ -150,10 +151,19 @@ pub async fn handle_stake(cmd: StakeCommands, client: &Client, ctx: &Ctx<'_>) ->
             max_slippage,
         } => {
             validate_netuid(netuid)?;
-            validate_amount(amount, "unstake amount")?;
             let (pair, hk) =
                 unlock_and_resolve(wallet_dir, wallet_name, hotkey_name, hotkey, password)?;
-            // Slippage check
+            let alpha = preflight_alpha_amount(
+                client,
+                &pair,
+                netuid,
+                &hk,
+                amount,
+                "unstake amount (alpha, α)",
+                "unstake",
+            )
+            .await?;
+            // Slippage check (simulates alpha → TAO)
             if let Some(max_slip) = max_slippage {
                 check_slippage(client, netuid, amount, max_slip, false).await?;
             }
@@ -161,51 +171,74 @@ pub async fn handle_stake(cmd: StakeCommands, client: &Client, ctx: &Ctx<'_>) ->
                 eprintln!("MEV shield: encrypting unstake operation");
                 tracing::info!("MEV shield: encrypting unstake operation");
             }
-            {
-                let bal = Balance::from_tao(amount);
-                stake_op(
-                    "Removing",
-                    "removed",
-                    &hk,
-                    client
-                        .remove_stake_mev(&pair, &hk, NetUid(netuid), bal, mev)
-                        .await,
-                    &format!("Unstaked {} from SN{}", bal.display_tao(), netuid),
-                )
-            }
+            stake_op(
+                output,
+                "Removing",
+                "removed",
+                &hk,
+                client
+                    .remove_stake_mev(&pair, &hk, NetUid(netuid), alpha, mev)
+                    .await,
+                &format!("Unstaked {:.9} α from SN{}", alpha.units(), netuid),
+            )
         }
         StakeCommands::Move {
             amount,
             from,
             to,
             hotkey,
+            dest_hotkey,
         } => {
             validate_netuid(from)?;
             validate_netuid(to)?;
-            validate_amount(amount, "move amount")?;
             if from == to {
                 anyhow::bail!("Source and destination subnets are the same (SN{}). Use a different --to subnet.", from);
             }
-            // Spending limit check on destination subnet
-            check_spending_limit(to, amount)?;
             let (pair, hk) =
                 unlock_and_resolve(wallet_dir, wallet_name, hotkey_name, hotkey, password)?;
+            let alpha = preflight_alpha_amount(
+                client,
+                &pair,
+                from,
+                &hk,
+                amount,
+                "move amount (alpha, α)",
+                "move",
+            )
+            .await?;
+            let dest_hk = match dest_hotkey {
+                Some(ref d) => {
+                    validate_ss58(d, "dest-hotkey")?;
+                    d.clone()
+                }
+                None => hk.clone(),
+            };
             if mev {
                 eprintln!("MEV shield: encrypting move-stake operation");
                 tracing::info!("MEV shield: encrypting move-stake operation");
             }
-            {
-                let bal = Balance::from_tao(amount);
-                stake_op(
-                    "Moving",
-                    "moved",
-                    &hk,
-                    client
-                        .move_stake_mev(&pair, &hk, NetUid(from), NetUid(to), bal, mev)
-                        .await,
-                    &format!("Moved {} from SN{} to SN{}", bal.display_tao(), from, to),
+            let detail = if dest_hk == hk {
+                format!("Moved {:.9} α from SN{} to SN{}", alpha.units(), from, to)
+            } else {
+                format!(
+                    "Moved {:.9} α from SN{} to SN{} ({} → {})",
+                    alpha.units(),
+                    from,
+                    to,
+                    crate::utils::short_ss58(&hk),
+                    crate::utils::short_ss58(&dest_hk)
                 )
-            }
+            };
+            stake_op(
+                output,
+                "Moving",
+                "moved",
+                &hk,
+                client
+                    .move_stake_mev(&pair, &hk, &dest_hk, NetUid(from), NetUid(to), alpha, mev)
+                    .await,
+                &detail,
+            )
         }
         StakeCommands::Swap {
             amount,
@@ -215,35 +248,48 @@ pub async fn handle_stake(cmd: StakeCommands, client: &Client, ctx: &Ctx<'_>) ->
         } => {
             validate_netuid(from)?;
             validate_netuid(to)?;
-            validate_amount(amount, "swap amount")?;
             if from == to {
                 anyhow::bail!("Source and destination subnets are the same (SN{}). Use a different --to subnet.", from);
             }
-            // Spending limit check on destination subnet
-            check_spending_limit(to, amount)?;
             let (pair, hk) =
                 unlock_and_resolve(wallet_dir, wallet_name, hotkey_name, hotkey, password)?;
-            let bal = Balance::from_tao(amount);
+            let alpha = preflight_alpha_amount(
+                client,
+                &pair,
+                from,
+                &hk,
+                amount,
+                "swap amount (alpha, α)",
+                "swap",
+            )
+            .await?;
             if mev {
                 eprintln!("MEV shield: encrypting swap-stake operation");
                 tracing::info!("MEV shield: encrypting swap-stake operation");
             }
-            println!(
-                "Swapping stake: {} from SN{} to SN{} for {}",
-                bal.display_tao(),
-                from,
-                to,
-                crate::utils::short_ss58(&hk)
-            );
+            if !output.is_json() {
+                println!(
+                    "Swapping stake: {:.9} α from SN{} to SN{} for {}",
+                    alpha.units(),
+                    from,
+                    to,
+                    crate::utils::short_ss58(&hk)
+                );
+            }
             let hash = client
-                .swap_stake_mev(&pair, &hk, NetUid(from), NetUid(to), bal, mev)
+                .swap_stake_mev(&pair, &hk, NetUid(from), NetUid(to), alpha, mev)
                 .await?;
-            println!(
-                "Stake swapped. {} moved from SN{} to SN{}\n  Tx: {}",
-                bal.display_tao(),
-                from,
-                to,
-                hash
+            emit_stake_tx(
+                output,
+                &hash,
+                &format!(
+                    "Stake swapped. {:.9} α moved from SN{} to SN{}\n  Tx: {}",
+                    alpha.units(),
+                    from,
+                    to,
+                    hash
+                ),
+                Some("swapped"),
             );
             Ok(())
         }
@@ -251,6 +297,7 @@ pub async fn handle_stake(cmd: StakeCommands, client: &Client, ctx: &Ctx<'_>) ->
             let (pair, hk) =
                 unlock_and_resolve(wallet_dir, wallet_name, hotkey_name, hotkey, password)?;
             stake_op(
+                output,
                 "Unstaking all from",
                 "unstaked",
                 &hk,
@@ -263,7 +310,12 @@ pub async fn handle_stake(cmd: StakeCommands, client: &Client, ctx: &Ctx<'_>) ->
             let mut wallet = open_wallet(wallet_dir, wallet_name)?;
             unlock_coldkey(&mut wallet, password)?;
             let hash = client.claim_root(wallet.coldkey()?, &[netuid]).await?;
-            println!("Root dividends claimed for SN{}.\n  Tx: {}", netuid, hash);
+            emit_stake_tx(
+                output,
+                &hash,
+                &format!("Root dividends claimed for SN{}.\n  Tx: {}", netuid, hash),
+                Some("claimed"),
+            );
             Ok(())
         }
         StakeCommands::AddLimit {
@@ -274,36 +326,40 @@ pub async fn handle_stake(cmd: StakeCommands, client: &Client, ctx: &Ctx<'_>) ->
             hotkey,
         } => {
             validate_netuid(netuid)?;
-            validate_amount(amount, "limit stake amount")?;
-            validate_amount(price, "limit price")?;
-            validate_limit_price(price, "limit price")?;
+            let lp = parse_cli_limit_price(price, "limit price")?;
             // Spending limit check
             check_spending_limit(netuid, amount)?;
             let (pair, hk) =
                 unlock_and_resolve(wallet_dir, wallet_name, hotkey_name, hotkey, password)?;
-            let bal = Balance::from_tao(amount);
-            let lp = safe_rao(price);
+            let bal = parse_cli_tao_amount(amount, "limit stake amount")?;
             if mev {
                 eprintln!("MEV shield: encrypting add-stake-limit operation");
                 tracing::info!("MEV shield: encrypting add-stake-limit operation");
             }
-            println!(
-                "Adding stake limit: {} at {:.4} on SN{} (partial={})",
-                bal.display_tao(),
-                price,
-                netuid,
-                partial
-            );
+            if !output.is_json() {
+                println!(
+                    "Adding stake limit: {} at {:.4} on SN{} (partial={})",
+                    bal.display_tao(),
+                    price,
+                    netuid,
+                    partial
+                );
+            }
             let hash = client
                 .add_stake_limit_mev(&pair, &hk, NetUid(netuid), bal, lp, partial, mev)
                 .await?;
-            println!(
-                "Limit stake order placed. {} at price {:.4} on SN{} (partial={})\n  Tx: {}",
-                bal.display_tao(),
-                price,
-                netuid,
-                partial,
-                hash
+            emit_stake_tx(
+                output,
+                &hash,
+                &format!(
+                    "Limit stake order placed. {} at price {:.4} on SN{} (partial={})\n  Tx: {}",
+                    bal.display_tao(),
+                    price,
+                    netuid,
+                    partial,
+                    hash
+                ),
+                Some("limit_added"),
             );
             Ok(())
         }
@@ -315,28 +371,46 @@ pub async fn handle_stake(cmd: StakeCommands, client: &Client, ctx: &Ctx<'_>) ->
             hotkey,
         } => {
             validate_netuid(netuid)?;
-            validate_amount(amount, "limit unstake amount")?;
-            validate_amount(price, "limit price")?;
-            validate_limit_price(price, "limit price")?;
-            // No spending limit check: unstaking returns funds to the user, not a spend.
+            let lp = parse_cli_limit_price(price, "limit price")?;
             let (pair, hk) =
                 unlock_and_resolve(wallet_dir, wallet_name, hotkey_name, hotkey, password)?;
-            let lp = safe_rao(price);
-            let amt = safe_rao(amount);
+            let alpha = preflight_alpha_amount(
+                client,
+                &pair,
+                netuid,
+                &hk,
+                amount,
+                "limit unstake amount (alpha, α)",
+                "limit unstake",
+            )
+            .await?;
             if mev {
                 eprintln!("MEV shield: encrypting remove-stake-limit operation");
                 tracing::info!("MEV shield: encrypting remove-stake-limit operation");
             }
-            println!(
-                "Removing stake limit: {:.4} at {:.4} on SN{} (partial={})",
-                amount, price, netuid, partial
-            );
+            if !output.is_json() {
+                println!(
+                    "Removing stake limit: {:.9} α at {:.4} on SN{} (partial={})",
+                    alpha.units(),
+                    price,
+                    netuid,
+                    partial
+                );
+            }
             let hash = client
-                .remove_stake_limit_mev(&pair, &hk, NetUid(netuid), amt, lp, partial, mev)
+                .remove_stake_limit_mev(&pair, &hk, NetUid(netuid), alpha, lp, partial, mev)
                 .await?;
-            println!(
-                "Limit stake order removed. {:.4} at price {:.4} on SN{}\n  Tx: {}",
-                amount, price, netuid, hash
+            emit_stake_tx(
+                output,
+                &hash,
+                &format!(
+                    "Limit unstake order placed. {:.9} α at price {:.4} on SN{}\n  Tx: {}",
+                    alpha.units(),
+                    price,
+                    netuid,
+                    hash
+                ),
+                Some("limit_removed"),
             );
             Ok(())
         }
@@ -350,18 +424,33 @@ pub async fn handle_stake(cmd: StakeCommands, client: &Client, ctx: &Ctx<'_>) ->
             let (pair, hk) =
                 unlock_and_resolve(wallet_dir, wallet_name, hotkey_name, hotkey, password)?;
             let take_u16 = (take / 100.0 * 65535.0).round().min(65535.0) as u16;
-            println!(
-                "Setting childkey take to {:.2}% on SN{} for {}",
-                take,
-                netuid,
-                crate::utils::short_ss58(&hk)
-            );
+            if !output.is_json() {
+                println!(
+                    "Setting childkey take to {:.2}% on SN{} for {} (on-chain u16={})",
+                    take,
+                    netuid,
+                    crate::utils::short_ss58(&hk),
+                    take_u16
+                );
+            } else {
+                tracing::info!(
+                    take_pct = take,
+                    take_u16,
+                    netuid,
+                    "childkey take encoding u16÷65535"
+                );
+            }
             let hash = client
                 .set_childkey_take(&pair, &hk, NetUid(netuid), take_u16)
                 .await?;
-            println!(
-                "Childkey take set to {:.2}% on SN{}.\n  Tx: {}",
-                take, netuid, hash
+            emit_stake_tx(
+                output,
+                &hash,
+                &format!(
+                    "Childkey take set to {:.2}% on SN{}.\n  Tx: {}",
+                    take, netuid, hash
+                ),
+                Some("childkey_take_set"),
             );
             Ok(())
         }
@@ -374,20 +463,33 @@ pub async fn handle_stake(cmd: StakeCommands, client: &Client, ctx: &Ctx<'_>) ->
             let (pair, hk) =
                 unlock_and_resolve(wallet_dir, wallet_name, hotkey_name, hotkey, password)?;
             let children_parsed = parse_children(&children)?;
-            println!(
-                "Setting {} children on SN{} for {}",
-                children_parsed.len(),
-                netuid,
-                crate::utils::short_ss58(&hk)
-            );
+            let total_prop: u128 = children_parsed.iter().map(|(p, _)| *p as u128).sum();
+            if !output.is_json() {
+                println!(
+                    "Setting {} children on SN{} for {} (total proportion raw sum={} / u64::MAX)",
+                    children_parsed.len(),
+                    netuid,
+                    crate::utils::short_ss58(&hk),
+                    total_prop
+                );
+                eprintln!(
+                    "Note: proportions are u64 on-chain; runtime uses value÷u64::MAX. \
+                     Decimal inputs like 0.5 are converted automatically."
+                );
+            }
             let hash = client
                 .set_children(&pair, &hk, NetUid(netuid), &children_parsed)
                 .await?;
-            println!(
-                "{} children set on SN{}.\n  Tx: {}",
-                children_parsed.len(),
-                netuid,
-                hash
+            emit_stake_tx(
+                output,
+                &hash,
+                &format!(
+                    "{} children set on SN{}.\n  Tx: {}",
+                    children_parsed.len(),
+                    netuid,
+                    hash
+                ),
+                Some("children_set"),
             );
             Ok(())
         }
@@ -397,27 +499,38 @@ pub async fn handle_stake(cmd: StakeCommands, client: &Client, ctx: &Ctx<'_>) ->
             hotkey,
         } => {
             validate_netuid(netuid)?;
-            validate_amount(amount, "recycle alpha amount")?;
             let (pair, hk) =
                 unlock_and_resolve(wallet_dir, wallet_name, hotkey_name, hotkey, password)?;
+            let alpha = preflight_alpha_amount(
+                client,
+                &pair,
+                netuid,
+                &hk,
+                amount,
+                "recycle alpha amount (alpha, α)",
+                "recycle",
+            )
+            .await?;
             if mev {
                 eprintln!("MEV shield: encrypting recycle-alpha operation");
                 tracing::info!("MEV shield: encrypting recycle-alpha operation");
             }
             stake_op(
+                output,
                 "Recycling alpha via",
                 "recycled",
                 &hk,
                 client
-                    .recycle_alpha_mev(&pair, &hk, NetUid(netuid), safe_rao(amount), mev)
+                    .recycle_alpha_mev(&pair, &hk, NetUid(netuid), alpha, mev)
                     .await,
-                &format!("Recycled {:.4} alpha on SN{}", amount, netuid),
+                &format!("Recycled {:.9} α on SN{}", alpha.units(), netuid),
             )
         }
         StakeCommands::UnstakeAllAlpha { hotkey } => {
             let (pair, hk) =
                 unlock_and_resolve(wallet_dir, wallet_name, hotkey_name, hotkey, password)?;
             stake_op(
+                output,
                 "Unstaking all alpha from",
                 "unstaked",
                 &hk,
@@ -431,23 +544,34 @@ pub async fn handle_stake(cmd: StakeCommands, client: &Client, ctx: &Ctx<'_>) ->
             hotkey,
         } => {
             validate_netuid(netuid)?;
-            validate_amount(amount, "burn alpha amount")?;
             let (pair, hk) =
                 unlock_and_resolve(wallet_dir, wallet_name, hotkey_name, hotkey, password)?;
+            let alpha = preflight_alpha_amount(
+                client,
+                &pair,
+                netuid,
+                &hk,
+                amount,
+                "burn alpha amount (alpha, α)",
+                "burn",
+            )
+            .await?;
             if mev {
                 eprintln!("MEV shield: encrypting burn-alpha operation");
                 tracing::info!("MEV shield: encrypting burn-alpha operation");
             }
             stake_op(
+                output,
                 "Burning alpha via",
                 "burned",
                 &hk,
                 client
-                    .burn_alpha_mev(&pair, &hk, safe_rao(amount), NetUid(netuid), mev)
+                    .burn_alpha_mev(&pair, &hk, alpha, NetUid(netuid), mev)
                     .await,
                 &format!(
-                    "Burned {:.4} alpha on SN{} (permanently destroyed)",
-                    amount, netuid
+                    "Burned {:.9} α on SN{} (permanently destroyed)",
+                    alpha.units(),
+                    netuid
                 ),
             )
         }
@@ -461,31 +585,60 @@ pub async fn handle_stake(cmd: StakeCommands, client: &Client, ctx: &Ctx<'_>) ->
         } => {
             validate_netuid(from)?;
             validate_netuid(to)?;
-            validate_amount(amount, "swap-limit amount")?;
-            validate_limit_price(price, "swap-limit price")?;
+            let lp = parse_cli_limit_price(price, "swap-limit price")?;
             if from == to {
                 anyhow::bail!("Source and destination subnets are the same (SN{}). Use a different --to subnet.", from);
             }
-            // Spending limit check on destination subnet
-            check_spending_limit(to, amount)?;
             let (pair, hk) =
                 unlock_and_resolve(wallet_dir, wallet_name, hotkey_name, hotkey, password)?;
-            let amt = safe_rao(amount);
-            let lp = safe_rao(price);
+            let alpha = preflight_alpha_amount(
+                client,
+                &pair,
+                from,
+                &hk,
+                amount,
+                "swap-limit amount (alpha, α)",
+                "swap-limit",
+            )
+            .await?;
             if mev {
                 eprintln!("MEV shield: encrypting swap-stake-limit operation");
                 tracing::info!("MEV shield: encrypting swap-stake-limit operation");
             }
-            println!(
-                "Swap-limit {:.4} from SN{} to SN{} at price {:.4} (partial={})",
-                amount, from, to, price, partial
-            );
+            if !output.is_json() {
+                println!(
+                    "Swap-limit {:.9} α from SN{} to SN{} at price {:.4} (partial={})",
+                    alpha.units(),
+                    from,
+                    to,
+                    price,
+                    partial
+                );
+            }
             let hash = client
-                .swap_stake_limit_mev(&pair, &hk, NetUid(from), NetUid(to), amt, lp, partial, mev)
+                .swap_stake_limit_mev(
+                    &pair,
+                    &hk,
+                    NetUid(from),
+                    NetUid(to),
+                    alpha,
+                    lp,
+                    partial,
+                    mev,
+                )
                 .await?;
-            println!(
-                "Swap limit submitted. {:.4} from SN{} to SN{} at price {:.4}\n  Tx: {}",
-                amount, from, to, price, hash
+            emit_stake_tx(
+                output,
+                &hash,
+                &format!(
+                    "Swap limit submitted. {:.9} α from SN{} to SN{} at price {:.4}\n  Tx: {}",
+                    alpha.units(),
+                    from,
+                    to,
+                    price,
+                    hash
+                ),
+                Some("swap_limit_submitted"),
             );
             Ok(())
         }
@@ -493,17 +646,24 @@ pub async fn handle_stake(cmd: StakeCommands, client: &Client, ctx: &Ctx<'_>) ->
             validate_netuid(netuid)?;
             let (pair, hk) =
                 unlock_and_resolve(wallet_dir, wallet_name, hotkey_name, hotkey, password)?;
-            println!(
-                "Setting auto-stake on SN{} to hotkey {}...",
-                netuid,
-                crate::utils::short_ss58(&hk)
-            );
+            if !output.is_json() {
+                println!(
+                    "Setting auto-stake on SN{} to hotkey {}...",
+                    netuid,
+                    crate::utils::short_ss58(&hk)
+                );
+            }
             let hash = client.set_auto_stake(&pair, NetUid(netuid), &hk).await?;
-            println!(
-                "Auto-stake configured. SN{} emissions will auto-stake to {}\n  Tx: {}",
-                netuid,
-                crate::utils::short_ss58(&hk),
-                hash
+            emit_stake_tx(
+                output,
+                &hash,
+                &format!(
+                    "Auto-stake configured. SN{} emissions will auto-stake to {}\n  Tx: {}",
+                    netuid,
+                    crate::utils::short_ss58(&hk),
+                    hash
+                ),
+                Some("auto_stake_configured"),
             );
             Ok(())
         }
@@ -515,7 +675,6 @@ pub async fn handle_stake(cmd: StakeCommands, client: &Client, ctx: &Ctx<'_>) ->
                 "stake show-auto --address",
             )?;
             let subnets = client.get_all_subnets().await?;
-            // Parallel fetch: query all subnets concurrently instead of one-by-one
             let addr_ref = &addr;
             let futures: Vec<_> = subnets
                 .iter()
@@ -525,24 +684,33 @@ pub async fn handle_stake(cmd: StakeCommands, client: &Client, ctx: &Ctx<'_>) ->
                 })
                 .collect();
             let results = futures::future::join_all(futures).await;
-            let mut found = false;
+            let mut destinations: Vec<(u16, String)> = Vec::new();
             for (netuid, result) in &results {
                 if let Ok(Some(hotkey)) = result {
-                    if !found {
-                        println!(
-                            "Auto-stake destinations for {}:",
-                            crate::utils::short_ss58(&addr)
-                        );
-                        found = true;
-                    }
-                    println!("  SN{:<4} → {}", netuid, crate::utils::short_ss58(hotkey));
+                    destinations.push((netuid.0, hotkey.clone()));
                 }
             }
-            if !found {
+            if output.is_json() {
+                print_json(&serde_json::json!({
+                    "address": addr,
+                    "auto_stake": destinations.iter().map(|(n, h)| serde_json::json!({
+                        "netuid": n,
+                        "hotkey": h,
+                    })).collect::<Vec<_>>(),
+                }));
+            } else if destinations.is_empty() {
                 println!(
                     "No auto-stake destinations set for {}",
                     crate::utils::short_ss58(&addr)
                 );
+            } else {
+                println!(
+                    "Auto-stake destinations for {}:",
+                    crate::utils::short_ss58(&addr)
+                );
+                for (netuid, hotkey) in &destinations {
+                    println!("  SN{:<4} → {}", netuid, crate::utils::short_ss58(hotkey));
+                }
             }
             Ok(())
         }
@@ -570,23 +738,46 @@ pub async fn handle_stake(cmd: StakeCommands, client: &Client, ctx: &Ctx<'_>) ->
                 ids
             });
             let keep_subnets = subnet_ids.as_deref();
-            println!(
-                "Setting root claim type to '{}'{}...",
-                claim_type,
-                keep_subnets
-                    .map(|s| format!(" (subnets: {:?})", s))
-                    .unwrap_or_default()
-            );
+            if claim_type == "keep-subnets" {
+                match keep_subnets {
+                    None | Some([]) => {
+                        anyhow::bail!(
+                            "`--claim-type keep-subnets` requires at least one netuid in `--subnets`.\n  \
+                             Example: agcli stake set-claim --claim-type keep-subnets --subnets \"1,2\"\n  \
+                             On-chain: empty `KeepSubnets {{ subnets }}` returns InvalidSubnetNumber."
+                        );
+                    }
+                    Some(ids) => {
+                        for id in ids {
+                            validate_netuid(*id)?;
+                        }
+                    }
+                }
+            }
+            if !output.is_json() {
+                println!(
+                    "Setting root claim type to '{}'{}...",
+                    claim_type,
+                    keep_subnets
+                        .map(|s| format!(" (subnets: {:?})", s))
+                        .unwrap_or_default()
+                );
+            }
             let hash = client
                 .set_root_claim_type(&pair, &claim_type, keep_subnets)
                 .await?;
-            println!(
-                "Root claim type set to '{}'{}.\n  Tx: {}",
-                claim_type,
-                keep_subnets
-                    .map(|s| format!(" for subnets {:?}", s))
-                    .unwrap_or_default(),
-                hash
+            emit_stake_tx(
+                output,
+                &hash,
+                &format!(
+                    "Root claim type set to '{}'{}.\n  Tx: {}",
+                    claim_type,
+                    keep_subnets
+                        .map(|s| format!(" for subnets {:?}", s))
+                        .unwrap_or_default(),
+                    hash
+                ),
+                Some("claim_type_set"),
             );
             Ok(())
         }
@@ -600,33 +791,46 @@ pub async fn handle_stake(cmd: StakeCommands, client: &Client, ctx: &Ctx<'_>) ->
             validate_netuid(from)?;
             validate_netuid(to)?;
             validate_ss58(&dest, "destination")?;
-            validate_amount(amount, "transfer stake amount")?;
-            // Spending limit check on destination subnet
-            check_spending_limit(to, amount)?;
             let (pair, hk) =
                 unlock_and_resolve(wallet_dir, wallet_name, hotkey_name, hotkey, password)?;
-            let amt = Balance::from_tao(amount);
+            let alpha = preflight_alpha_amount(
+                client,
+                &pair,
+                from,
+                &hk,
+                amount,
+                "transfer stake amount (alpha, α)",
+                "transfer",
+            )
+            .await?;
             if mev {
                 eprintln!("MEV shield: encrypting transfer-stake operation");
                 tracing::info!("MEV shield: encrypting transfer-stake operation");
             }
-            println!(
-                "Transferring {:.4} TAO stake from SN{} to SN{} → {}",
-                amount,
-                from,
-                to,
-                crate::utils::short_ss58(&dest)
-            );
+            if !output.is_json() {
+                println!(
+                    "Transferring {:.9} α stake from SN{} to SN{} → {}",
+                    alpha.units(),
+                    from,
+                    to,
+                    crate::utils::short_ss58(&dest)
+                );
+            }
             let hash = client
-                .transfer_stake_mev(&pair, &dest, &hk, NetUid(from), NetUid(to), amt, mev)
+                .transfer_stake_mev(&pair, &dest, &hk, NetUid(from), NetUid(to), alpha, mev)
                 .await?;
-            println!(
-                "Stake transferred. {:.4} TAO from SN{} to SN{}, destination: {}\n  Tx: {}",
-                amount,
-                from,
-                to,
-                crate::utils::short_ss58(&dest),
-                hash
+            emit_stake_tx(
+                output,
+                &hash,
+                &format!(
+                    "Stake transferred. {:.9} α from SN{} to SN{}, destination: {}\n  Tx: {}",
+                    alpha.units(),
+                    from,
+                    to,
+                    crate::utils::short_ss58(&dest),
+                    hash
+                ),
+                Some("transferred"),
             );
             Ok(())
         }
@@ -679,19 +883,31 @@ pub async fn handle_stake(cmd: StakeCommands, client: &Client, ctx: &Ctx<'_>) ->
                 .collect();
 
             if target_netuids.is_empty() {
-                println!(
-                    "No stakes found for hotkey {} to claim from.",
-                    crate::utils::short_ss58(&hk)
-                );
+                if output.is_json() {
+                    print_json(&serde_json::json!({
+                        "hotkey": hk,
+                        "claimed": [],
+                        "failed": [],
+                        "success_count": 0,
+                        "failed_count": 0,
+                    }));
+                } else {
+                    println!(
+                        "No stakes found for hotkey {} to claim from.",
+                        crate::utils::short_ss58(&hk)
+                    );
+                }
                 return Ok(());
             }
 
-            println!(
-                "Processing root claims for hotkey {} across {} subnet(s): {:?}",
-                crate::utils::short_ss58(&hk),
-                target_netuids.len(),
-                target_netuids
-            );
+            if !output.is_json() {
+                println!(
+                    "Processing root claims for hotkey {} across {} subnet(s): {:?}",
+                    crate::utils::short_ss58(&hk),
+                    target_netuids.len(),
+                    target_netuids
+                );
+            }
 
             // Submit claims in parallel for all subnets
             let hk_account = Client::ss58_to_account_id_pub(&hk)?;
@@ -717,26 +933,60 @@ pub async fn handle_stake(cmd: StakeCommands, client: &Client, ctx: &Ctx<'_>) ->
                 })
                 .collect();
             let results = futures::future::join_all(claim_futures).await;
-            let mut success = 0u32;
-            let mut failed = 0u32;
+            let mut claimed: Vec<(u16, String)> = Vec::new();
+            let mut failures: Vec<(u16, String)> = Vec::new();
             for (nuid, result) in results {
                 match result {
                     Ok(hash) => {
-                        println!("  SN{}: claimed (tx: {})", nuid, hash);
-                        success += 1;
+                        if !output.is_json() {
+                            println!("  SN{}: claimed (tx: {})", nuid, hash);
+                        }
+                        claimed.push((nuid, hash));
                     }
                     Err(e) => {
-                        eprintln!("  SN{}: failed — {}", nuid, e);
-                        failed += 1;
+                        let msg = format!("{:#}", e);
+                        if !output.is_json() {
+                            eprintln!("  SN{}: failed — {}", nuid, msg);
+                        }
+                        tracing::error!(netuid = nuid, error = %e, "claim_root_dividends failed");
+                        failures.push((nuid, msg));
                     }
                 }
             }
-            println!(
-                "\nDone: {} claimed, {} failed out of {} total",
-                success,
-                failed,
-                target_netuids.len()
-            );
+            if output.is_json() {
+                print_json(&serde_json::json!({
+                    "hotkey": hk,
+                    "claimed": claimed.iter().map(|(n, h)| serde_json::json!({
+                        "netuid": n,
+                        "tx_hash": h,
+                    })).collect::<Vec<_>>(),
+                    "failed": failures.iter().map(|(n, e)| serde_json::json!({
+                        "netuid": n,
+                        "error": e,
+                    })).collect::<Vec<_>>(),
+                    "success_count": claimed.len(),
+                    "failed_count": failures.len(),
+                }));
+            } else {
+                println!(
+                    "\nDone: {} claimed, {} failed out of {} total",
+                    claimed.len(),
+                    failures.len(),
+                    target_netuids.len()
+                );
+            }
+            if !failures.is_empty() {
+                let failed_list: Vec<String> =
+                    failures.iter().map(|(n, _)| n.to_string()).collect();
+                anyhow::bail!(
+                    "Root claim failed for {}/{} subnet(s): {}.\n  \
+                     Per-subnet errors are printed above.\n  \
+                     Tip: retry one subnet with `agcli stake claim-root --netuid <N>` or check hotkey stake on failed SNs.",
+                    failures.len(),
+                    target_netuids.len(),
+                    failed_list.join(", ")
+                );
+            }
             Ok(())
         }
         StakeCommands::RemoveFullLimit {
@@ -746,16 +996,15 @@ pub async fn handle_stake(cmd: StakeCommands, client: &Client, ctx: &Ctx<'_>) ->
         } => {
             let (pair, hk) =
                 unlock_and_resolve(wallet_dir, wallet_name, hotkey_name, hotkey, password)?;
-            let limit_price = Balance::from_tao(price).rao();
+            let limit_price = parse_cli_limit_price(price, "limit price")?;
             println!(
                 "Removing all stake from SN{} hotkey {} (limit price {} TAO/α)",
                 netuid,
                 crate::utils::short_ss58(&hk),
                 price
             );
-            // amount is 0 for full removal — the chain handles the "full" part
             let hash = client
-                .remove_stake_full_limit(&pair, &hk, NetUid(netuid), 0, limit_price)
+                .remove_stake_full_limit(&pair, &hk, NetUid(netuid), limit_price)
                 .await?;
             print_tx_result(
                 output,
@@ -772,21 +1021,38 @@ pub async fn handle_stake(cmd: StakeCommands, client: &Client, ctx: &Ctx<'_>) ->
     }
 }
 
+/// Print write-command success: JSON `{"tx_hash": "...", "action": "..."}` or human text.
+fn emit_stake_tx(output: OutputFormat, hash: &str, human: &str, action: Option<&str>) {
+    if output.is_json() {
+        let mut payload = serde_json::json!({"tx_hash": hash});
+        if let Some(a) = action {
+            payload["action"] = serde_json::json!(a);
+        }
+        print_json(&payload);
+    } else {
+        println!("{}", human);
+    }
+}
+
 /// Common pattern for stake operations: print action, handle result with context.
 fn stake_op(
+    output: OutputFormat,
     action: &str,
     past: &str,
     hotkey: &str,
     result: Result<String>,
     detail: &str,
 ) -> Result<()> {
-    println!("{} {}", action, crate::utils::short_ss58(hotkey));
-    let hash = result?;
-    if detail.is_empty() {
-        println!("Stake {}. Tx: {}", past, hash);
-    } else {
-        println!("Stake {}. {}\n  Tx: {}", past, detail, hash);
+    if !output.is_json() {
+        println!("{} {}", action, crate::utils::short_ss58(hotkey));
     }
+    let hash = result?;
+    let human = if detail.is_empty() {
+        format!("Stake {}. Tx: {}", past, hash)
+    } else {
+        format!("Stake {}. {}\n  Tx: {}", past, detail, hash)
+    };
+    emit_stake_tx(output, &hash, &human, Some(past));
     Ok(())
 }
 
@@ -856,13 +1122,16 @@ async fn staking_wizard(
     amount_arg: Option<f64>,
     hotkey_arg: Option<String>,
 ) -> Result<()> {
-    let (wallet_dir, wallet_name, hotkey_name, password) = (
+    let (wallet_dir, wallet_name, hotkey_name, password, output) = (
         ctx.wallet_dir,
         ctx.wallet_name,
         ctx.hotkey_name,
         ctx.password,
+        ctx.output,
     );
-    println!("=== Staking Wizard ===\n");
+    if !output.is_json() {
+        println!("=== Staking Wizard ===\n");
+    }
 
     let mut wallet = open_wallet(wallet_dir, wallet_name)?;
     let coldkey_ss58 = match wallet.coldkey_ss58() {
@@ -912,6 +1181,7 @@ async fn staking_wizard(
     let netuid: u16 = match netuid_arg {
         Some(n) => n,
         None => {
+            require_tty_for_input("--netuid")?;
             let netuid_input: String = dialoguer::Input::new()
                 .with_prompt("\nEnter subnet netuid to stake on")
                 .interact_text()?;
@@ -927,6 +1197,7 @@ async fn staking_wizard(
     let amount: f64 = match amount_arg {
         Some(a) => a,
         None => {
+            require_tty_for_input("--amount")?;
             let amount_input: String = dialoguer::Input::new()
                 .with_prompt(format!("Amount of TAO to stake (max {:.4})", max_tao))
                 .interact_text()?;
@@ -979,6 +1250,7 @@ async fn staking_wizard(
 
     // Confirm: skip if --yes or --batch, otherwise prompt
     if !is_yes_mode() {
+        require_confirm_prompt_capability()?;
         let confirm = dialoguer::Confirm::new()
             .with_prompt("Proceed?")
             .default(true)
@@ -996,7 +1268,7 @@ async fn staking_wizard(
         tracing::info!("MEV shield: encrypting stake operation");
     }
     unlock_coldkey(&mut wallet, password)?;
-    let stake_balance = Balance::from_tao(amount);
+    let stake_balance = parse_cli_tao_amount(amount, "stake amount")?;
     let hash = client
         .add_stake_mev(
             wallet.coldkey()?,
@@ -1006,14 +1278,78 @@ async fn staking_wizard(
             mev,
         )
         .await?;
-    println!("Stake added! Tx: {}", hash);
+    emit_stake_tx(
+        output,
+        &hash,
+        &format!("Stake added! Tx: {}", hash),
+        Some("added"),
+    );
 
-    println!("\nUpdated portfolio:");
-    let portfolio = crate::queries::portfolio::fetch_portfolio(client, &coldkey_ss58).await?;
-    println!("  Free:   {}", portfolio.free_balance.display_tao());
-    println!("  Staked: {}", portfolio.total_staked.display_tao());
+    if !output.is_json() {
+        println!("\nUpdated portfolio:");
+        let portfolio = crate::queries::portfolio::fetch_portfolio(client, &coldkey_ss58).await?;
+        println!("  Free:   {}", portfolio.free_balance.display_tao());
+        println!("  Staked: {}", portfolio.total_staked.display_tao());
+    }
 
     Ok(())
+}
+
+/// Validate amount, parse alpha, and preflight stake balance on a subnet/hotkey.
+async fn preflight_alpha_amount(
+    client: &Client,
+    pair: &sp_core::sr25519::Pair,
+    netuid: u16,
+    hotkey_ss58: &str,
+    amount: f64,
+    amount_label: &str,
+    action: &str,
+) -> Result<AlphaBalance> {
+    let alpha = parse_cli_alpha_amount(amount, amount_label)?;
+    let coldkey_ss58 = crate::wallet::keypair::to_ss58(&sp_core::Pair::public(pair), 42);
+    preflight_alpha_stake(client, &coldkey_ss58, netuid, hotkey_ss58, alpha, action).await?;
+    Ok(alpha)
+}
+
+/// Client-side alpha balance check before alpha-denominated extrinsics.
+async fn preflight_alpha_stake(
+    client: &Client,
+    coldkey_ss58: &str,
+    netuid: u16,
+    hotkey_ss58: &str,
+    alpha: AlphaBalance,
+    action: &str,
+) -> Result<()> {
+    if alpha.raw() == 0 {
+        return Ok(());
+    }
+    let stakes = client
+        .get_stake_for_coldkey(coldkey_ss58)
+        .await
+        .with_context(|| format!("Failed to load stakes for {action} preflight"))?;
+    match stakes
+        .iter()
+        .find(|s| s.netuid.0 == netuid && s.hotkey == hotkey_ss58)
+    {
+        Some(pos) if alpha.raw() > pos.alpha_stake.raw() => {
+            anyhow::bail!(
+                "Cannot {action} {:.9} α — you have {:.9} α on SN{} for hotkey {}.\n  \
+                 `--amount` is alpha (α), not TAO. Check: agcli stake list",
+                alpha.units(),
+                pos.alpha_stake.units(),
+                netuid,
+                crate::utils::short_ss58(hotkey_ss58)
+            );
+        }
+        None => {
+            anyhow::bail!(
+                "No alpha stake on SN{} for hotkey {} ({action}).\n  Check: agcli stake list",
+                netuid,
+                crate::utils::short_ss58(hotkey_ss58)
+            );
+        }
+        _ => Ok(()),
+    }
 }
 
 #[cfg(test)]
